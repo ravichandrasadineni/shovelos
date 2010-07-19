@@ -7,6 +7,7 @@
 ####################################################################################
 
 .code16
+.arch i386
 .section .text
 
 ###################################################
@@ -34,22 +35,29 @@
 #####################################################################################
 .global main
 main:
-  jmp domain
+  jmp do_main
  
 magick:
   .string "ShovelBS"
-  
-boot_partition:
-.short 0x00
 
-domain:
-  xorw %ax,   %ax
-  movw %ax,   %ds			# zero data  segment
-  movw %ax,   %ss			# zero stack segment
-  xorl %esp,  %esp		# zero esp
-  movw  $0x9c00, %sp		# stack top after bootsector
+do_main:
+
+  ##############################################################
+  # setup segment registers.
+  # code starts at 0x0000:0x7c00 and has size 512 bytes
+  # data starts after code at 0x07e0:0x0000 and grows up (64k)
+  # stack starts at 0x17e0:0xffff and grows down. (64k)
+  ##############################################################
+  movw $0x17e0, %ax
+  movw %ax,     %ss
+  movw $0xffff, %sp
+  movw $0x07e0, %ax
+  movw %ax,     %ds
+
+  mov $0x69, %ax
+  call putn
+
   call die_without_edd		# check bios support for disk io
-  
   
   movw $msg_string,%si		# PRINT ALIVE MESSAGE
   call puts
@@ -89,20 +97,20 @@ putn:
   xorl %ebx, 		%ebx	# clear ebx ( cant use indirect base,index,scale with 16bit regs? )
   xorl %esi, 		%esi	# clear ecx ( cant use indirect base,index,scale with 16bit regs? )
 
-  movw $nums,		%si		# hex number string array
-  movw $gnumstring,	%di		# output string
-  addw $0x0005,		%di		# seek to end
-  movw $0x0004,		%cx		# loop counter
+  movw $nums,		%si	# hex number string array
+  movw $gnumstring,	%di	# output string
+  addw $0x0005,		%di	# seek to end
+  movw $0x0004,		%cx	# loop counter
 putn_loop:
-  movw     %ax, 		%bx		# number to ax
-  sar  $0x0004,		%ax		# number >>= 4
-  and  $0x000f, 		%bx		# bx &= 0xf
-  movb (%esi,%ebx,1),	%dh		# dh = nums[bx]
-  movb  %dh,		(%di)		# *output = dh
-  dec  %di					# --output
-  dec  %cx					# dec loop counter
-  jnz putn_loop				# loop while not zero
-  movw $gnumstring,	%si		# print buffer
+  movw     %ax, 	%bx	# number to ax
+  sar  $0x0004,		%ax	# number >>= 4
+  and  $0x000f, 	%bx	# bx &= 0xf
+  cs movb (%esi,%ebx,1),%dh	# dh = nums[bx]
+  cs movb  %dh,		(%di)	# *output = dh
+  dec  %di			# --output
+  dec  %cx			# dec loop counter
+  jnz putn_loop			# loop while not zero
+  movw $gnumstring,	%si	# print buffer
   call puts
   ret
 
@@ -113,12 +121,12 @@ putn_loop:
 #####################################################################################
 puts:
   cld
-pust_loop:
-  lodsb			
+puts_loop:
+  cs lodsb
   or %al, %al
   jz puts_end
   call putc
-  jmp  pust_loop
+  jmp  puts_loop
 puts_end:
   ret
 
@@ -131,8 +139,8 @@ die_without_edd:
   movb $0x41,	%ah	# are extensions available
   movw $0x55aa,	%bx	# no idea?  http://en.wikipedia.org/wiki/INT_13
   int  $0x0013		# call bios
-  cmpl $0x0007,	%cx	# require all flags set
-  jne die			# otherwise die
+  cmpw $0x0007,	%cx	# require all flags set
+  jne die		# otherwise die
 
   ret
 
@@ -147,12 +155,16 @@ read_drive_params:
   movb $0x48, %ah	# INT 13h FUNCTION
   movb $0x80, %dl	# Drive Number
 			# ds:si set by caller
-  int  $0x0013	# call BIOS
+  int  $0x0013		# call BIOS
   jc   die		# CF set on error
   ret
 
 
-  
+
+
+################################################################################
+#  static data ( in code segment )
+################################################################################
 msg_string:
   .asciz "ShovelOS bootsector is "
 dead_string:
