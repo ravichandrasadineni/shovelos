@@ -1,18 +1,48 @@
+####################################################################################
+#	                          SHOVEL OS BOOT SECTOR
+#
+#    AUTHOR:  Chris Stones ( chris.stones _AT_ gmail.com )
+#    CREATED: 17th JULY 2010
+#
+####################################################################################
 
 .code16
 .section .text
+
+###################################################
+# IBM PC - 16 byte partition record.              #
+###################################################
+# OFF  # SIZE #             DESCR                 #
+###################################################
+# 0x00 # 0x01 # BOOTABLE(0x80) or 0x00            #
+# 0x01 # 0x03 # CHS of first absolute sector      #
+# 0x01 # 0x01 # ^ HE7,HE6,HE5,HE4,HE3,HE2,HE1,HE0 #
+# 0x02 # 0x01 # ^ CY9,CY8,SE5,SE4,SE3,SE2,SE1,SE0 #
+# 0x03 # 0x01 # ^ CY7,CY6,CY5,CY4,CY3,CY2,CY1,CY0 #
+# 0x04 # 0x01 # partition type                    #
+# 0x05 # 0x03 # CHZ of last absolute sector       #
+# 0x05 # 0x01 # ^ HE7,HE6,HE5,HE4,HE3,HE2,HE1,HE0 #
+# 0x06 # 0x01 # ^ CY9,CY8,SE5,SE4,SE3,SE2,SE1,SE0 #
+# 0x07 # 0x01 # ^ CY7,CY6,CY5,CY4,CY3,CY2,CY1,CY0 #
+# 0x08 # 0x04 # LBA of first absolute sector      #
+# 0x0C # 0x04 # number of sectors (little-endian) #
+###################################################
+
+
+#####################################################################################
+#                            ENTRY POINT ( 0x7C00 )
+#####################################################################################
 .global main
 main:
   xorw %ax,   %ax
-  movw %ax,   %ds	# zero data  segment
-  movw %ax,   %ss	# zero stack segment
-  xorl %esp,  %esp	# zero esp
-  movw  $0x9c00, %sp	# stack top after bootsector
-  call die_without_edd	# check bios support for disk io
+  movw %ax,   %ds			# zero data  segment
+  movw %ax,   %ss			# zero stack segment
+  xorl %esp,  %esp			# zero esp
+  movw  $0x9c00, %sp		# stack top after bootsector
+  call die_without_edd		# check bios support for disk io
   
-
-
-  movw $msg_string,%si
+  
+  movw $msg_string,%si		# PRINT ALIVE MESSAGE
   call puts
   movw $alive_string,%si
   call puts
@@ -47,26 +77,24 @@ putc:
 #####################################################################################
 putn:
 
-  xorl %ebx, 		%ebx	# clear ebx ( cant use indirect base,index,scale with 16bit regs? )
-  xorl %esi, 		%esi	# clear ecx ( cant use indirect base,index,scale with 16bit regs? )
+  xorl %ebx, 			%ebx	# clear ebx ( cant use indirect base,index,scale with 16bit regs? )
+  xorl %esi, 			%esi	# clear ecx ( cant use indirect base,index,scale with 16bit regs? )
 
-  movw $nums,		%si	# hex number string array
-  movw $gnumstring,	%di	# output string
-  addw $0x0005,		%di	# seek to end
-  movw $0x0004,		%cx	# loop counter
+  movw $nums,			%si		# hex number string array
+  movw $gnumstring,		%di		# output string
+  addw $0x0005,			%di		# seek to end
+  movw $0x0004,			%cx		# loop counter
 putn_loop:
-  movw     %ax, 	%bx	# number to ax
-  sar  $0x0004, 	%ax	# number >>= 4
-  and  $0x000f, 	%bx	# bx &= 0xf
-  movb (%esi,%ebx,1),	%dh	# dh = nums[bx]
-  movb  %dh,		(%di)	# *output = dh
-  dec  %di			# --output
-  dec  %cx			# dec loop counter
-  jnz putn_loop			# loop while not zero
-
-  movw $gnumstring, %si		# print buffer
+  movw     %ax, 		%bx		# number to ax
+  sar  $0x0004,			%ax		# number >>= 4
+  and  $0x000f, 		%bx		# bx &= 0xf
+  movb (%esi,%ebx,1),	%dh		# dh = nums[bx]
+  movb  %dh,			(%di)	# *output = dh
+  dec  %di						# --output
+  dec  %cx						# dec loop counter
+  jnz putn_loop					# loop while not zero
+  movw $gnumstring,		%si		# print buffer
   call puts
-
   ret
 
 #####################################################################################
@@ -113,6 +141,24 @@ die_without_edd:
 #  add $0x0004, %sp
 #  ret
 ############################
+
+
+
+###########################################
+# read_drive_params
+#  Extended Read Drive Parameters
+#  Parameters ds:si - output buffer
+#  Returns BIOS return code in reg ah
+###########################################
+read_drive_params:
+  movb $0x48, %ah	# INT 13h FUNCTION
+  movb $0x80, %dl	# Drive Number
+					# ds:si set by caller
+  int  $0x0013		# call BIOS
+  jc   die			# CF set on error
+  ret
+
+
   
 msg_string:
   .asciz "ShovelOS bootsector is "
