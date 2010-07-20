@@ -27,12 +27,14 @@
 #         07e0:0000 -> 07e0:ffff                  #
 #                                                 #
 #    DATA: Extended Drive Parameters              #
-#         07e0:0000 -> 07e0:01eh                  #
+#         07e0:0000 -> 07e0:001e                  #
 #                                                 #
 #    DATA: Disk Address Packet                    #
-#         07e0:01eh -> 07e0:01fh                  #
+#         07e0:001e -> 07e0:002e                  #
 #                                                 #
-#                                                 #
+#    DATA: Disk sector                            #
+#         07e0:002e -> 07e0:022e                  #
+
 
 
 ###################################################
@@ -78,6 +80,7 @@ do_main:
   movw $0xffff, %sp
   movw $0x07e0, %ax
   movw %ax,     %ds
+  movw %ax,     %es
 
   
   
@@ -87,6 +90,30 @@ do_main:
   call puts
   
   jmp halt
+
+
+#####################################################################################
+#  read_disk_sectors
+#    read sectors from disk
+#####################################################################################
+read_disk_sectors:
+  movw   $0x001e, %si     # Disk Access Packet
+  movb   $0x10,   0(%si)  # Packet size
+  movb   $0x00,   1(%si)  # Unused
+  movb   $0x01,   2(%si)  # sectors to read
+  movb   $0x00,   3(%si)  # Unused
+  movw   $0x002e, 4(%si)  # load to offset
+  movw   %ds,     %ax
+  movw   %ax,     6(%si)  # load to segment
+  movl   $0x00,   8(%si)  # first sector to load
+  movl   $0x00,  12(%si)  # first sector to load
+
+  movb $0x42, %ah         # BIOS function for extended read
+  movb $0x80, %dl         # first hard disk
+                          # si already loaded with packet offset
+  int $0x13
+  ret
+  
 
 #####################################################################################
 #  die
@@ -120,20 +147,20 @@ putn:
   xorl %ebx, %ebx	# clear ebx ( cant use indirect base,index,scale with 16bit regs? )
   xorl %esi, %esi	# clear ecx ( cant use indirect base,index,scale with 16bit regs? )
 
-  movw $nums,         %si           # hex number string array
-  movw $gnumstring,	  %di           # output string
-  addw $0x0005,		  %di           # seek to end
-  movw $0x0004,		  %cx           # loop counter
+  movw $nums,         %si             # hex number string array
+  movw $gnumstring,   %di             # output string
+  addw $0x0005,       %di             # seek to end
+  movw $0x0004,       %cx             # loop counter
 putn_loop:
-       movw           %ax, 	%bx	    # number to bx
-       sar        $0x0004,	%ax	    # number >>= 4
-       and        $0x000f, 	%bx	    # bx &= 0xf
-  cs   movb (%esi,%ebx,1),  %dh     # dh = nums[bx]
-  cs   movb           %dh,	(%di)	# *output = dh
-       dec            %di           # --output
-       dec            %cx           # dec loop counter
-       jnz      putn_loop           # loop while not zero
-       movw   $gnumstring,  %si     # print buffer
+       movw           %ax,      %bx   # number to bx
+       sar        $0x0004,      %ax   # number >>= 4
+       and        $0x000f,      %bx   # bx &= 0xf
+  cs   movb (%esi,%ebx,1),      %dh   # dh = nums[bx]
+  cs   movb           %dh,     (%di)  # *output = dh
+       dec            %di             # --output
+       dec            %cx             # dec loop counter
+       jnz      putn_loop             # loop while not zero
+       movw   $gnumstring,      %si   # print buffer
        call          puts
        ret
 
