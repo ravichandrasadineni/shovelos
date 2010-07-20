@@ -1,14 +1,39 @@
 ####################################################################################
-#	                          SHOVEL OS BOOT SECTOR
-#
-#    AUTHOR:  Chris Stones ( chris.stones _AT_ gmail.com )
-#    CREATED: 17th JULY 2010
-#
+#                         SHOVEL OS i386 BOOT SECTOR                               #
+#                                                                                  #
+#    AUTHOR:  Chris Stones ( chris.stones _AT_ gmail.com )                         #
+#    CREATED: 17th JULY 2010                                                       #
+#                                                                                  #
 ####################################################################################
 
 .code16
 .arch i386
 .section .text
+
+
+###################################################
+# MEMORY MAP                                      #
+#                                                 #
+#    CODE:                                        #
+#         0000:7c00 -> 0000:7dbe                  #
+#                                                 #
+#    PARTITION TABLE:                             #
+#         0000:7dbe -> 0000:7dfe                  #
+#                                                 #
+#    STACK:                                       #
+#         17e0:ffff -> 17e0:0000                  #
+#                                                 #
+#    DATA:                                        #
+#         07e0:0000 -> 07e0:ffff                  #
+#                                                 #
+#    DATA: Extended Drive Parameters              #
+#         07e0:0000 -> 07e0:01eh                  #
+#                                                 #
+#    DATA: Disk Address Packet                    #
+#         07e0:01eh -> 07e0:01fh                  #
+#                                                 #
+#                                                 #
+
 
 ###################################################
 # IBM PC - 16 byte partition record.              #
@@ -30,9 +55,9 @@
 ###################################################
 
 
-#####################################################################################
-#                            ENTRY POINT ( 0x7C00 )
-#####################################################################################
+###############################################################
+#                   ENTRY POINT ( 0x7C00 )                    #
+###############################################################
 .global main
 main:
   jmp do_main
@@ -54,10 +79,7 @@ do_main:
   movw $0x07e0, %ax
   movw %ax,     %ds
 
-  mov $0x69, %ax
-  call putn
-
-  call die_without_edd		# check bios support for disk io
+  
   
   movw $msg_string,%si		# PRINT ALIVE MESSAGE
   call puts
@@ -81,6 +103,7 @@ halt:
 #####################################################################################
 #  putc
 #    put char
+#    Parameter ah = character to print
 #####################################################################################
 putc:
   movb $0x0E, %ah
@@ -94,25 +117,25 @@ putc:
 #####################################################################################
 putn:
 
-  xorl %ebx, 		%ebx	# clear ebx ( cant use indirect base,index,scale with 16bit regs? )
-  xorl %esi, 		%esi	# clear ecx ( cant use indirect base,index,scale with 16bit regs? )
+  xorl %ebx, %ebx	# clear ebx ( cant use indirect base,index,scale with 16bit regs? )
+  xorl %esi, %esi	# clear ecx ( cant use indirect base,index,scale with 16bit regs? )
 
-  movw $nums,		%si	# hex number string array
-  movw $gnumstring,	%di	# output string
-  addw $0x0005,		%di	# seek to end
-  movw $0x0004,		%cx	# loop counter
+  movw $nums,         %si           # hex number string array
+  movw $gnumstring,	  %di           # output string
+  addw $0x0005,		  %di           # seek to end
+  movw $0x0004,		  %cx           # loop counter
 putn_loop:
-  movw     %ax, 	%bx	# number to ax
-  sar  $0x0004,		%ax	# number >>= 4
-  and  $0x000f, 	%bx	# bx &= 0xf
-  cs movb (%esi,%ebx,1),%dh	# dh = nums[bx]
-  cs movb  %dh,		(%di)	# *output = dh
-  dec  %di			# --output
-  dec  %cx			# dec loop counter
-  jnz putn_loop			# loop while not zero
-  movw $gnumstring,	%si	# print buffer
-  call puts
-  ret
+       movw           %ax, 	%bx	    # number to bx
+       sar        $0x0004,	%ax	    # number >>= 4
+       and        $0x000f, 	%bx	    # bx &= 0xf
+  cs   movb (%esi,%ebx,1),  %dh     # dh = nums[bx]
+  cs   movb           %dh,	(%di)	# *output = dh
+       dec            %di           # --output
+       dec            %cx           # dec loop counter
+       jnz      putn_loop           # loop while not zero
+       movw   $gnumstring,  %si     # print buffer
+       call          puts
+       ret
 
 #####################################################################################
 #  puts
@@ -120,13 +143,13 @@ putn_loop:
 #    parameters %si: string to print
 #####################################################################################
 puts:
-  cld
+  cld               # Clear direction flag
 puts_loop:
-  cs lodsb
-  or %al, %al
-  jz puts_end
-  call putc
-  jmp  puts_loop
+  cs   lodsb        # load byte from cs:si to al, postincrement si
+  or   %al, %al     # if terminating null ?
+  jz   puts_end     # then finish
+  call putc         # put character
+  jmp  puts_loop    # next
 puts_end:
   ret
 
@@ -135,32 +158,27 @@ puts_end:
 #   check for BIOS Enhanced Disk Drive Services. Quit if not present
 #####################################################################################
 die_without_edd:
-  movb $0x80, 	%dl	# select first hard drive
-  movb $0x41,	%ah	# are extensions available
-  movw $0x55aa,	%bx	# no idea?  http://en.wikipedia.org/wiki/INT_13
-  int  $0x0013		# call bios
-  cmpw $0x0007,	%cx	# require all flags set
-  jne die		# otherwise die
-
+  movb $0x80,   %dl # select first hard drive
+  movb $0x41,   %ah # are extensions available
+  movw $0x55aa, %bx # no idea?  http://en.wikipedia.org/wiki/INT_13
+  int  $0x0013      # call bios
+  cmpw $0x0007,	%cx # require all flags set
+  jne die           # otherwise die
   ret
-
 
 ###########################################
 # read_drive_params
-#  Extended Read Drive Parameters
-#  Parameters ds:si - output buffer
-#  Returns BIOS return code in reg ah
+#  Extended Read Drive Parameters.
+#  writes 07e0:0000 -> 07e0:01eh.
 ###########################################
 read_drive_params:
-  movb $0x48, %ah	# INT 13h FUNCTION
-  movb $0x80, %dl	# Drive Number
-			# ds:si set by caller
-  int  $0x0013		# call BIOS
-  jc   die		# CF set on error
+  movw $0x00, %si    # destination address ds:si
+  movb $0x48, %ah    # INT 13h FUNCTION 48h
+  movb $0x80, %dl    # Drive Number
+			         # ds:si set by caller
+  int  $0x0013       # call BIOS
+  jc   die           # CF set on error
   ret
-
-
-
 
 ################################################################################
 #  static data ( in code segment )
