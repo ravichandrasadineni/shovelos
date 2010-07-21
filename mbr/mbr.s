@@ -78,7 +78,8 @@ relocated_main:
 
   movw $0x3000, %ax
   movw %ax,     %ds        # 64k of data  at segment 0x3000
-  movw $0x2000, %ss        # 64k of stack at segment 0x2000
+  movw $0x2000, %ax
+  movw %ax,     %ss        # 64k of stack at segment 0x2000
   movw $0xffff, %sp
 
 ##############################################################
@@ -119,7 +120,7 @@ found_active:
 ##################################################################
 none_active:
   xorw %ax, %ax
-try_next
+try_next:
   call try_to_boot
   incw %ax
   cmpw $0x0004, %ax
