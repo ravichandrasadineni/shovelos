@@ -4,8 +4,8 @@
 #    AUTHOR:  Chris Stones ( chris.stones _AT_ gmail.com )                         #
 #    CREATED: 17th JULY 2010                                                       #
 #                                                                                  #
-#    1) Relocate to top of 16bit address space                                     #
-#    2) Parse partition table and chainload VBR                                    #
+#    1) Relocate MBR to the same offset at segment 1000h                           #
+#    2) Parse primary partition table and chainload VBR                            #
 #                                                                                  #
 ####################################################################################
 
@@ -76,13 +76,31 @@ relocate:
 ###############################################################
 relocated_main:
 
-  movw $0x2000, %ax
-  movw %ax,     %ds        # 64k of data  at segment 0x2000
-  movw $0x3000, %ss        # 64k of stack at segment 0x3000
+  movw $0x3000, %ax
+  movw %ax,     %ds        # 64k of data  at segment 0x3000
+  movw $0x2000, %ss        # 64k of stack at segment 0x2000
   movw $0xffff, %sp
-  movw %ax,     %ax        # partition 0
+
+##############################################################
+###    Is an active partition override configured?         ###
+##############################################################
+
+  xorw %ax,     %ax        # partition 0
   movw $0x7dbe, %bx        # address of first partition table
 
+  movw $override_active_partition, %bx
+
+  cmpb $0x03, (%bx)          # is primary ?
+  ja   scan_partition_tbl    # no, scan partitions
+  movb (%bx),  %al           # yes, ax=partition number
+  call try_to_boot           # try to boot parition ax.
+                             # on success,it wont return.
+  
+##############################################################
+###                Scan partition table                    ###
+##############################################################
+scan_partition_tbl:
+  xorw  %ax,     %ax       # partition 0
 try_partition:  
   cmpw  $0x80, (%bx)       # this partition marked as active?
   je    found_active       # boot it
@@ -91,15 +109,41 @@ try_partition:
   incw  %ax                # next partition number
   addw $0x0010, %bx        # next partition table
   jmp  try_partition       # re-try
-
-none_active:
-
-  movw
-
 found_active:
+  call try_to_boot         # try to boot active partition.
+                           # on success, it wont return.
 
+##################################################################
+###   No partitions marked active, and no override configured  ###
+###      try to boot all partitions, in order                  ###
+##################################################################
+none_active:
+  xorw %ax, %ax
+try_next
+  call try_to_boot
+  incw %ax
+  cmpw $0x0004, %ax
+  jne  try_next
+  
+#####################################################################################
+# NOTHING TO BOOT !
+#####################################################################################
+die:
+  movw $msg_string,%si
+  call puts
+  movw $dead_string,%si
+  call puts
+halt:
   jmp halt
 
+
+#####################################################################################
+#  try to boot given VBR
+#    parameters ax - partition number
+#####################################################################################
+try_to_boot:
+
+  ret 
 
 #####################################################################################
 #  read_disk_sectors
@@ -123,18 +167,6 @@ read_disk_sectors:
   int $0x13
   ret
   
-
-#####################################################################################
-#  die
-#    somthing went wrong. notify user and loop forever.
-#####################################################################################
-die:
-  movw $msg_string,%si
-  call puts
-  movw $dead_string,%si
-  call puts
-halt:
-  jmp halt
 
 #####################################################################################
 #  putc
@@ -229,5 +261,5 @@ nums:
   .asciz "0123456789abcdef"
 gnumstring:
   .asciz "0x????\r\n"
-non_active_string:
-  .asciz "couldn't find any active partitions to boot."
+
+  
