@@ -81,29 +81,27 @@ relocated_main:
   movw $0x2000, %ax
   movw %ax,     %ss        # 64k of stack at segment 0x2000
   movw $0xffff, %sp
+  movw $0x0000, %ax
+  movw %ax,     %es        # zero es ( VRB sector )
 
 ##############################################################
 ###    Is an active partition override configured?         ###
 ##############################################################
 
-  xorw %ax,     %ax        # partition 0
-  movw $0x7dbe, %bx        # address of first partition table
-
-  movw $override_active_partition, %bx
-
-  cmpb $0x03, (%bx)          # is primary ?
-  ja   scan_partition_tbl    # no, scan partitions
-  movb (%bx),  %al           # yes, ax=partition number
-  call try_to_boot           # try to boot parition ax.
-                             # on success,it wont return.
+  movw   $override_active_partition, %ax 
+  cs cmpb $0x03, (%ax)          # is primary ?
+  ja      scan_partition_tbl    # no, scan partitions
+  call    try_to_boot           # try to boot parition ax.
+                                # on success,it wont return.
   
 ##############################################################
 ###                Scan partition table                    ###
 ##############################################################
 scan_partition_tbl:
   xorw  %ax,     %ax       # partition 0
+  movw $0x7dbe, %bx        # address of first partition table
 try_partition:  
-  cmpw  $0x80, (%bx)       # this partition marked as active?
+  cs cmpw  $0x80, (%bx)    # this partition marked as active?
   je    found_active       # boot it
   cmpw  $0x03, %ax         # no primary partitions active?
   je    none_active        # quit!
@@ -144,6 +142,23 @@ halt:
 #####################################################################################
 try_to_boot:
 
+  pusha
+  
+  movw $0x7dbe, %bx       # address of first partition table
+  mulw $0x0010, %ax       # partition table byte offset from partition0
+  addw %ax,     %bx       # bx holds address of partition to boot
+  
+  movb $0x02, %ah         # bios disk function 2 ( read CHS mode )
+  movb $0x01, %al         # read one sector
+  cs movw 2(%bx), %cx     # read track/sector info to cl/ch ( CHECK ME! )
+  cs movb 1(%bx), %dh     # read head of first sector of partition to dh
+  movb $0x80, %dl         # first hard disk
+  movw $0x7c00,%bx        # read to addess
+  int $0x0013             # call BIOS
+  
+  
+  
+  popa
   ret 
 
 #####################################################################################
