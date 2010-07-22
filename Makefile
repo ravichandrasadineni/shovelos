@@ -1,6 +1,6 @@
-install_bootloader : bootsector/bsector.bin
-	dd if=bootsector/bsector.bin of=ATA0.img bs=446 count=1 conv=notrunc
+install_mbr : mbr/mbr.bin
+	dd if=mbr/mbr.bin of=ATA0.img bs=446 count=1 conv=notrunc
 
-bootsector/bsector.bin : bootsector/bsector.s
-	make -C bootsector bsector.bin
+mbr/mbr.bin : mbr/mbr.s mbr/Makefile mbr/link.script
+	make -C mbr mbr.bin
 
