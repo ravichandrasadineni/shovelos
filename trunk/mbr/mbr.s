@@ -49,7 +49,7 @@ main:
 magick:
   .string "ShovMBR"
 
-override_active_partition:
+oap:
   .value 0xff
 
 ###############################################################
@@ -84,13 +84,17 @@ relocated_main:
   movw $0x0000, %ax
   movw %ax,     %es        # zero es ( VRB sector )
 
+  movw $s1,     %si        # say hello!
+  call puts
+
 ##############################################################
 ###    Is an active partition override configured?         ###
 ##############################################################
 
-  movw   $override_active_partition, %ax 
-  cs cmpb $0x03, (%ax)          # is primary ?
+  movw    $oap,   %bx 
+  cs cmpb $0x03, (%bx)          # is primary ?
   ja      scan_partition_tbl    # no, scan partitions
+  movw    %bx,    %ax
   call    try_to_boot           # try to boot parition ax.
                                 # on success,it wont return.
   
@@ -101,7 +105,7 @@ scan_partition_tbl:
   xorw  %ax,     %ax       # partition 0
   movw $0x7dbe, %bx        # address of first partition table
 try_partition:  
-  cs cmpw  $0x80, (%bx)    # this partition marked as active?
+  cs cmpb  $0x80, (%bx)    # this partition marked as active?
   je    found_active       # boot it
   cmpw  $0x03, %ax         # no primary partitions active?
   je    none_active        # quit!
@@ -128,8 +132,6 @@ try_next:
 # NOTHING TO BOOT !
 #####################################################################################
 die:
-  movw $msg_string,%si
-  call puts
   movw $dead_string,%si
   call puts
 halt:
@@ -143,46 +145,56 @@ halt:
 try_to_boot:
 
   pusha
-  
+
+  movw $ttb,     %si      # debug msg
+  call puts
+  call putn
+
+  #############################
+  # address of partition table
+  #############################
   movw $0x7dbe, %bx       # address of first partition table
-  mulw $0x0010, %ax       # partition table byte offset from partition0
+  imul $0x0010, %ax       # partition table byte offset from partition0
   addw %ax,     %bx       # bx holds address of partition to boot
+ 
+  ################################################################
+  # read address ( in CHS ) of first sector from partiton table
+  # read sector to 0000:7c00
+  ################################################################
+  movb $0x02, %ah          # bios disk function 2 ( read CHS mode )
+  movb $0x01, %al          # read one sector
+  cs movw 2(%bx), %cx      # read track/sector info to cl/ch ( CHECK ME! )
+  cs movb 1(%bx), %dh      # read head of first sector of partition to dh
+
+  movb $0x80, %dl          # first hard disk
+  movw $0x7c00,%bx         # read to addess ( es is 0000 here )
+  int $0x0013              # call BIOS
+
+  jc failed_to_boot_onerr  # read error ?
   
-  movb $0x02, %ah         # bios disk function 2 ( read CHS mode )
-  movb $0x01, %al         # read one sector
-  cs movw 2(%bx), %cx     # read track/sector info to cl/ch ( CHECK ME! )
-  cs movb 1(%bx), %dh     # read head of first sector of partition to dh
-  movb $0x80, %dl         # first hard disk
-  movw $0x7c00,%bx        # read to addess
-  int $0x0013             # call BIOS
+  ###############################################################
+  ### DO ALL VBR's CONTAIN MBR SIGS?
+  ###  GRUB and WINDOWS-7 DOES.
+  ###  BETTER SAFE THAN SORRY, LETS REFUSE TO CHAINLOAD WITHOUT.
+  ###############################################################
+  es cmpw $0xaa55,510(%bx) # leaded sector has MBR sig ?
+  jne failed_to_boot_onsig
   
-  
-  
+  ###############################################################
+  ### CANT FIND A REASON NOT TO.... LETS BOOT IT!
+  ###############################################################
+  ljmp $0x0000, $0x7c00
+
+failed_to_boot_onerr:
+  mov $failed_to_boot_onerr_str, %si
+  call puts
+  jmp failed_to_boot
+failed_to_boot_onsig:
+  mov $failed_to_boot_onsig_str, %si
+  call puts
+failed_to_boot:
   popa
   ret 
-
-#####################################################################################
-#  read_disk_sectors
-#    read sectors from disk
-#####################################################################################
-read_disk_sectors:
-  movw   $0x001e, %si     # Disk Access Packet
-  movb   $0x10,   0(%si)  # Packet size
-  movb   $0x00,   1(%si)  # Unused
-  movb   $0x01,   2(%si)  # sectors to read
-  movb   $0x00,   3(%si)  # Unused
-  movw   $0x002e, 4(%si)  # load to offset
-  movw   %ds,     %ax
-  movw   %ax,     6(%si)  # load to segment
-  movl   $0x00,   8(%si)  # first sector to load
-  movl   $0x00,  12(%si)  # first sector to load
-
-  movb $0x42, %ah         # BIOS function for extended read
-  movb $0x80, %dl         # first hard disk
-                          # si already loaded with packet offset
-  int $0x13
-  ret
-  
 
 #####################################################################################
 #  putc
@@ -200,6 +212,8 @@ putc:
 #    parameters ax
 #####################################################################################
 putn:
+
+  pusha
 
   xorl %ebx, %ebx	# clear ebx ( cant use indirect base,index,scale with 16bit regs? )
   xorl %esi, %esi	# clear ecx ( cant use indirect base,index,scale with 16bit regs? )
@@ -219,6 +233,7 @@ putn_loop:
        jnz      putn_loop             # loop while not zero
        movw   $gnumstring,      %si   # print buffer
        call          puts
+       popa
        ret
 
 #####################################################################################
@@ -227,6 +242,7 @@ putn_loop:
 #    parameters %si: string to print
 #####################################################################################
 puts:
+  pusha
   cld               # Clear direction flag
 puts_loop:
   cs   lodsb        # load byte from cs:si to al, postincrement si
@@ -235,47 +251,28 @@ puts_loop:
   call putc         # put character
   jmp  puts_loop    # next
 puts_end:
+  popa
   ret
 
-#####################################################################################
-# die_without_edd
-#   check for BIOS Enhanced Disk Drive Services. Quit if not present
-#####################################################################################
-die_without_edd:
-  movb $0x80,   %dl # select first hard drive
-  movb $0x41,   %ah # are extensions available
-  movw $0x55aa, %bx # no idea?  http://en.wikipedia.org/wiki/INT_13
-  int  $0x0013      # call bios
-  cmpw $0x0007,	%cx # require all flags set
-  jne die           # otherwise die
-  ret
-
-###########################################
-# read_drive_params
-#  Extended Read Drive Parameters.
-#  writes 07e0:0000 -> 07e0:01eh.
-###########################################
-read_drive_params:
-  movw $0x00, %si    # destination address ds:si
-  movb $0x48, %ah    # INT 13h FUNCTION 48h
-  movb $0x80, %dl    # Drive Number
-			         # ds:si set by caller
-  int  $0x0013       # call BIOS
-  jc   die           # CF set on error
-  ret
 
 ################################################################################
 #  static data ( in code segment )
 ################################################################################
-msg_string:
-  .asciz "ShovelOS bootsector is "
+s1:
+  .asciz "ShovelOS stage 1\r\n"
+ttb:
+  .asciz "Trying to chainload partition "
 dead_string:
-  .asciz "DEAD!\r\n"
-alive_string:
-  .asciz "ALIVE!\r\n"
+  .asciz "No bootable partitions found\r\nSystem Halted\r\n"
+jmpstr:
+  .asciz "Jumping....\r\n"
 nums:
   .asciz "0123456789abcdef"
 gnumstring:
   .asciz "0x????\r\n"
+failed_to_boot_onsig_str:
+  .asciz "no MBR sig\r\n"
+failed_to_boot_onerr_str:
+  .asciz "disk err\r\n"
 
   
