@@ -212,7 +212,9 @@ try_LBA:
   ###############################################################
   ### CANT FIND A REASON NOT TO.... LETS BOOT IT!
   ###############################################################
-  ljmp $0x0000, $0x7c00
+  movw $jmpstr, %si       # Goodbye message
+  call puts
+  ljmp $0x0000, $0x7c00   # JUMP to newly loaded VBR
 
 failed_to_boot:
   popa
