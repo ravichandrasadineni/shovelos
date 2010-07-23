@@ -1,11 +1,23 @@
 ####################################################################################
 #                         SHOVEL OS i386 MBR                                       #
-#                                                                                  #
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 #    AUTHOR:  Chris Stones ( chris.stones _AT_ gmail.com )                         #
 #    CREATED: 17th JULY 2010                                                       #
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -#
+#    Chainload a volume boot record, attempt in the following order                #
+#-                                                                                 #
+#    1) If a default partition is selected ( word at offset 0x0d )                 #
+#       then attempt to boot it.                                                   #
 #                                                                                  #
-#    1) Relocate MBR to the same offset at segment 1000h                           #
-#    2) Parse primary partition table and chainload VBR                            #
+#    2) Next, try to boot first partition marked *active*                          #
+#                                                                                  #
+#    3) Next, try to boot any partition with a 0x55aa signiture.                   #
+#                                                                                  #
+#    4) Give up!                                                                   #
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -#
+#    Assumes Bios supports LBA32 disk access ( all pc's since the mid 90's do )    #
+#                                                                                  #
+#    At present, this can only chainload the first hard disk.                      #
 #                                                                                  #
 ####################################################################################
 
@@ -13,24 +25,24 @@
 .arch i386
 .section .text
 
-###################################################
-# IBM PC - 16 byte partition record.              #
-###################################################
-# OFF  # SIZE #             DESCR                 #
-###################################################
-# 0x00 # 0x01 # BOOTABLE(0x80) or 0x00            #
-# 0x01 # 0x03 # CHS of first absolute sector      #
-# 0x01 # 0x01 # ^ HE7,HE6,HE5,HE4,HE3,HE2,HE1,HE0 #
-# 0x02 # 0x01 # ^ CY9,CY8,SE5,SE4,SE3,SE2,SE1,SE0 #
-# 0x03 # 0x01 # ^ CY7,CY6,CY5,CY4,CY3,CY2,CY1,CY0 #
-# 0x04 # 0x01 # partition type                    #
-# 0x05 # 0x03 # CHZ of last absolute sector       #
-# 0x05 # 0x01 # ^ HE7,HE6,HE5,HE4,HE3,HE2,HE1,HE0 #
-# 0x06 # 0x01 # ^ CY9,CY8,SE5,SE4,SE3,SE2,SE1,SE0 #
-# 0x07 # 0x01 # ^ CY7,CY6,CY5,CY4,CY3,CY2,CY1,CY0 #
-# 0x08 # 0x04 # LBA of first absolute sector      #
-# 0x0C # 0x04 # number of sectors (little-endian) #
-###################################################
+#####################################################
+# IBM PC - 16 byte partition record. (ofset 0x01be) #
+#------|------|-------------------------------------#
+# OFF  | SIZE |             DESCR                   #
+#------|------|-------------------------------------#
+# 0x00 | 0x01 | BOOTABLE(0x80) or 0x00              #
+# 0x01 | 0x03 | CHS of first absolute sector        #
+# 0x01 | 0x01 | ^ HE7,HE6,HE5,HE4,HE3,HE2,HE1,HE0   #
+# 0x02 | 0x01 | ^ CY9,CY8,SE5,SE4,SE3,SE2,SE1,SE0   #
+# 0x03 | 0x01 | ^ CY7,CY6,CY5,CY4,CY3,CY2,CY1,CY0   #
+# 0x04 | 0x01 | partition type                      #
+# 0x05 | 0x03 | CHZ of last absolute sector         #
+# 0x05 | 0x01 | ^ HE7,HE6,HE5,HE4,HE3,HE2,HE1,HE0   #
+# 0x06 | 0x01 | ^ CY9,CY8,SE5,SE4,SE3,SE2,SE1,SE0   #
+# 0x07 | 0x01 | ^ CY7,CY6,CY5,CY4,CY3,CY2,CY1,CY0   #
+# 0x08 | 0x04 | LBA of first absolute sector        #
+# 0x0C | 0x04 | number of sectors (little-endian)   #
+#####################################################
 
 
 ###############################################################
@@ -50,7 +62,11 @@ magick:
   .string "ShovMBR"
 
 oap:
-  .value 0xff
+  .value 0x02      # default boot partition.
+                   # to override the active partition
+                   # write the desired boot partition
+                   # index here at install time.
+                   # word at offset 0x0d in mbr.bin.
 
 ###############################################################
 #  GET OUT OF THE WAY OF THE VBR                              #
@@ -94,9 +110,9 @@ relocated_main:
   movw    $oap,   %bx 
   cs cmpb $0x03, (%bx)          # is primary ?
   ja      scan_partition_tbl    # no, scan partitions
-  movw    %bx,    %ax
+  cs movw (%bx),  %ax
   call    try_to_boot           # try to boot parition ax.
-                                # on success,it wont return.
+                                # on success,this wont return.
   
 ##############################################################
 ###                Scan partition table                    ###
@@ -121,20 +137,20 @@ found_active:
 ###      try to boot all partitions, in order                  ###
 ##################################################################
 none_active:
-  xorw %ax, %ax
+  xorw %ax, %ax            # partition 0
 try_next:
-  call try_to_boot
-  incw %ax
-  cmpw $0x0004, %ax
-  jne  try_next
+  call try_to_boot         # try to boot it
+  incw %ax                 # it above returned, it failed. NEXT!
+  cmpw $0x0004, %ax        # out of primary partitions ?
+  jne  try_next            # nope, keep going.
   
 #####################################################################################
 # NOTHING TO BOOT !
 #####################################################################################
 die:
-  movw $dead_string,%si
+  movw $dead_string,%si    # signal user that we have given up.
   call puts
-halt:
+halt:                      # loop forever
   jmp halt
 
 
@@ -146,29 +162,19 @@ try_to_boot:
 
   pusha
 
-  movw $ttb,     %si      # debug msg
-  call puts
-  call putn
-
   #############################
   # address of partition table
   #############################
   movw $0x7dbe, %bx       # address of first partition table
   imul $0x0010, %ax       # partition table byte offset from partition0
   addw %ax,     %bx       # bx holds address of partition to boot
- 
-  ################################################################
-  # read address ( in CHS ) of first sector from partiton table
-  # read sector to 0000:7c00
-  ################################################################
-  #   movb $0x02,  %ah        # bios disk function 2 ( read CHS mode )
-  #   movb $0x01,  %al        # read one sector
-  #cs movw 2(%bx), %cx        # read track/sector info to cl/ch ( CHECK ME! )
-  #cs movb 1(%bx), %dh        # read head of first sector of partition to dh
-  #   movb $0x80,  %dl        # first hard disk
-  #   movw $0x7c00,%bx        # read to addess ( es is 0000 here )
-  #   int $0x0013             # call BIOS
-  #   jc failed_to_boot_onerr # read error ?
+
+  # NOTE: It seems that partition managers dont invalidate empty partition
+  #       tables! to prevent a boot loop, we need to check sector size is non-zero.
+  
+  cs    movw  0x0c(%bx), %cx     # cx  = number of sectors ( lest sig word )
+  cs    orw   0x0e(%bx), %cx     # cx |= number of secotrs ( most sig word )
+        jz    failed_to_boot     # zero ? no partition!
   
   ##########################################################################
   # read address ( in LBA ) of first sector from partiton table
@@ -188,9 +194,11 @@ try_LBA:
      movw %cx,      8(%si)    # least sig word of LBA32
   cs movw 10(%bx),    %cx
      movw %cx,     10(%si)    # most sig word of LBA32
+     movw $0x0000, 12(%si)    # zero most sif dword
+     movw $0x0000, 14(%si)
      movw $0x7c00,    %bx     # for testing MBR sig in next section
      int  $0x0013             # call bios
-     jc failed_to_boot_onerr  # read error ?
+     jc failed_to_boot        # read error ?
   
   ###############################################################
   ### DO ALL VBR's CONTAIN MBR SIGS?
@@ -198,20 +206,13 @@ try_LBA:
   ###  BETTER SAFE THAN SORRY, LETS REFUSE TO CHAINLOAD WITHOUT.
   ###############################################################
   es cmpw $0xaa55,510(%bx) # leaded sector has MBR sig ?
-     jne failed_to_boot_onsig
+     jne failed_to_boot
   
   ###############################################################
   ### CANT FIND A REASON NOT TO.... LETS BOOT IT!
   ###############################################################
   ljmp $0x0000, $0x7c00
 
-failed_to_boot_onerr:
-  mov $failed_to_boot_onerr_str, %si
-  call puts
-  jmp failed_to_boot
-failed_to_boot_onsig:
-  mov $failed_to_boot_onsig_str, %si
-  call puts
 failed_to_boot:
   popa
   ret 
@@ -225,36 +226,6 @@ putc:
   movb $0x0E, %ah
   int  $0x10
   ret
-
-#####################################################################################
-#  putn
-#    put number
-#    parameters ax
-#####################################################################################
-putn:
-
-  pusha
-
-  xorl %ebx, %ebx	# clear ebx ( cant use indirect base,index,scale with 16bit regs? )
-  xorl %esi, %esi	# clear ecx ( cant use indirect base,index,scale with 16bit regs? )
-
-  movw $nums,         %si             # hex number string array
-  movw $gnumstring,   %di             # output string
-  addw $0x0005,       %di             # seek to end
-  movw $0x0004,       %cx             # loop counter
-putn_loop:
-       movw           %ax,      %bx   # number to bx
-       sar        $0x0004,      %ax   # number >>= 4
-       and        $0x000f,      %bx   # bx &= 0xf
-  cs   movb (%esi,%ebx,1),      %dh   # dh = nums[bx]
-  cs   movb           %dh,     (%di)  # *output = dh
-       dec            %di             # --output
-       dec            %cx             # dec loop counter
-       jnz      putn_loop             # loop while not zero
-       movw   $gnumstring,      %si   # print buffer
-       call          puts
-       popa
-       ret
 
 #####################################################################################
 #  puts
@@ -280,19 +251,7 @@ puts_end:
 ################################################################################
 s1:
   .asciz "ShovelOS stage 1\r\n"
-ttb:
-  .asciz "Trying to chainload partition "
 dead_string:
   .asciz "No bootable partitions found\r\nSystem Halted\r\n"
 jmpstr:
-  .asciz "Jumping....\r\n"
-nums:
-  .asciz "0123456789abcdef"
-gnumstring:
-  .asciz "0x????\r\n"
-failed_to_boot_onsig_str:
-  .asciz "no MBR sig\r\n"
-failed_to_boot_onerr_str:
-  .asciz "disk err\r\n"
-
-  
+  .asciz "Jumping...\r\n"
