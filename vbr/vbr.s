@@ -62,8 +62,7 @@ real_main:
 try_to_boot:
 
   ##########################################################################
-  # read address ( in LBA ) of first sector from partiton table
-  # read sector to 0000:7c00 ( ASSUMING EXTENDED BIOS FUNCTIONS AVAILABLE )
+  # read stage 1.5 to 1000:1000
   ##########################################################################
 try_LBA:
      movb $0x42,               %ah     # BIOS function 42h
