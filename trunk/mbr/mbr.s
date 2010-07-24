@@ -63,7 +63,7 @@ magick:
   .string "ShovMBR"
 
 oap:
-  .value 0x02      # default boot partition.
+  .value 0xff      # default boot partition.
                    # to override the active partition
                    # write the desired boot partition
                    # index here at install time.
@@ -253,7 +253,7 @@ puts_end:
 #  static data ( in code segment )
 ################################################################################
 s1:
-  .asciz "ShovelOS stage 1\r\n"
+  .asciz "ShovelOS MBR\r\n"
 dead_string:
   .asciz "No bootable partitions found\r\nSystem Halted\r\n"
 jmpstr:
