@@ -2,6 +2,8 @@
 #include "16bitreal.h"
 #include "print.h"
 
+static const char num[] = "0123456789ABCDEF";
+
 /***********************************************************************
     void putc(char c);
       write a character the the screen using bios.
@@ -20,10 +22,30 @@ __asm__("putc:\n"\
     puts
       write a string to the the screen using bios.
 ***********************************************************************/
-void puts(const char *s) {
+short puts(const char *s) {
 
-    while(*s++)
+    short i=0;
+    while(*s++) {
+        ++i;
         putc(*s);
+    }
+    return i;
+}
+
+/***********************************************************************
+    putnhex
+      write a number to the screen, in hex
+***********************************************************************/
+short putnhex(int n) {
+    short s;         // shift
+    short h;         // hex nibble
+    short l=0;       // wrote length
+    for(s=28; s>=0; s-=4)
+        if((h = ((n>>s)&15)) || l || !s) {
+            ++l;
+            putc(num[h]);
+        }
+    return l;
 }
 
 
