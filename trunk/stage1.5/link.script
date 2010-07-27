@@ -1,0 +1,40 @@
+ENTRY(main);
+SECTIONS
+{
+	. = 0x0000;
+
+	.sig : AT(0x0000)
+	{
+		/* STRING("ShovStage1.5"); */
+		/* TODO: add other options here */
+	}
+
+	.text : AT(0x0100)
+	{
+		_text_start = .;
+		*(.text);
+		_text_end = .;
+	}
+
+	.data : 
+	{
+		_data_start = .;
+		*(.bss);
+		*(.bss*);
+		*(.data);
+		*(.rodata);
+		*(.COMMON);
+		_data_end = .;
+	}
+
+	/DISCARD/ :
+	{
+		*(.note*);
+		*(.iplt*);
+		*(.igot*);
+		*(.rel*);
+		*(.comment);
+	}
+}
+
+
