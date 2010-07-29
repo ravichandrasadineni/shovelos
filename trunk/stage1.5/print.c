@@ -121,6 +121,8 @@ int printf(const char * format, int *_args) {
                 break;
             }
         }
+        else if(c == '%')
+          special = 1;
         else
           putc(c);
     }
