@@ -16,7 +16,7 @@ SECTIONS
 		_text_end = .;
 	}
 
-	.data : 
+	.data : AT( 0x0100 + (SIZEOF(.text) )
 	{
 		_data_start = .;
 		*(.bss);
@@ -26,6 +26,11 @@ SECTIONS
 		*(.COMMON);
 		_data_end = .;
 	}
+
+      .heap : AT( 0x0100 + (SIZEOF(.text) + SIZEOF(.data) )
+      {
+		_heap_start = .;
+      }
 
 	/DISCARD/ :
 	{
