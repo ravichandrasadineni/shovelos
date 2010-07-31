@@ -48,9 +48,8 @@ real_main:
   movw $0x2000, %ax
   movw %ax,     %ss        # 64k of stack at segment 0x2000
   movw $0xffff, %sp
-  movw $0x1000, %ax
-  movw %ax,     %es        # zero es ( VRB sector )
-
+  movw $0x07e0, %ax
+  movw %ax,     %es        # set es ( stage 1.5 sector )
   movw $s1,     %si        # say hello!
   call puts
 
@@ -62,7 +61,7 @@ real_main:
 try_to_boot:
 
   ##########################################################################
-  # read stage 1.5 to 1000:1000
+  # read stage 1.5 to 07e0:0000
   ##########################################################################
 try_LBA:
      movb $0x42,               %ah     # BIOS function 42h
@@ -75,8 +74,8 @@ try_LBA:
   cs movb (%bx),               %bl
      movb %bl,               2(%si)    # sectors to read
      movb $0x0000,           3(%si)    # reserved
-     movw $0x1000,           4(%si)    # load to offset
-     movw $0x1000,           6(%si)    # load to segment
+     movw $0x0000,           4(%si)    # load to offset
+     movw $0x07e0,           6(%si)    # load to segment
      movw $stage_1_5_sector,   %bx
   cs movw (%bx),               %cx
      movw %cx,               8(%si)    # least sig word of LBA32
@@ -92,8 +91,8 @@ try_LBA:
   #######################################################################
       xorw %ax, %ax
       xorw %bx, %bx
-      movw $0x100d, %si
-      movw $0x0012, %cx
+      movw $0x0000, %si
+      movw $0x000c, %cx
 next_sig:
   es  lodsb
       addw %ax,     %bx
@@ -107,7 +106,7 @@ next_sig:
   ###############################################################
   movw $jmpstr, %si       # Goodbye message
   call puts
-  ljmp $0x1000, $0x1000   # JUMP to newly loaded Stage 1.5
+  ljmp $0x07e0, $0x0100   # JUMP to newly loaded Stage 1.5
 
   ###############################################################
   ### ERROR - REPORT IT AND HALT                              ###

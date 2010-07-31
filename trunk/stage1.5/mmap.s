@@ -29,6 +29,7 @@
 # set _mmap to _heap_start
 # adjust _heap_start
 ###############################
+.global _16_read_memory_map
 _16_read_memory_map:
   push %bp
   movw %sp, %bp
@@ -39,7 +40,7 @@ _16_read_memory_map:
   xorl %ebx,         %ebx     # clear ebx
 
 .rmm_next:
-  mowl $0x534D4150, %edx      # call bios
+  movl $0x534D4150, %edx      # call bios
   movl $0x0000e820, %eax
   movl $0x00000018, %ecx
   int  $0x00000015
@@ -56,7 +57,7 @@ _16_read_memory_map:
 
 .rmm_continue:
   addw $0x0018, %di           # inc array address
-  jmp .rmm_next
+#  jmp .rmm_next
 
 .rmm_exit:
   pop %ebx
