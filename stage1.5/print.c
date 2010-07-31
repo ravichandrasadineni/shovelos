@@ -11,9 +11,9 @@ static const char num[] = "0123456789ABCDEF";
       clobbers ax
 ***********************************************************************/
 __asm__("putc:\n"\
-            "push %bp\n"
+            "pushw %bp\n"
             "movw %sp, %bp\n"
-            "movb 4(%bp), %al\n"      /* parameter (char) from stack  */
+            "movb 6(%bp), %al\n"      /* parameter (char) from stack  */
             "movb $0x0E, %ah\n"       /* function 0x0e ( print char ) */
             "int  $0x10\n"            /* call bios */
             "pop  %bp\n"
@@ -26,9 +26,9 @@ __asm__("putc:\n"\
 int puts(const char *s) {
 
     short i=0;
-    while(*s++) {
+    while(*s) {
         ++i;
-        putc(*s);
+        putc(*s++);
     }
     return i;
 }
@@ -54,7 +54,7 @@ int putnhex(unsigned int n) {
       write an unsigned number to the screen, in dec
 ***********************************************************************/
 int putndecu(unsigned int n) {
-    short s;         // divisor
+    int   s;         // divisor
     short h;         // digit
     short l=0;       // wrote length
     for(s=1000000000; s>=1; s/=10)
@@ -71,10 +71,10 @@ int putndecu(unsigned int n) {
 ***********************************************************************/
 int putndec(int n) {
 
-    if(sn>=0)
+    if(n>=0)
         return putndecu((unsigned int)n);
 
-    putc("-");
+    putc('-');
 
     return putndecu((unsigned int)(-1 * n));
 }

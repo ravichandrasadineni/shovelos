@@ -5,9 +5,15 @@ SECTIONS
 
 	.sig : AT(0x0000)
 	{
-		/* STRING("ShovStage1.5"); */
-		/* TODO: add other options here */
+		SHORT(0x6853); /* "hS" */
+		SHORT(0x766f); /* "vo" */
+		SHORT(0x7453); /* "tS" */
+		SHORT(0x6761); /* "ga" */
+		SHORT(0x3165); /* "1e" */
+		SHORT(0x352E); /* "5." */
 	}
+
+        . = 0x0100;
 
 	.text : AT(0x0100)
 	{
@@ -16,7 +22,7 @@ SECTIONS
 		_text_end = .;
 	}
 
-	.data : AT( 0x0100 + (SIZEOF(.text) )
+	.data : /*AT( 0x0100 + (SIZEOF(.text) ) */
 	{
 		_data_start = .;
 		*(.bss);
@@ -27,7 +33,7 @@ SECTIONS
 		_data_end = .;
 	}
 
-      .heap : AT( 0x0100 + (SIZEOF(.text) + SIZEOF(.data) )
+      .heap : /*AT( 0x0100 + (SIZEOF(.text) + SIZEOF(.data) )*/
       {
 		_heap_start = .;
       }

@@ -1,7 +1,7 @@
 
-CFLAGS = -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc -save-temps
+CFLAGS = -m32 -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc 
 
-OBJS = entry.o main.o print.o
+OBJS = entry.o main.o print.o mmap.o
 
 .PHONY: all clean
 
@@ -11,7 +11,7 @@ all : stage1.5.bin
 	objcopy -O binary $< $@
 
 stage1.5.elf : $(OBJS) link.script
-	$(LD) -static -nodefaultlibs -nostdlib -Tlink.script -o stage1.5.elf $(OBJS)
+	$(LD) -melf_i386 -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o stage1.5.elf $(OBJS)
 	
 clean:
 	rm -f *~
