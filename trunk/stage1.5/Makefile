@@ -16,7 +16,8 @@ stage1.5.elf : $(OBJS) link.script
 clean:
 	rm -f *~
 	rm -f *.o
-	rm -f stage1.5
+	rm -f stage1.5.elf
+	rm -f stage1.5.bin
 
 %.o : %.c
 	gcc -c $(CFLAGS) -o $@ $<

@@ -1,7 +1,7 @@
 
 #include "16bitreal.h"
 
-extern short* _heap_start;
+#include "mmap.h"
 
 void __attribute__((noreturn))
   cmain() {
@@ -11,7 +11,7 @@ void __attribute__((noreturn))
   puts("######################\r\n");
  
   
-  _16_read_memory_map();
+  read_mmap();
  
   
   puts("HALTING...");
