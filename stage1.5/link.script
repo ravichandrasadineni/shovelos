@@ -36,6 +36,8 @@ SECTIONS
       .heap : /*AT( 0x0100 + (SIZEOF(.text) + SIZEOF(.data) )*/
       {
 		_heap_start = .;
+                SHORT(.);
+		SHORT(0x0000);
       }
 
 	/DISCARD/ :

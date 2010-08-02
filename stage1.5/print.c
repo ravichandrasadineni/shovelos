@@ -39,13 +39,14 @@ int puts(const char *s) {
 ***********************************************************************/
 int putnhex(unsigned int n) {
     short s;         // shift
-    short h;         // hex nibble
+//    short h;         // hex nibble
     short l=0;       // wrote length
-    for(s=28; s>=0; s-=4)
-        if((h = ((n>>s)&15)) || l || !s) {
-            ++l;
-            putc(num[h]);
-        }
+    for(s=28; s>=0; s-=4) {
+//      if((h = ((n>>s)&15)) || l || !s) {
+        
+        ++l;
+        putc(num[(n>>s)&15]);
+    }
     return l;
 }
 
