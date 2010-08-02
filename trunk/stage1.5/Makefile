@@ -11,7 +11,7 @@ all : stage1.5.bin
 	objcopy -O binary $< $@
 
 stage1.5.elf : $(OBJS) link.script
-	$(LD) -melf_i386 -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o stage1.5.elf $(OBJS)
+	$(LD) -Map link.map -melf_i386 -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o stage1.5.elf $(OBJS)
 	
 clean:
 	rm -f *~
