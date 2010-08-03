@@ -49,10 +49,12 @@ __asm__("_bios_15h_e820h:\n"
   
   "ret\n");
 
+
+ // global storage for memory map. ( contains heap ptr )
+ struct mmap_e820h mem = {0,0};
   
- struct mmap_e820h read_mmap() {
+ void read_mmap() {
     
-   struct mmap_e820h mem = {0,0};
    int end_of_map;
  
    end_of_map = _bios_15h_e820h();
@@ -78,8 +80,6 @@ __asm__("_bios_15h_e820h:\n"
      puts("failed to read memory map!\r\n");
      while(1);
    }
-   
-   return mem;
  }
  
  

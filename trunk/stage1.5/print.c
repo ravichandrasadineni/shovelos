@@ -19,6 +19,37 @@ __asm__("putc:\n"\
             "pop  %bp\n"
                 "ret");
 
+
+/***********************************************************************
+    void putc_vmem(char c, char x, char y);
+      write a character the the screen WITHOUT using bios.
+***********************************************************************/
+void putc_vmem(char c, char x, char y);
+__asm__("putc_vmem:\n"
+        
+        "push %ebp\n"
+        "movl %esp, %ebp\n"              /* enter */
+        "push %esi\n"                    /* save extra segment */
+        "push %edi\n"
+        "movw $0xb800, %es\n"            /* set extra segment to start of video memory */
+        "xor    %eax, %eax\n"            /* start of video memory */
+        "xor    %edi, %edi\n"            /* start of video memory */
+        "addb 4(%ebp), %di\n"            /* read y coord from stack */
+        "mul   $0xa0, %di\n"             /* 80 columns, 2 bytes per char */
+        "addb 3(%bp), %di\n"             /* read x coord from stack */
+        "addb 3(%bp), %di\n"             /* and again ( 2 bytes per char ) */
+
+        "xor  %eax, %eax\n"
+        "movb $0x0f, %ah\n"              /* white on black attribute */
+        "movb 2(%bp),%al\n"              /* character from stack */
+        "stosw\n"                        /* ax to es:di */
+
+        "pop %edi\n"                     /* restore */
+        "pop %esi\n"                     /* restore */
+        "pop %ebp\n"                     /* leave */
+        "ret");
+
+
 /***********************************************************************
     puts
       write a string to the the screen using bios.
@@ -39,15 +70,9 @@ int puts(const char *s) {
 ***********************************************************************/
 int putnhex(unsigned int n) {
     short s;         // shift
-//    short h;         // hex nibble
-    short l=0;       // wrote length
-    for(s=28; s>=0; s-=4) {
-//      if((h = ((n>>s)&15)) || l || !s) {
-        
-        ++l;
+    for(s=28; s>=0; s-=4)
         putc(num[(n>>s)&15]);
-    }
-    return l;
+    return 8;
 }
 
 /***********************************************************************
