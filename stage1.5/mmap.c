@@ -53,6 +53,15 @@ __asm__("_bios_15h_e820h:\n"
  // global storage for memory map. ( contains heap ptr )
  struct mmap_e820h mem = {0,0};
   
+ static const char * types[] ={
+   "UNKNOWN",
+   "USABLE",
+   "RESERVED",
+   "ACPI RECLAIMABLE",
+   "ACPI NVS",
+   "BAD",
+ };
+ 
  void read_mmap() {
     
    int end_of_map;
@@ -67,14 +76,18 @@ __asm__("_bios_15h_e820h:\n"
      _heap_start = end_of_map;
      
      puts("memory map:\r\n");
-     for(i=0;i<mem.size;i++)
-       printf(" %d) base {0x%x%x} len {0x%x%x} type %d\r\n",
+     for(i=0;i<mem.size;i++) {
+       if(mem.map[i].type > 5)
+	  mem.map[i].type = 0;
+       
+       printf(" %d) base {0x%x%x} len {0x%x%x} type %s\r\n",
 	      i,
 	      mem.map[i].base.msi,
 	      mem.map[i].base.lsi,
 	      mem.map[i].length.msi,
 	      mem.map[i].length.lsi,
-	      mem.map[i].type);
+	      types[mem.map[i].type]);
+     }
    }
    else {
      puts("failed to read memory map!\r\n");
