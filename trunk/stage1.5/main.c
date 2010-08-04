@@ -8,9 +8,7 @@ void __attribute__((noreturn))
     
   cls(); 
     
-  puts("######################\r\n");
-  puts("# ShovelOS Stage 1.5 #\r\n");
-  puts("######################\r\n");
+  puts("ShovelOS Stage 1.5\n");
    
   _heap_start = &_heap_start+1;
   
