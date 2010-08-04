@@ -5,19 +5,8 @@
 
 static const char num[] = "0123456789ABCDEF";
 
-/***********************************************************************
-    void putc(char c);
-      write a character the the screen using bios.
-      clobbers ax
-***********************************************************************/
-__asm__("putc:\n"
-            "pushw %bp\n"
-            "movw %sp, %bp\n"
-            "movb 6(%bp), %al\n"      /* parameter (char) from stack  */
-            "movb $0x0E, %ah\n"       /* function 0x0e ( print char ) */
-            "int  $0x10\n"            /* call bios */
-            "pop  %bp\n"
-                "ret");
+static char screen_x=0;
+static char screen_y=0;
 
 
 /***********************************************************************
@@ -62,33 +51,99 @@ __asm__("putc_vmem:\n"
       scroll the screen down one line (80x25)
 ***********************************************************************/
 __asm__("scroll:\n"
+            "push %es\n"
+            "push %ds\n"
+            "push %edi\n"
+            "push %esi\n"
+            "push %ecx\n"
+            "cld\n"
             
             "movw $0xb800, %ax\n"
             "movw %ax, %es\n"                 /* set extra segment to start of video memory */
             "movw %ax, %ds\n"                 /* set extra segment to start of video memory */
+            "movl $0x000000a0, %esi\n"        /* src = start of line 1 */
+            "movl $0x00000000, %edi\n"        /* dst = start of line 0 */
+            "movl $0x00000780, %ecx\n"
+            "rep  \n"                         /* 24 lines, times 80 columns */
+            "movsw\n"                         /* scroll! */
+            "movw $0x0f20, %ax\n"             /* white on black space */ 
+            "movl $0x00003160, %edi\n"        /* dst = start of line 79 */
+            "movl $0x00000050, %ecx\n"
+            "rep  \n"                         /* 80 columns */
+            "stosw\n"                         /* blank last line */
             
-".scroll_x:\n"
-            "subw $2, %ecx\n"
-            "subw $2, %edi\n"
-            "movw (%ecx,%ebx,2), %ax\n"
-            "stosw\n"
-            "cmpw $0,%ecx\n"
-            "jne .scroll_x\n"
-            
-            
-            
+            "pop %ecx\n"
+            "pop %esi\n"
+            "pop %edi\n"
+            "pop %ds\n"
+            "pop %es\n"
             "ret");
+           
+/***********************************************************************
+    void cls()
+      clear screen
+***********************************************************************/
+__asm__(".global cls\n"
+            "cls:\n"
+            "push %es\n"
+            "push %edi\n"
+            "push %esi\n"
+            "push %ecx\n"
+            "cld\n"
             
+            "movb $0, screen_x\n"            /* reset screen coords */
+            "movb $0, screen_y\n"
+            
+            "movw $0xb800, %ax\n"
+            "movw %ax, %es\n"                 /* set extra segment to start of video memory */
+            "movl $0x00000000, %edi\n"        /* dst = start of line 0 */
+            "movw $0x0f20, %ax\n"             /* white on black space */ 
+            "movl $0x000007D0, %ecx\n"
+            "rep  \n"                         /* 25 lines, times 80 columns */
+            "stosw\n"                         /* cls! */
+          
+            "pop %ecx\n"
+            "pop %esi\n"
+            "pop %edi\n"
+            "pop %es\n"
+            "ret");	    
+	    
+void putc(char c) {
+  
+  switch(c) {
+    case '\n':
+      screen_x = 0;
+      if(screen_y>=24)
+	scroll();
+      else
+	++screen_y;
+    case '\r':
+      break;
+    default:
+      putc_vmem(c,screen_x,screen_y);
+      ++screen_x;
+      if(screen_x>=80) {
+        screen_x = 0;
+	if(screen_y>=24)
+	  scroll();
+	else
+	  ++screen_y;
+      }
+  }
+}
+	    
 /***********************************************************************
     puts
-      write a string to the the screen using bios.
+      write a string to the the screen
 ***********************************************************************/
 int puts(const char *s) {
 
     short i=0;
-    while(*s) {
+    char c;
+    while((c = *s)) {
         ++i;
-        putc(*s++);
+	putc(c);
+	++s;
     }
     return i;
 }

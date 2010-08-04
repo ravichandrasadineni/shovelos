@@ -6,6 +6,8 @@
 void __attribute__((noreturn))
   cmain() {
     
+  cls(); 
+    
   puts("######################\r\n");
   puts("# ShovelOS Stage 1.5 #\r\n");
   puts("######################\r\n");

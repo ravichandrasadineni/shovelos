@@ -2,8 +2,8 @@
 #ifndef __PRINT_H
 #define __PRINT_H
 
-// write a char
-void putc(char c);
+// clear screen
+void cls();
 
 // write a string
 int  puts(const char *s);
