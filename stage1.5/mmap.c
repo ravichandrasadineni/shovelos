@@ -66,14 +66,14 @@ __asm__("_bios_15h_e820h:\n"
     
    int end_of_map;
  
-   end_of_map = _bios_15h_e820h();
+   end_of_map = (int)_bios_15h_e820h();
    
    mem.size = ((short)end_of_map - (short)_heap_start) / sizeof(struct mmap_e820h_reg);
    
    if(mem.size) {
      int i;
      mem.map = (struct mmap_e820h_reg *)_heap_start;
-     _heap_start = end_of_map;
+     _heap_start = (short*)end_of_map;
      
      puts("memory map:\r\n");
      for(i=0;i<mem.size;i++) {
