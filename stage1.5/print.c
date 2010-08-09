@@ -60,7 +60,7 @@ __asm__("scroll:\n"
             
             "movw $0xb800, %ax\n"
             "movw %ax, %es\n"                 /* set extra segment to start of video memory */
-            "movw %ax, %ds\n"                 /* set extra segment to start of video memory */
+            "movw %ax, %ds\n"                 /* set data segment to start of video memory */
             "movl $0x000000a0, %esi\n"        /* src = start of line 1 */
             "movl $0x00000000, %edi\n"        /* dst = start of line 0 */
             "movl $0x00000780, %ecx\n"
