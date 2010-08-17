@@ -78,7 +78,7 @@ __asm__("_bios_15h_e820h:\n"
      puts("memory map:\r\n");
      for(i=0;i<mem.size;i++) {
        if(mem.map[i].type > 5)
-	  mem.map[i].type = 0;
+	     mem.map[i].type = 0;
        
        printf(" %d) base {0x%x%x} len {0x%x%x} type %s\r\n",
 	      i,

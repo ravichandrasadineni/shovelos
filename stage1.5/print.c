@@ -107,16 +107,20 @@ __asm__(".global cls\n"
             "pop %edi\n"
             "pop %es\n"
             "ret");	    
-	    
+
+/***********************************************************************
+    putc
+      write a character to the the screen
+***********************************************************************/	    
 void putc(char c) {
   
   switch(c) {
     case '\n':
       screen_x = 0;
       if(screen_y>=24)
-	scroll();
+        scroll();
       else
-	++screen_y;
+        ++screen_y;
     case '\r':
       break;
     default:
@@ -128,7 +132,7 @@ void putc(char c) {
 	  scroll();
 	else
 	  ++screen_y;
-      }
+    }
   }
 }
 	    
@@ -227,7 +231,7 @@ int printf(const char * format, int *_args) {
                 break;
               case 'x':
               case 'X':
-                putnhex((unsigned int)*args++);
+                putnhex((int)*args++);
                 break;
             }
         }
