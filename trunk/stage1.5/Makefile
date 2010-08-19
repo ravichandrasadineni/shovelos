@@ -1,7 +1,7 @@
 
 CFLAGS = -m32 -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc 
 
-OBJS = entry.o main.o print.o mmap.o
+OBJS = entry.o main.o print.o mmap.o a20.o
 
 .PHONY: all clean
 

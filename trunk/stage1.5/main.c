@@ -3,6 +3,8 @@
 
 #include "mmap.h"
 
+int check_a20_line();
+
 void __attribute__((noreturn))
   cmain() {
     
@@ -14,6 +16,8 @@ void __attribute__((noreturn))
   
   read_mmap();
   
+  printf("looks like a20 line is %s.\n", check_a20_line() ? "enabled" : "disabled");
+
   puts("HALTING...");
   while(1);
 }
