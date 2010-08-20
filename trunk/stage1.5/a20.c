@@ -49,7 +49,7 @@ __asm__(
 		"jnc .success         \n"
 		"xorl %eax, %eax      \n"
 	".success:                \n"
-		"ret                  \n"
+		"ret                  \n");
 
 /***************************************************************************************
  * Check if the A20 line is enabled. ( test if address wraps around after 1 megabyte )
@@ -74,13 +74,11 @@ void enable_a20_line() {
 	else {
 		puts("trying to enable a20 line...");
 		a20_enable_bios();
+		if(!check_a20_line()) {
+			puts("  [FAIL]\n");
+			for(;;);
+		}
+		puts("  [ OK ]\n");
 	}
-
-	if(!check_a20_line()) {
-		puts("  [FAIL]\n")
-		for(;;);
-	}
-
-	puts("  [ OK ]\n");
 }
 
