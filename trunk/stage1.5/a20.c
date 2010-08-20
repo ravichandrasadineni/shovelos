@@ -3,16 +3,17 @@
 
 /*******************************************************************************
  * rread: real read
- *  int rread(int seg, int offset);
+ *  short rread(int seg, int offset);
  *    read int from seg:offset
  ******************************************************************************/
 __asm__(
 
-    "rread:\n"
+    "rreads:\n"
         "pushl    %ds         \n" // backup data segment
 		"movl  12(%esp), %eax \n" // read offset from stack
 		"movw   8(%esp), %ds  \n" // read segment to data segment
-		"movl    (%eax), %eax \n" // read value
+		"movw    (%eax), %eax \n" // read value
+		"andl   $0xffff, %eax \n"
 		"popl     %ds         \n"
         "ret                  \n" );
 
@@ -34,35 +35,52 @@ __asm__(
 		"popl     %ds         \n"
         "ret                  \n" );
 
+/*******************************************************************************
+ * attempt to enable a20 line using the bios.
+ *  int a20_enable_bios();
+ *  returns 1 on reported success, 0 on failure.
+ ******************************************************************************/
+__asm__(
 
+    "a20_enable_bios:\n"
+        "mov $0x2401, %eax    \n"
+		"int $0x15            \n"
+		"movw $1, %eax        \n"
+		"jnc .success         \n"
+		"xorl %eax, %eax      \n"
+	".success:                \n"
+		"ret                  \n"
 
 /***************************************************************************************
  * Check if the A20 line is enabled. ( test if address wraps around after 1 megabyte )
  *   returns zero is a20 line is not enabled, non-zero if it is enabled.
  **************************************************************************************/
-#define S1 0x0000
-#define O1 0x7dfe
-#define S2 0xFFFF
-#define O2 0x7e0e
 int check_a20_line() {
 
-	int bootsig   = (rread(S1,O1) & 0xffff); // read MBR boot sig ( 0xaa55 )
-	int bootsig1M = (rread(S2,O2) & 0xffff); // read MBR boot sig + 1M ( will wrap around if A20 line is disabled )
+	// overwrite bootsig with NOT contents of bootsig address + 1M
+	rwrites(0x0000,0x7dfe, ~rreads(0xFFFF,0x7e0e));
 
-	printf("0x%x\n", bootsig);
-	printf("0x%x\n", bootsig1M);
-
-	if(bootsig == bootsig1M) {
-
-		rwrites(S1,O1, ~bootsig);               // change boot sig
-		bootsig   = (rread(S1,O1) & 0xffff);    // re-read boot sig
-		bootsig1M = (rread(S2,O2) & 0xffff);    // re-read boot sig +1M
-
-		printf("0x%x\n", bootsig);
-		printf("0x%x\n", bootsig1M);
-	}
-
-	return (bootsig1M - bootsig);                  // if different, a20 line must be enabled
+	// if contents of bootsig are different from bootsig + 1M, then a20 MUST be enabled.
+	return rreads(0x0000,0x7dfe) != rreads(0xFFFF,0x7e0e);
 }
 
+/***************************************************************************************
+ * Attempt to enable the a20 line.
+ **************************************************************************************/
+void enable_a20_line() {
+
+	if(check_a20_line())
+	    puts("a20 line already enabled\n");
+	else {
+		puts("trying to enable a20 line...");
+		a20_enable_bios();
+	}
+
+	if(!check_a20_line()) {
+		puts("  [FAIL]\n")
+		for(;;);
+	}
+
+	puts("  [ OK ]\n");
+}
 
