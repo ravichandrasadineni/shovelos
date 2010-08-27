@@ -18,14 +18,14 @@ struct disk_address_packet {
 			unsigned short offset;    // memory offset to access
 			unsigned short segment;   // memory segment to access
 		} seg;
-	} dst;
+	} mem_addr;
 	union {
-		unsigned long sector;         // absolute first sector
+		unsigned long long sector;    // absolute first sector
 		struct {
 			unsigned int lower;       // absolute first sector least sig dword
 			unsigned int upper;       // absolute first sector most  sig dword
 		} sec32;
-	} src;
+	} disk_addr;
 };
 
 #endif /*** __BIOS_DISK_H ***/
