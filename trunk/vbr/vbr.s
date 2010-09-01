@@ -87,7 +87,7 @@ try_LBA:
   
   #######################################################################
   # Check for valid ShovelOS Stage 1.5 Loader.                          #
-  # Check that offset 0x0d into loaded sector contains "ShovStake1.5"   #
+  # Check that offset 0x0d into loaded sector contains "ShovStage1.5"   #
   #######################################################################
       xorw %ax, %ax
       xorw %bx, %bx
