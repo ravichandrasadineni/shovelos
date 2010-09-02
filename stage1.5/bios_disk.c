@@ -15,6 +15,32 @@ __asm__("get_ds_reg:\n"
 		);
 
 /******************************************************************************************************
+ *   extended_read_drive_parameters
+ *     call bios extended read sectors function.
+ *     takes 1) BIOS disk ( 0x80 for C:, etc )
+ *           2) result buffer (struct ext_drive_param_buffer*) .
+ *     returns 0 on success, non-zero on error.
+ */
+int extended_read_drive_parameters(unsigned char bios_drive, struct ext_drive_param_buffer* out);
+
+__asm__("extended_read_drive_parameters:      \n"
+		"  pushl   %edx                       \n"
+		"  pushl   %esi                       \n"
+	    "  movw    $48h,       %ah            \n"
+		"  movw    $12(%esp),  %dl            \n" // parameter 1, bios drive
+		"  movw    $16(%esp),  %si            \n" // parameter 2, ptr to result buffer
+		"  int     $0x13                      \n" // call bios 13h
+	    "  xorl    %eax ,     %eax            \n" // clear return var
+		"  jnc     .ret                       \n" // exit on no error
+		"  movb    $1 ,       %al             \n" // set error return flag
+		".ret:                                \n"
+		"  popl    %esi                       \n"
+		"  popl    %edx                       \n"
+		"  ret" );
+
+
+
+/******************************************************************************************************
  *   extended_read_sectors_from_drive
  *     call bios extended read sectors function.
  *     takes 1) BIOS disk ( 0x80 for C:, etc )
@@ -23,20 +49,39 @@ __asm__("get_ds_reg:\n"
  */
 int extended_read_sectors_from_drive(unsigned char bios_drive, struct disk_address_packet *dap);
 
-__asm__("extended_read_sectors_from_drive:\n"
+__asm__("extended_read_sectors_from_drive:       \n"
 		"  pushl      %edx                       \n"
 		"  pushl      %esi                       \n"
-		"  movb    $8(%esp),   %dl               \n" // bios disk to dl
-		"  movw   $12(%esp),   %si               \n" // D.A.P address ( DS:SI )
+		"  movb   $12(%esp),   %dl               \n" // bios disk to dl
+		"  movw   $16(%esp),   %si               \n" // D.A.P address ( DS:SI )
 		"  movb      $0x42 ,   %ah               \n" // bios function 42h
 		"  int       $0x13                       \n" // call bios 13h
-		"  xorl       $eax ,   %eax              \n" // clear return var
+		"  xorl       %eax ,   %eax              \n" // clear return var
 		"  jnc        .ret                       \n" // exit on no error
 		"  movb         $1 ,   %al               \n" // set error return flag
-".ret:"
+        ".ret:                                   \n"
 		"  popl   %esi                           \n"
 		"  popl   %edx                           \n"
 		"  ret"
+
+
+/****************************************************************************************************
+ * bytes_per_sector
+ *     query the number of bytes per sector. ( probably 512 )
+ *     takes 1) bios drive
+ *     returns bytes per sector, or zero on error.
+ */
+int bytes_per_sector(unsigned char bios_disk) {
+
+	struct ext_drive_param_buffer edpb;
+	memset(&edpb, 0, sizeof edpb);
+	edpb.buffer_size = 0x1e;
+
+	if(extended_read_sectors_from_drive(bios_disk, &edpb) != 0)
+		return 0;
+
+	return edpb.bytes_per_sector;
+}
 
 /******************************************************************************************************
  *  disk_read_sector
@@ -71,15 +116,16 @@ int disk_read_sector( unsigned char bios_drive, unsigned long long sector, void 
 int disk_read( unsigned char bios_drive, unsigned long long abs_address, unsigned short abs_size, void* dst) {
 
 	int ret;
-	static char buffer[512]; // TODO:
+	int bps = bytes_per_sector(bios_drive);
+	char *buffer = malloc();
 
 	while(abs_size) {
 
-		unsigned long long sector = abs_address / 512;
-		unsigned short offset     = abs_address % 512;
-		unsigned short thisread   = 512 - offset;
+		unsigned long long sector = abs_address / bps;
+		unsigned short offset     = abs_address % bps;
+		unsigned short thisread   = bps - offset;
 
-		if(offset || (abs_size < 512)) {
+		if(offset || (abs_size < bps)) {
 			// not reading a whole sector, we need to buffer, and selectivly copy.
 			if((ret = disk_read_sector( bios_drive, sector, buffer )) != 0)
 				return ret;
