@@ -6,6 +6,13 @@
 int enable_a20_line();
 
 void __attribute__((noreturn))
+  halt(char *msg) {
+
+	puts(msg);
+	for(;;);
+}
+
+void __attribute__((noreturn))
   cmain() {
 
   cls();
@@ -18,8 +25,7 @@ void __attribute__((noreturn))
 
   enable_a20_line();
 
-  puts("HALTING...");
-  while(1);
+  halt("HALTING...");
 }
 
 

@@ -3,5 +3,7 @@
 
     __asm__(".code16gcc\n");
 
+    void __attribute__((noreturn)) halt(char *msg);
+
 #endif /*** __16BITREAL_H ***/
 
