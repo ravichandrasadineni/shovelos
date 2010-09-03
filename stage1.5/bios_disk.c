@@ -26,14 +26,14 @@ int extended_read_drive_parameters(unsigned char bios_drive, struct ext_drive_pa
 __asm__("extended_read_drive_parameters:      \n"
 		"  pushl   %edx                       \n"
 		"  pushl   %esi                       \n"
-	    "  movw    $48h,       %ah            \n"
-		"  movw    $12(%esp),  %dl            \n" // parameter 1, bios drive
-		"  movw    $16(%esp),  %si            \n" // parameter 2, ptr to result buffer
+	    "  movb    $0x48,      %ah            \n"
+		"  movb    12(%esp),  %dl            \n" // parameter 1, bios drive
+		"  movw    16(%esp),  %si            \n" // parameter 2, ptr to result buffer
 		"  int     $0x13                      \n" // call bios 13h
 	    "  xorl    %eax ,     %eax            \n" // clear return var
-		"  jnc     .ret                       \n" // exit on no error
+		"  jnc     erdp.ret                   \n" // exit on no error
 		"  movb    $1 ,       %al             \n" // set error return flag
-		".ret:                                \n"
+		"erdp.ret:                            \n"
 		"  popl    %esi                       \n"
 		"  popl    %edx                       \n"
 		"  ret" );
@@ -52,17 +52,17 @@ int extended_read_sectors_from_drive(unsigned char bios_drive, struct disk_addre
 __asm__("extended_read_sectors_from_drive:       \n"
 		"  pushl      %edx                       \n"
 		"  pushl      %esi                       \n"
-		"  movb   $12(%esp),   %dl               \n" // bios disk to dl
-		"  movw   $16(%esp),   %si               \n" // D.A.P address ( DS:SI )
+		"  movb    12(%esp),   %dl               \n" // bios disk to dl
+		"  movw    16(%esp),   %si               \n" // D.A.P address ( DS:SI )
 		"  movb      $0x42 ,   %ah               \n" // bios function 42h
 		"  int       $0x13                       \n" // call bios 13h
 		"  xorl       %eax ,   %eax              \n" // clear return var
-		"  jnc        .ret                       \n" // exit on no error
+		"  jnc        ersfd.ret                  \n" // exit on no error
 		"  movb         $1 ,   %al               \n" // set error return flag
-        ".ret:                                   \n"
+        "ersfd.ret:                                   \n"
 		"  popl   %esi                           \n"
 		"  popl   %edx                           \n"
-		"  ret"
+		"  ret");
 
 
 /****************************************************************************************************
@@ -77,7 +77,7 @@ int bytes_per_sector(unsigned char bios_disk) {
 	memset(&edpb, 0, sizeof edpb);
 	edpb.buffer_size = 0x1e;
 
-	if(extended_read_sectors_from_drive(bios_disk, &edpb) != 0)
+	if(extended_read_drive_parameters(bios_disk, &edpb) != 0)
 		return 0;
 
 	return edpb.bytes_per_sector;
@@ -99,7 +99,7 @@ int disk_read_sector( unsigned char bios_drive, unsigned long long sector, void 
 	dap.reserved0 = dap.reserved1 = 0;
 	dap.sectors = 1;
 	dap.mem_addr.seg.segment = get_ds_reg();
-	dap.mem_addr.seg.offset = dst;
+	dap.mem_addr.seg.offset = (unsigned short)dst;
 	dap.disk_addr.sector = sector;
 
 	return extended_read_sectors_from_drive(bios_drive, &dap);
@@ -117,7 +117,7 @@ int disk_read( unsigned char bios_drive, unsigned long long abs_address, unsigne
 
 	int ret;
 	int bps = bytes_per_sector(bios_drive);
-	char *buffer = malloc();
+	char *buffer = (char*)malloc();
 
 	while(abs_size) {
 

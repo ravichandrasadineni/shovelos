@@ -68,6 +68,7 @@ __asm__("_bios_15h_e820h:\n"
 
    end_of_map = (int)_bios_15h_e820h();
 
+   // warning: cast from pointer to integer of different size WTF???
    mem.size = ((short)end_of_map - (short)_heap_start) / sizeof(struct mmap_e820h_reg);
 
    if(mem.size) {
