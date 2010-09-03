@@ -19,7 +19,7 @@ void __attribute__((noreturn))
 
   puts("ShovelOS Stage 1.5\n");
 
-  _heap_start = &_heap_start+1;
+//_heap_start = (int)(&_heap_start+1);
 
   read_mmap();
 
