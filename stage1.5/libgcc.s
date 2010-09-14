@@ -1,4 +1,23 @@
 
+#include "16bitreal.h"
+
+// int64_t __add64(int64_t a, int64_t b); 
+__asm__(".global __add64       \n"
+        "__add64:              \n"
+        "  push %ebp           \n"
+        "  movw %esp, %ebp     \n"
+        "  movw  8(%ebp), %eax \n"  // get a - least significant
+        "  movw 12(%ebp), %ebx \n"  // get a -  most significant
+        "  addw 20(%ebp), %ebx \n"  // add b -  most significant
+        "  addw 16(%ebp), %eax \n"  // add b - least significant
+        "  jnc .nocarry        \n"  // handle least sig carry
+        "  incw %ebx           \n"  // 
+        ".nocarry:             \n"
+        "  ret                 \n"  // TODO: how to return 64bit int in 32bit mode?
+
+  
+
+
 /**************
 	FIXME !!!!
 	  fragments taken from libgcc.a ( 64bit internal math functions )
