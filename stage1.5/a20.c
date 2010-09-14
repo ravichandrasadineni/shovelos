@@ -12,7 +12,7 @@ __asm__(
         "pushl    %ds         \n" // backup data segment
 		"movl  12(%esp), %eax \n" // read offset from stack
 		"movw   8(%esp), %ds  \n" // read segment to data segment
-		"movw    (%eax), %eax \n" // read value
+		"movw    (%eax), %ax  \n" // read value
 		"andl   $0xffff, %eax \n"
 		"popl     %ds         \n"
         "ret                  \n" );
@@ -43,9 +43,9 @@ __asm__(
 __asm__(
 
     "a20_enable_bios:\n"
-        "mov $0x2401, %eax    \n"
+        "movl $0x2401, %eax    \n"
 		"int $0x15            \n"
-		"movw $1, %eax        \n"
+		"movl $1, %eax        \n"
 		"jnc .success         \n"
 		"xorl %eax, %eax      \n"
 	".success:                \n"

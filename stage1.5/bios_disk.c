@@ -126,7 +126,7 @@ int disk_read( unsigned char bios_drive, unsigned long long abs_address, unsigne
 		unsigned short thisread   = bps - offset;
 
 		if(offset || (abs_size < bps)) {
-			// not reading a whole sector, we need to buffer, and selectivly copy.
+			// not reading a whole sector, we need to buffer, and selectively copy.
 			if((ret = disk_read_sector( bios_drive, sector, buffer )) != 0)
 				return ret;
 
