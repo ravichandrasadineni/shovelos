@@ -13,8 +13,7 @@ void __attribute__((noreturn))
 	for(;;);
 }
 
-
-
+/***
 void _test_math64(uint64_t a, uint64_t b) {
 
 	uint64_t c;
@@ -35,8 +34,9 @@ void _test_math64(uint64_t a, uint64_t b) {
 
 void test_math64() {
 
-	_test_math64(0xffffffffffffffff, 0x0000000000000001);
+	_test_math64(0x2a509b9150fff0, 0x10393b560e098f);
 }
+***/
 
 void __attribute__((noreturn))
   cmain() {
@@ -51,7 +51,7 @@ void __attribute__((noreturn))
 
   enable_a20_line();
 
-  test_math64();
+  // test_math64();
 
   halt("HALTING...");
 }
