@@ -7,49 +7,43 @@
 /***********************************************************
  * read memory map from BIOS ( use int 15h EAX=e820h )
  * takes: nothing
- * writes: array to _heap_start
- * returns: end of array address
- *
- * FIXME: this asm function directly manipulates _heap_start
- * 			it SHOULD be using alloc()
- *
+ * writes: array to bottom of heap.
  ***********************************************************/
-short *_bios_15h_e820h();
+void _bios_15h_e820h();
 
 __asm__("_bios_15h_e820h:\n"
 
   "push %edi\n"
   "push %ebx\n"
   "push %ecx\n"
+  "push $0x0018\n"				  // alloc parameter
 
   "xorl %ebx,         %ebx\n"     // clear ebx
-  "xorl %edi,         %edi\n"     // clear ebx
-  "movw _heap_start,  %di\n"
 
 ".rmm_next:\n"
+
+  "call alloc \n"
+  "movw %ax, %di \n"
+
   "movl $0x00000001, 20(%di)\n"   // insitialise bytes 20..24 (incase the bios doesnt)
   "movl $0x534D4150,  %edx\n"
   "movl $0x0000e820,  %eax\n"
   "movl $0x00000018,  %ecx\n"
-  "push %di\n"
   "int  $0x00000015\n"            // call bios
-  "pop %di\n"
 
   "jc   .rmm_exit\n"              // carry flag set? error
   "cmpl $0x534d4150,  %eax\n"     // eax not magic? error
   "jne  .rmm_exit\n"
-  "addw $0x0018, %di\n"           // inc array address
 
   "cmpl $0, %ebx\n"               // should be non-zero. may be reset to zero after reading last entry ?
   "je  .rmm_exit\n"
   "jmp .rmm_next\n"               // next next region
 ".rmm_exit:\n"
-  "movl $0, %eax\n"               // return end of struct
-  "movw %di, %ax\n"
 
-  "pop %ecx\n"
-  "pop %ebx\n"
-  "pop %edi\n"
+  "pop %ecx\n" // pop alloc parameter
+  "pop %ecx\n" // pop ecx
+  "pop %ebx\n" // pop ebx
+  "pop %edi\n" // pop edi
 
   "ret\n");
 
@@ -68,17 +62,18 @@ __asm__("_bios_15h_e820h:\n"
 
  void read_mmap() {
 
-   int end_of_map;
+   mem.map = (struct mmap_e820h_reg*)alloc(0);
 
-   end_of_map = (int)_bios_15h_e820h();
+   printf("heap before 0x%x\n", alloc(0));
 
-   // warning: cast from pointer to integer of different size WTF???
-   mem.size = ((short)end_of_map - (short)_heap_start) / sizeof(struct mmap_e820h_reg);
+   _bios_15h_e820h();
+
+   printf("heap before 0x%x\n", alloc(0));
+
+   mem.size = (alloc(0) - (int)mem.map) / sizeof(struct mmap_e820h_reg);
 
    if(mem.size) {
      int i;
-     mem.map = (struct mmap_e820h_reg *)_heap_start;
-     _heap_start = (short*)end_of_map;
 
      puts("memory map:\r\n");
      for(i=0;i<mem.size;i++) {

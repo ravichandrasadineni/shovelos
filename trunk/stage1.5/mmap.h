@@ -1,8 +1,6 @@
 #ifndef __MMAP_H
 #define __MMAP_H
 
-extern short * _heap_start;
-
 struct mmap_e820h_reg {
   
   struct {
