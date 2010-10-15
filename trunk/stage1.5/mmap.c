@@ -9,6 +9,10 @@
  * takes: nothing
  * writes: array to _heap_start
  * returns: end of array address
+ *
+ * FIXME: this asm function directly manipulates _heap_start
+ * 			it SHOULD be using alloc()
+ *
  ***********************************************************/
 short *_bios_15h_e820h();
 
