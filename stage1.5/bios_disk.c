@@ -99,7 +99,7 @@ int disk_read_sector( unsigned char bios_drive, unsigned long long sector, void 
 	dap.reserved0 = dap.reserved1 = 0;
 	dap.sectors = 1;
 	dap.mem_addr.seg.segment = get_ds_reg();
-	dap.mem_addr.seg.offset = (unsigned short)dst;
+	dap.mem_addr.seg.offset = (unsigned short)(int)dst;
 	dap.disk_addr.sector = sector;
 
 	return extended_read_sectors_from_drive(bios_drive, &dap);
@@ -113,11 +113,16 @@ int disk_read_sector( unsigned char bios_drive, unsigned long long sector, void 
  *           3) read to address ( in data segment )
  *     returns 0 on success, non-zero on error.
  */
+
+static char *buffer = 0;
+static int bps = 0;
+
 int disk_read( unsigned char bios_drive, unsigned long long abs_address, unsigned short abs_size, void* dst) {
 
 	int ret;
-	int bps = bytes_per_sector(bios_drive);
-	char *buffer = (char*)malloc();
+
+	if(!bps)
+		bps = bytes_per_sector(bios_drive);
 
 	while(abs_size) {
 
@@ -127,6 +132,10 @@ int disk_read( unsigned char bios_drive, unsigned long long abs_address, unsigne
 
 		if(offset || (abs_size < bps)) {
 			// not reading a whole sector, we need to buffer, and selectively copy.
+
+			if(!buffer)
+				buffer = (char*)alloc(bps);
+
 			if((ret = disk_read_sector( bios_drive, sector, buffer )) != 0)
 				return ret;
 

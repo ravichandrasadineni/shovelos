@@ -3,11 +3,13 @@
 #include "16bitreal.h"
 #include "alloc.h"
 
-void *malloc(unsigned short size) {
+extern short _heap_start;
 
-	void *ret = (void*)_heap_start;
+void *alloc(unsigned short size) {
 
-	*((unsigned short *)_heap_start) += size;
+	void *ret = (void*)(int)_heap_start;
+
+	_heap_start += size;
 
 	return ret;
 }
