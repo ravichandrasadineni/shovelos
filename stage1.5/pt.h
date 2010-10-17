@@ -3,6 +3,8 @@
 #ifndef __PAGE_TRANSLATION_H
 #define __PAGE_TRANSLATION_H
 
+#define PAGE_SIZE 0x200000 /* 2meg pages */
+
 /*** Page map - level 4 offset table ***/
 struct PML4E __attribute__ ((packed)) {
 
