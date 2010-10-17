@@ -64,11 +64,7 @@ __asm__("_bios_15h_e820h:\n"
 
    mem.map = (struct mmap_e820h_reg*)alloc(0);
 
-   printf("heap before 0x%x\n", alloc(0));
-
    _bios_15h_e820h();
-
-   printf("heap before 0x%x\n", alloc(0));
 
    mem.size = (alloc(0) - (int)mem.map) / sizeof(struct mmap_e820h_reg);
 
