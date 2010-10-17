@@ -74,10 +74,8 @@ void enable_a20_line() {
 	else {
 		puts("trying to enable a20 line...");
 		a20_enable_bios();
-		if(!check_a20_line()) {
-			puts("  [FAIL]\n");
-			for(;;);
-		}
+		if(!check_a20_line())
+			halt("  [FAIL]\n");
 		puts("  [ OK ]\n");
 	}
 }

@@ -24,8 +24,6 @@ void __attribute__((noreturn))
 
   enable_a20_line();
 
-  // test_math64();
-
   halt("HALTING...");
 }
 
