@@ -14,3 +14,20 @@ void *alloc(unsigned short size) {
 	return ret;
 }
 
+void *zalloc(unsigned short size) {
+
+	void *ret = alloc(size);
+
+	memset(ret,0,size);
+
+	return ret;
+}
+
+void zalloc_align(unsigned short boundary, unsigned short size) {
+
+	// move heap start to next boundary.
+	if(alloc(0) % boundry)
+		alloc(boundry - (alloc(0) % boundry));
+
+	return zalloc(size);
+}

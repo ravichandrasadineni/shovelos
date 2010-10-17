@@ -3,9 +3,11 @@
 #ifndef __ALLOC_H
 #define __ALLOC_H
 
-void setup_heap(void *heap_start, unsigned short heap_size);
+void *alloc(unsigned short size);
+void *zalloc(unsigned short size);
+void *zalloc_align(unsigned short boundary, unsigned short size);
 
-void *malloc(unsigned short size);
+zalloc_align
 
 #endif /*** __ALLOC_H ***/
 
