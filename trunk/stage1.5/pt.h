@@ -3,7 +3,9 @@
 #ifndef __PAGE_TRANSLATION_H
 #define __PAGE_TRANSLATION_H
 
-#define PAGE_SIZE 0x200000 /* 2meg pages */
+#define PAGE_SIZE 		0x200000 					/* 2meg pages */
+
+#define ALIGN_DOWN(x)	(x & ~(PAGE_SIZE-1))		/* mask out bits under page size */
 
 /*** Page map - level 4 offset table ***/
 struct PML4E __attribute__ ((packed)) {
@@ -72,6 +74,16 @@ struct PDE __attribute__ ((packed)) {
 	unsigned Available			: 11;	/*** ??? ***/
 	unsigned NX 				: 1; 	/*** NO EXECUTE BIT ***/
 };
+
+static inline __attribute__ ((__always_inline__)) struct PDPE* pt_get_pdpe(struct PML4E *pmle4) {
+
+	return (struct PDPE*)ALIGN_DOWN( pmle4->PageDirectoryPtr );
+}
+
+static inline __attribute__ ((__always_inline__)) struct PDE* pt_get_pde(struct PDPE *pdpe) {
+
+	return (struct PDE*)ALIGN_DOWN( pdpe->PageDirectory );
+}
 
 #endif /*** __PAGE_TRANSLATION_H ***/
 
