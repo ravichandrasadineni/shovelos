@@ -11,14 +11,15 @@
 
 static struct PML4E *g_pmle4 = 0;
 
-void pt_map_page(uint64_t virt, uint64 phy) {
+void pt_map_page(uint64_t virt, uint64_t phy) {
 
 	struct PML4E *pmle4 = g_pmle4;
 	struct PDPE  *pdpe;
 	struct PDP   *pde;
 
 	if(!pmle4) {
-		g_pmle4 = pmle4 = (struct PML4E *)zalloc_align(PAGE_SIZE, 512 * sizeof(struct PMLE4));
+		g_pmle4 =
+		pmle4	= (struct PML4E *)zalloc_align(PAGE_SIZE, 512 * sizeof(struct PMLE4));
 	}
 	pmle4 += 0x1ff & (virt >> 39);
 

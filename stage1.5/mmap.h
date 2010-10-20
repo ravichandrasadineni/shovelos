@@ -2,23 +2,23 @@
 #define __MMAP_H
 
 struct mmap_e820h_reg {
-  
+
   struct {
     int lsi;
     int msi;
   } base;
-  
+
   struct {
     int lsi;
     int msi;
   } length;
-  
+
   int type;
   int extended;
 };
 
 struct mmap_e820h {
-  
+
   short size;
   struct mmap_e820h_reg *map;
 };
