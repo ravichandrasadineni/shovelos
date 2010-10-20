@@ -37,7 +37,7 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
 		pdpe->attr.P  = 1; // present
 		pdpe->attr.RW = 1; // writable
 	}
-	pde += 0x1ff & (virt >> 21);)
+	pde += 0x1ff & (virt >> 21);
 
 	pde->PhysicalPage = phy;
 	pde->attr.P  = 1; // present

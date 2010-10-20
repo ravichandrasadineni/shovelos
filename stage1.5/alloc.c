@@ -23,11 +23,11 @@ void *zalloc(unsigned short size) {
 	return ret;
 }
 
-void zalloc_align(unsigned short boundary, unsigned short size) {
+void *zalloc_align(unsigned short boundary, unsigned short size) {
 
 	// move heap start to next boundary.
-	if(alloc(0) % boundry)
-		alloc(boundry - (alloc(0) % boundry));
+	if((int)alloc(0) % boundary)
+		alloc(boundary - ((unsigned int)alloc(0) % boundary));
 
 	return zalloc(size);
 }

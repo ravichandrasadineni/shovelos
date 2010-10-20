@@ -22,6 +22,7 @@ clean:
 %.o : %.c
 	gcc -c $(CFLAGS) -o $@ $<
 
+
 %.o : %.s
 	gcc -c $(CFLAGS) -o $@ $<
 
