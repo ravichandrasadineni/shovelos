@@ -92,7 +92,7 @@ __asm__(".global cls\n"
             "push %ecx\n"
             "cld\n"
 
-            "movb $0, screen_x\n"            /* reset screen coords */
+            "movb $0, screen_x\n"            /* reset screen cords */
             "movb $0, screen_y\n"
 
             "movw $0xb800, %ax\n"
@@ -147,8 +147,8 @@ int puts(const char *s) {
     char c;
     while((c = *s)) {
         ++i;
-	putc(c);
-	++s;
+	    putc(c);
+	    ++s;
     }
     return i;
 }
@@ -157,9 +157,9 @@ int puts(const char *s) {
     putnhex
       write a number to the screen, in hex
 ***********************************************************************/
-int putnhex(uint64_t n) {
+int putnhex(uint64_t n, int longmode) {
     short s;         // shift
-    for(s=56; s>=0; s-=4)
+    for(s=longmode ? 60 : 28; s>=0; s-=4)
         putc(num[(n>>s)&15]);
     return 8;
 }
@@ -169,10 +169,11 @@ int putnhex(uint64_t n) {
       write an unsigned number to the screen, in dec
 ***********************************************************************/
 int putndecu(uint64_t n) {
-	uint64_t   s;         // divisor
+	uint64_t   s=1000000000;
+	s          *=1000000000; // s = 100000000000000000 generates compiler warning.
     short h;         	  // digit
     short l=0;            // wrote length
-    for(s=10000000000000000000; s>=1; s/=10)
+    for(; s>=1; s/=10)
         if((h = ((n/s)%10)) || l || (s<=1)) {
             ++l;
             putc(num[h]);
@@ -202,9 +203,10 @@ int putndec(sint64_t n) {
 int printf(const char * format, int *_args) {
 
     char c;                // current char
-    char special=0;        // special flag ( '%' )
-    char longflag=0;       // special flag ( 'l' )
+    int special=0;        // special flag ( '%' )
+    int longflag=0;       // special flag ( 'l' )
     int  **args = &_args;  // ptr to args array
+    uint64_t longargs;
     short l=0;
 
     if(!format)
@@ -225,40 +227,39 @@ int printf(const char * format, int *_args) {
                 break;
               case 'l':
               case 'L':
-            	  longflag = 1;
+            	  special=longflag = 1;
             	  break;
               case 'd':
               case 'D':
               {
-                uint64_t longargs = *args++;
-                if(longflag)
-                    longargs |= ((*args++) << 32);
+                _64_DWORD_LO(longargs) = (int)(*(args++));
+                _64_DWORD_HI(longargs) = longflag ? (int)(*(args++)) : 0;
+
             	putndec((sint64_t)longargs);
                 break;
               }
               case 'u':
               case 'U':
               {
-            	uint64_t longargs = *args++;
-            	if(longflag)
-            	  longargs |= ((*args++) << 32);
+            	_64_DWORD_LO(longargs) = (int)(*(args++));
+            	_64_DWORD_HI(longargs) = longflag ? (int)(*(args++)) : 0;
+
                 putndecu((uint64_t)longargs);
                 break;
               }
               case 'x':
               case 'X':
               {
-                uint64_t longargs = *args++;
-            	if(longflag)
-            	  longargs |= ((*args++) << 32);
-                putnhex((sint64_t)longargs);
+            	_64_DWORD_LO(longargs) = (int)(*(args++));
+            	_64_DWORD_HI(longargs) = longflag ? (int)(*(args++)) : 0;
+                putnhex((sint64_t)longargs,longflag);
                 break;
               }
             }
         }
         else if(c == '%') {
           longflag = 0;
-          special  = 0;
+          special  = 1;
         }
         else
           putc(c);

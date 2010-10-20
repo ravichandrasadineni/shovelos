@@ -7,7 +7,6 @@ void *alloc(unsigned short size);
 void *zalloc(unsigned short size);
 void *zalloc_align(unsigned short boundary, unsigned short size);
 
-zalloc_align
 
 #endif /*** __ALLOC_H ***/
 

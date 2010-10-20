@@ -1,17 +1,25 @@
 #ifndef __MMAP_H
 #define __MMAP_H
 
+#include "inttypes.h"
+
 struct mmap_e820h_reg {
 
-  struct {
-    int lsi;
-    int msi;
-  } base;
+  union {
+	struct {
+	  int lsi;
+	  int msi;
+    } b32;
+  uint64_t b64;
+  };
 
-  struct {
-    int lsi;
-    int msi;
-  } length;
+  union {
+    struct {
+      int lsi;
+      int msi;
+    } l32;
+    uint64_t l64;
+  };
 
   int type;
   int extended;

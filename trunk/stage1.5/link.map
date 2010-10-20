@@ -44,7 +44,7 @@ Linker script and memory map
                 0x000000000000000a        0x2 SHORT 0x352e
                 0x0000000000000100                . = 0x100
 
-.text           0x0000000000000100      0xc5c
+.text           0x0000000000000100      0xe00
                 0x0000000000000100                _text_start = .
  *(.text)
  .text          0x0000000000000100       0x11 entry.o
@@ -54,83 +54,84 @@ Linker script and memory map
                 0x0000000000000114                halt
                 0x000000000000012a                cmain
  *fill*         0x0000000000000165        0x3 00
- .text          0x0000000000000168      0x367 print.o
+ .text          0x0000000000000168      0x47c print.o
                 0x00000000000001db                cls
                 0x000000000000020c                putc
                 0x0000000000000269                putndecu
-                0x00000000000002eb                putndec
-                0x000000000000031f                putnhex
-                0x0000000000000371                puts
-                0x00000000000003b0                printf
- *fill*         0x00000000000004cf        0x1 00
- .text          0x00000000000004d0      0x11f mmap.o
-                0x000000000000051c                read_mmap
- *fill*         0x00000000000005ef        0x1 00
- .text          0x00000000000005f0      0x121 a20.o
-                0x000000000000063d                check_a20_line
-                0x00000000000006ab                enable_a20_line
- *fill*         0x0000000000000711        0x3 00
- .text          0x0000000000000714       0x15 alloc.o
-                0x0000000000000714                alloc
- *fill*         0x0000000000000729        0x3 00
- .text          0x000000000000072c       0x63 mem.o
-                0x000000000000072c                memcpy
-                0x000000000000076b                memset
- *fill*         0x000000000000078f        0x1 00
- .text          0x0000000000000790      0x31d math64.o
-                0x0000000000000a3c                __umoddi3
-                0x0000000000000a78                __udivdi3
- *fill*         0x0000000000000aad        0x3 00
- .text          0x0000000000000ab0      0x2ac bios_disk.o
-                0x0000000000000af5                disk_read_sector
-                0x0000000000000b66                bytes_per_sector
-                0x0000000000000bc4                disk_read
-                0x0000000000000d5c                _text_end = .
+                0x0000000000000334                putndec
+                0x000000000000037d                putnhex
+                0x00000000000003e9                puts
+                0x0000000000000428                printf
+ .text          0x00000000000005e4      0x11f mmap.o
+                0x0000000000000630                read_mmap
+ *fill*         0x0000000000000703        0x1 00
+ .text          0x0000000000000704      0x121 a20.o
+                0x0000000000000751                check_a20_line
+                0x00000000000007bf                enable_a20_line
+ *fill*         0x0000000000000825        0x3 00
+ .text          0x0000000000000828       0xa7 alloc.o
+                0x0000000000000828                alloc
+                0x000000000000083d                zalloc
+                0x0000000000000871                zalloc_align
+ *fill*         0x00000000000008cf        0x1 00
+ .text          0x00000000000008d0       0x63 mem.o
+                0x00000000000008d0                memcpy
+                0x000000000000090f                memset
+ *fill*         0x0000000000000933        0x1 00
+ .text          0x0000000000000934      0x31d math64.o
+                0x0000000000000be0                __umoddi3
+                0x0000000000000c1c                __udivdi3
+ *fill*         0x0000000000000c51        0x3 00
+ .text          0x0000000000000c54      0x2ac bios_disk.o
+                0x0000000000000c99                disk_read_sector
+                0x0000000000000d0a                bytes_per_sector
+                0x0000000000000d68                disk_read
+                0x0000000000000f00                _text_end = .
 
-.rodata.str1.1  0x0000000000000d5c       0xf5
+.rodata.str1.1  0x0000000000000f00       0xf0
  .rodata.str1.1
-                0x0000000000000d5c       0x1f main.o
+                0x0000000000000f00       0x1f main.o
  .rodata.str1.1
-                0x0000000000000d7b       0x8b mmap.o
+                0x0000000000000f1f       0x86 mmap.o
  .rodata.str1.1
-                0x0000000000000e06       0x4b a20.o
+                0x0000000000000fa5       0x4b a20.o
 
-.data           0x0000000000000e54       0x50
-                0x0000000000000e54                _data_start = .
+.data           0x0000000000000ff0       0x50
+                0x0000000000000ff0                _data_start = .
  *(.bss)
- .bss           0x0000000000000e54        0x0 entry.o
- .bss           0x0000000000000e54        0x0 main.o
- .bss           0x0000000000000e54        0x2 print.o
- *fill*         0x0000000000000e56        0x2 00
- .bss           0x0000000000000e58        0x8 mmap.o
-                0x0000000000000e58                mem
- .bss           0x0000000000000e60        0x0 a20.o
- .bss           0x0000000000000e60        0x0 alloc.o
- .bss           0x0000000000000e60        0x0 mem.o
- .bss           0x0000000000000e60        0x0 math64.o
- .bss           0x0000000000000e60       0x18 bios_disk.o
+ .bss           0x0000000000000ff0        0x0 entry.o
+ .bss           0x0000000000000ff0        0x0 main.o
+ .bss           0x0000000000000ff0        0x2 print.o
+ *fill*         0x0000000000000ff2        0x2 00
+ .bss           0x0000000000000ff4        0x8 mmap.o
+                0x0000000000000ff4                mem
+ .bss           0x0000000000000ffc        0x0 a20.o
+ .bss           0x0000000000000ffc        0x0 alloc.o
+ .bss           0x0000000000000ffc        0x0 mem.o
+ .bss           0x0000000000000ffc        0x0 math64.o
+ .bss           0x0000000000000ffc       0x18 bios_disk.o
  *(.bss*)
  *(.data)
- .data          0x0000000000000e78        0x0 entry.o
- .data          0x0000000000000e78        0x0 main.o
- .data          0x0000000000000e78        0x0 print.o
- .data          0x0000000000000e78        0x0 mmap.o
- .data          0x0000000000000e78        0x0 a20.o
- .data          0x0000000000000e78        0x0 alloc.o
- .data          0x0000000000000e78        0x0 mem.o
- .data          0x0000000000000e78        0x0 math64.o
- .data          0x0000000000000e78        0x0 bios_disk.o
+ .data          0x0000000000001014        0x0 entry.o
+ .data          0x0000000000001014        0x0 main.o
+ .data          0x0000000000001014        0x0 print.o
+ .data          0x0000000000001014        0x0 mmap.o
+ .data          0x0000000000001014        0x0 a20.o
+ .data          0x0000000000001014        0x0 alloc.o
+ .data          0x0000000000001014        0x0 mem.o
+ .data          0x0000000000001014        0x0 math64.o
+ .data          0x0000000000001014        0x0 bios_disk.o
  *(.rodata)
- .rodata        0x0000000000000e78       0x11 print.o
- *fill*         0x0000000000000e89        0x3 00
- .rodata        0x0000000000000e8c       0x18 mmap.o
+ .rodata        0x0000000000001014       0x11 print.o
+ *fill*         0x0000000000001025        0x3 00
+ .rodata        0x0000000000001028       0x18 mmap.o
  *(.COMMON)
-                0x0000000000000ea4                _data_end = .
+                0x0000000000001040                _data_end = .
 
-.heap           0x0000000000000ea4        0x4
-                0x0000000000000ea4                _heap_start = .
-                0x0000000000000ea4        0x2 SHORT 0xea8 (. + 0x4)
-                0x0000000000000ea6        0x2 SHORT 0x0
+.heap           0x0000000000001040        0x4
+                0x0000000000001040                _heap_start = .
+                0x0000000000001040        0x2 SHORT 0x1044 (. + 0x4)
+                0x0000000000001042        0x2 SHORT 0x0
 
 /DISCARD/
  *(.note*)

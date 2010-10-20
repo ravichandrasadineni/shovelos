@@ -69,24 +69,23 @@ __asm__("_bios_15h_e820h:\n"
    mem.size = (alloc(0) - (int)mem.map) / sizeof(struct mmap_e820h_reg);
 
    if(mem.size) {
-     int i;
+     int i=0;
 
-     puts("memory map:\r\n");
+     puts("memory map:\n");
+
      for(i=0;i<mem.size;i++) {
        if(mem.map[i].type > 5)
-	     mem.map[i].type = 0;
+	      mem.map[i].type = 0;
 
-       printf(" %d) base {0x%x%x} len {0x%x%x} type %s\r\n",
-	      i,
-	      mem.map[i].base.msi,
-	      mem.map[i].base.lsi,
-	      mem.map[i].length.msi,
-	      mem.map[i].length.lsi,
-	      types[mem.map[i].type]);
+       printf(" %d) base {0x%lx} len {0x%lx} type %s\n",
+       	      i,
+       	      mem.map[i].b64,
+       	      mem.map[i].l64,
+       	      types[mem.map[i].type]);
      }
    }
    else {
-     halt("failed to read memory map!\r\n");
+     halt("failed to read memory map!\n");
    }
  }
 
