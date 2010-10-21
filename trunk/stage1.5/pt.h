@@ -4,8 +4,13 @@
 #define __PAGE_TRANSLATION_H
 
 #define PAGE_SIZE 		0x200000 					/* 2meg pages */
+#define PAGE_TABLE_SIZE 512                         /* enteries per table */
 
-#define ALIGN_DOWN(x)	(x & ~(PAGE_SIZE-1))		/* mask out bits under page size */
+/* mask out bits under page size */
+#define ALIGN_DOWN(x)	(x & ~(PAGE_SIZE-1))
+
+/* next page aligned address */
+#define ALIGN_UP(x)     ((x & (PAGE_SIZE-1)) ? ALIGN_DOWN(x+PAGE_SIZE) : x)
 
 /*** Page map - level 4 offset table ***/
 struct PML4E __attribute__ ((packed)) {
