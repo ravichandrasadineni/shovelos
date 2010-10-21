@@ -81,8 +81,8 @@ __asm__("_bios_15h_e820h:\n"
 
 		   printf(" %d) base {0x%lx} len {0x%lx} type %s\n",
 				  i,
-				  mem.map[i].b64,
-				  mem.map[i].l64,
+				  mem.map[i].b.b64,
+				  mem.map[i].l.l64,
 				  types[mem.map[i].type]);
 		 }
 	   }

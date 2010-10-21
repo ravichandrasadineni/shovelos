@@ -3,6 +3,7 @@
 
 #include "mmap.h"
 #include "inttypes.h"
+#include "pt.h"
 
 int enable_a20_line();
 
@@ -20,9 +21,11 @@ void __attribute__((noreturn))
 
   puts("ShovelOS Stage 1.5\n");
 
+  enable_a20_line();
+
   read_mmap();
 
-  enable_a20_line();
+  setup_pt();
 
   halt("HALTING...");
 }
