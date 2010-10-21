@@ -1,7 +1,6 @@
 
 /************************************************************************************************************
  * Setup long-mode page tables.
- * Identity map the first 2meg.
  */
 
 #include "16bitreal.h"
