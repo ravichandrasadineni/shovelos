@@ -9,6 +9,7 @@
 #include "mem.h"
 #include "pt.h"
 #include "mmap.h"
+#include "alloc.h"
 
 static struct PML4E *g_pmle4 = 0;
 
@@ -21,34 +22,34 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
 
 	struct PML4E *pmle4 = g_pmle4;
 	struct PDPE  *pdpe;
-	struct PDP   *pde;
+	struct PDE   *pde;
 
-	if(!pmle4) {
+	if(pmle4 != 0) {
 		g_pmle4 =
-		pmle4	= (struct PML4E *)zalloc_align(PAGE_SIZE, PAGE_TABLE_SIZE * sizeof(struct PMLE4));
+		pmle4	= (struct PML4E *)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PML4E));
 	}
 	pmle4 += 0x1ff & (virt >> 39);
 
 	pdpe = pt_get_pdpe(pmle4);
-	if(!pdpe) {
-		pmle4->PageDirectoryPtr = pdpe = (struct PDPE*)zalloc_align(PAGE_SIZE, PAGE_TABLE_SIZE * sizeof(struct PDPE));
-		pmle4->attr.P  = 1; // present
-		pmle4->attr.RW = 1; // writable
+	if(pdpe != 0) {
+		pmle4->bits.PageDirectoryPtr52 = (int)(pdpe = (struct PDPE*)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PDPE)));
+		pmle4->bits.attr.P  = 1; // present
+		pmle4->bits.attr.RW = 1; // writable
 	}
 	pdpe += 0x1ff & (virt >> 30);
 
-	pde = pg_get_pde(pdpe);
-	if(!pde) {
-		pdpe->PageDirectory = pde = (struct PDE*)zalloc_align(PAGE_SIZE, PAGE_TABLE_SIZE * sizeof(struct PDE));
-		pdpe->attr.P  = 1; // present
-		pdpe->attr.RW = 1; // writable
+	pde = pt_get_pde(pdpe);
+	if(pde != 0) {
+		pdpe->bits.PageDirectory52 = (int)(pde = (struct PDE*)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PDE)));
+		pdpe->bits.attr.P  = 1; // present
+		pdpe->bits.attr.RW = 1; // writable
 	}
 	pde += 0x1ff & (virt >> 21);
 
-	pde->PhysicalPage = phy;
-	pde->attr.P  = 1; // present
-	pde->attr.RW = 1; // writable
-	pde->attr.PS = 1; // terminal table
+	pde->bits.PhysicalPage52 = phy;
+	pde->bits.attr.P  = 1; // present
+	pde->bits.attr.RW = 1; // writable
+	pde->bits.attr.PS = 1; // terminal table
 }
 
 
@@ -75,8 +76,8 @@ void setup_pt() {
 		if(mreg->type != 1)
 			continue; // NOT a usable region
 
-		pb = mreg->b64; // this region base
-		pl = mreg->l64; // this region length
+		pb = mreg->b.b64; // this region base
+		pl = mreg->l.l64; // this region length
 
 		// adjust phyical base/length for PAGE_SIZE alignment.
 		if(pb & (PAGE_SIZE-1)) {
@@ -95,12 +96,12 @@ void setup_pt() {
 
 	    	if(pb < 0x100000) {
 	    		/*** identity map low-mem ***/
-	    		pt_map(vl,pb);
+	    		pt_map_page(vl,pb);
 	    		vl += PAGE_SIZE;
 	    	}
 	    	else {
 	    		/*** map high-mem ***/
-	    		pt_map(vh,pb);
+	    		pt_map_page(vh,pb);
 	    		vh += PAGE_SIZE;
 	    		total_hi += PAGE_SIZE;
 
@@ -111,7 +112,10 @@ void setup_pt() {
 	    			return;
 	    	}
 	    	pb += PAGE_SIZE;
-	    	pl -= PAGE_SIZE;
+	    	if(pl > PAGE_SIZE)
+	    		pl -= PAGE_SIZE;
+	    	else
+	    		pl = 0;
 	    }
 	}
 }

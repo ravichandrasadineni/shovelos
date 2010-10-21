@@ -11,7 +11,7 @@ struct mmap_e820h_reg {
 	  int msi;
     } b32;
     uint64_t b64;
-  };
+  }b;
 
   union {
     struct {
@@ -19,7 +19,7 @@ struct mmap_e820h_reg {
       int msi;
     } l32;
     uint64_t l64;
-  };
+  }l;
 
   int type;
   int extended;
