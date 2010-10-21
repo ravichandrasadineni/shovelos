@@ -60,33 +60,38 @@ __asm__("_bios_15h_e820h:\n"
    "BAD",
  };
 
- void read_mmap() {
+ struct mmap_e820h *read_mmap() {
 
-   mem.map = (struct mmap_e820h_reg*)alloc(0);
+   if(mem.map == 0) {
 
-   _bios_15h_e820h();
+	   mem.map = (struct mmap_e820h_reg*)alloc(0);
 
-   mem.size = (alloc(0) - (int)mem.map) / sizeof(struct mmap_e820h_reg);
+	   _bios_15h_e820h();
 
-   if(mem.size) {
-     int i=0;
+	   mem.size = (alloc(0) - (int)mem.map) / sizeof(struct mmap_e820h_reg);
 
-     puts("memory map:\n");
+	   if(mem.size) {
+		 int i=0;
 
-     for(i=0;i<mem.size;i++) {
-       if(mem.map[i].type > 5)
-	      mem.map[i].type = 0;
+		 puts("memory map:\n");
 
-       printf(" %d) base {0x%lx} len {0x%lx} type %s\n",
-       	      i,
-       	      mem.map[i].b64,
-       	      mem.map[i].l64,
-       	      types[mem.map[i].type]);
-     }
+		 for(i=0;i<mem.size;i++) {
+		   if(mem.map[i].type > 5)
+			  mem.map[i].type = 0;
+
+		   printf(" %d) base {0x%lx} len {0x%lx} type %s\n",
+				  i,
+				  mem.map[i].b64,
+				  mem.map[i].l64,
+				  types[mem.map[i].type]);
+		 }
+	   }
+	   else {
+		 halt("failed to read memory map!\n");
+	   }
    }
-   else {
-     halt("failed to read memory map!\n");
-   }
+
+   return &mem;
  }
 
 

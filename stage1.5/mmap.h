@@ -10,7 +10,7 @@ struct mmap_e820h_reg {
 	  int lsi;
 	  int msi;
     } b32;
-  uint64_t b64;
+    uint64_t b64;
   };
 
   union {
@@ -30,6 +30,8 @@ struct mmap_e820h {
   short size;
   struct mmap_e820h_reg *map;
 };
+
+struct mmap_e820h *read_mmap();
 
 #endif /*** __MMAP_H ***/
 
