@@ -1,9 +1,9 @@
 ENTRY(main);
 SECTIONS
 {
-	. = 0x0000;
+	. = 0x7e00;
 
-	.sig : AT(0x0000)
+	.sig : AT(0x7e00)
 	{
 		SHORT(0x6853); /* "hS" */
 		SHORT(0x766f); /* "vo" */
@@ -13,9 +13,9 @@ SECTIONS
 		SHORT(0x352E); /* "5." */
 	}
 
-    . = 0x0100;
+    . = 0x7f00;
 
-	.text : AT(0x0100)
+	.text : AT(0x7f00)
 	{
 		_text_start = .;
 		*(.text);

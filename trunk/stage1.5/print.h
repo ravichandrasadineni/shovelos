@@ -11,7 +11,7 @@ void cls();
 int  puts(const char *s);
 
 // write fomatted
-int  printf(const char * format, int *_args);
+int  printf(const char * format, ... /*int *_args*/ );
 
 #endif /*** __PRINT_H ***/
 

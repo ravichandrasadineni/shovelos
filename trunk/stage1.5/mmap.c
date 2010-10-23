@@ -2,6 +2,8 @@
 #include "16bitreal.h"
 
 #include "mmap.h"
+#include "alloc.h"
+#include "print.h"
 
 
 /***********************************************************
@@ -68,7 +70,7 @@ __asm__("_bios_15h_e820h:\n"
 
 	   _bios_15h_e820h();
 
-	   mem.size = (alloc(0) - (int)mem.map) / sizeof(struct mmap_e820h_reg);
+	   mem.size = ((int)alloc(0) - (int)mem.map) / sizeof(struct mmap_e820h_reg);
 
 	   if(mem.size) {
 		 int i=0;
