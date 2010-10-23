@@ -2,12 +2,16 @@
 
 #include "16bitreal.h"
 #include "bios_disk.h"
+#include "mem.h"
+#include "alloc.h"
+#include "print.h"
 
 
 /******************************************************************************************************
  * int get_ds_reg
  *     return current data segment.
  */
+int get_ds_reg();
 __asm__("get_ds_reg:\n"
 		"  xorl %eax, %eax    \n"
 		"  movw  %ds,  %ax    \n"

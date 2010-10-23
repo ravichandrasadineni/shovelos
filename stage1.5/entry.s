@@ -7,12 +7,13 @@
 #############################################
 .global main
 main:
-    movw $0x07e0, %ax
+    cli
+    movw $0x0000, %ax
     movw     %ax, %ds
     movw     %ax, %ss
     movw     %ax, %es
     movw $0xffff, %sp
-    ljmp $0x07e0, $cmain   # all c code will run in segment 0x07e0
+    ljmp $0x0000, $cmain
 
 
 

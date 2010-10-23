@@ -9,8 +9,19 @@
 #include "pt.h"
 #include "mmap.h"
 #include "alloc.h"
+#include "print.h"
 
-static struct PML4E *g_pmle4 = 0;
+struct PML4E *g_pmle4 = 0;
+
+/*** tell processor where the page tables are ***/
+__asm__(".global load_pt           \n"
+		"load_pt:                  \n"
+		"    push %edx             \n"
+		"    movl g_pmle4, %edx    \n"
+		"    movl %edx,    %cr3    \n"
+		"    pop %edx              \n"
+		"    ret");
+
 
 /************************************************************************************************************
  * Create a 64bit virtual -> physical page mapping
@@ -19,29 +30,38 @@ static struct PML4E *g_pmle4 = 0;
  */
 void pt_map_page(uint64_t virt, uint64_t phy) {
 
-	struct PML4E *pmle4 = g_pmle4;
+	struct PML4E *pml4e = g_pmle4;
 	struct PDPE  *pdpe;
 	struct PDE   *pde;
 
-	if(pmle4 != 0) {
+	if(pml4e == 0) {
 		g_pmle4 =
-		pmle4	= (struct PML4E *)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PML4E));
+		pml4e	= (struct PML4E *)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PML4E));
+		printf("pml4e @ 0x%x\n", g_pmle4);
 	}
-	pmle4 += 0x1ff & (virt >> 39);
 
-	pdpe = pt_get_pdpe(pmle4);
-	if(pdpe != 0) {
-		pmle4->bits.PageDirectoryPtr52 = (int)(pdpe = (struct PDPE*)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PDPE)));
-		pmle4->bits.attr.P  = 1; // present
-		pmle4->bits.attr.RW = 1; // writable
+
+	pml4e += 0x1ff & (virt >> 39);
+
+	pdpe = pt_get_pdpe(pml4e);
+	if(pdpe == 0) {
+		pml4e->bits.PageDirectoryPtr52 = (int)(pdpe = (struct PDPE*)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PDPE)));
+		printf("pdpe @ 0x%x\n", pdpe);
+		pml4e->bits.attr.P   = 1;  // present
+		pml4e->bits.attr.RW  = 1;  // writable
+		pml4e->bits.attr.US  = 1;  // user
+		pml4e->bits.attr.PWT = 1;  // write through
 	}
 	pdpe += 0x1ff & (virt >> 30);
 
 	pde = pt_get_pde(pdpe);
-	if(pde != 0) {
+	if(pde == 0) {
 		pdpe->bits.PageDirectory52 = (int)(pde = (struct PDE*)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PDE)));
+		printf("ppe @ 0x%x\n", pde);
 		pdpe->bits.attr.P  = 1; // present
 		pdpe->bits.attr.RW = 1; // writable
+		pdpe->bits.attr.US  = 1;  // user
+		pdpe->bits.attr.PWT = 1;  // write through
 	}
 	pde += 0x1ff & (virt >> 21);
 
@@ -49,6 +69,14 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
 	pde->bits.attr.P  = 1; // present
 	pde->bits.attr.RW = 1; // writable
 	pde->bits.attr.PS = 1; // terminal table
+	pde->bits.attr.G  = 1; // global
+	pde->bits.attr.US  = 1;  // user
+	pde->bits.attr.PWT = 1;  // write through
+
+
+	printf("pml4e @0x%x (0x%lx)\n",pml4e,pml4e->bits.PageDirectoryPtr52);
+	printf("pdpe  @0x%x (0x%lx)\n",pdpe, pdpe->bits.PageDirectory52);
+	printf("pde   @0x%x (0x%lx)\n",pde,pde->bits.PhysicalPage52);
 }
 
 
@@ -99,6 +127,9 @@ void setup_pt() {
 	    		vl += PAGE_SIZE;
 	    	}
 	    	else {
+
+	    		return ; // disable hi-mem ?
+
 	    		/*** map high-mem ***/
 	    		pt_map_page(vh,pb);
 	    		vh += PAGE_SIZE;
@@ -117,5 +148,6 @@ void setup_pt() {
 	    		pl = 0;
 	    }
 	}
+	printf("mapped %ld Megabytes of high memory at 0x8000000000\n", (vh - 0x8000000000)/(1024 * 1024));
 }
 

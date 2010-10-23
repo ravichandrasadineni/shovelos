@@ -1,11 +1,13 @@
 
 #include "16bitreal.h"
+#include "print.h"
 
 /*******************************************************************************
  * rread: real read
  *  short rread(int seg, int offset);
  *    read int from seg:offset
  ******************************************************************************/
+short rreads(int seg, int offset);
 __asm__(
 
     "rreads:\n"
@@ -22,6 +24,7 @@ __asm__(
  *  void rwrites(int seg, int offset, int data);
  *    write given short to seg:offset
  ******************************************************************************/
+void rwrites(int seg, int offset, int data);
 __asm__(
 
     "rwrites:\n"
@@ -40,6 +43,7 @@ __asm__(
  *  int a20_enable_bios();
  *  returns 1 on reported success, 0 on failure.
  ******************************************************************************/
+int a20_enable_bios();
 __asm__(
 
     "a20_enable_bios:\n"

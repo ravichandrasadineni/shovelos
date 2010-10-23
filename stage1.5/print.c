@@ -14,6 +14,7 @@ static char screen_y=0;
     void putc_vmem(char c, char x, char y);
       write a character the the screen WITHOUT using bios.
 ***********************************************************************/
+void putc_vmem(int c, int x, int y);
 __asm__("putc_vmem:\n"
 
         "push %ebp\n"
@@ -51,6 +52,7 @@ __asm__("putc_vmem:\n"
     void scroll()
       scroll the screen down one line (80x25)
 ***********************************************************************/
+void scroll();
 __asm__("scroll:\n"
             "push %es\n"
             "push %ds\n"
@@ -84,6 +86,7 @@ __asm__("scroll:\n"
     void cls()
       clear screen
 ***********************************************************************/
+void cls();
 __asm__(".global cls\n"
             "cls:\n"
             "push %es\n"
@@ -200,12 +203,12 @@ int putndec(sint64_t n) {
     printf ( minimal, only supports %s,x,d,u - no floats, no padding )
       write a formatted string to the screen
 ***********************************************************************/
-int printf(const char * format, int *_args) {
+int printf(const char * format, ... /*int *_args*/) {
 
     char c;                // current char
     int special=0;        // special flag ( '%' )
     int longflag=0;       // special flag ( 'l' )
-    int  **args = &_args;  // ptr to args array
+    int  **args = (int**)(&format+1);  // ptr to args array
     uint64_t longargs;
     short l=0;
 
