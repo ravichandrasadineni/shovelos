@@ -10,10 +10,10 @@
 #define PAGE_TABLE_ALIGNLENT 0x1000
 
 /* mask out bits under page size */
-#define ALIGN_DOWN(x)	(x & ~(PAGE_SIZE-1))
+#define ALIGN_DOWN(x)	(x & ~(PAGE_TABLE_ALIGNLENT-1))
 
 /* next page aligned address */
-#define ALIGN_UP(x)     ((x & (PAGE_SIZE-1)) ? ALIGN_DOWN(x+PAGE_SIZE) : x)
+#define ALIGN_UP(x)     ((x & (PAGE_TABLE_ALIGNLENT-1)) ? ALIGN_DOWN(x+PAGE_TABLE_ALIGNLENT) : x)
 
 /*** Page map - level 4 offset table ***/
 struct PML4E {
