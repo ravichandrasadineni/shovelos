@@ -73,14 +73,10 @@ int check_a20_line() {
  **************************************************************************************/
 void enable_a20_line() {
 
-	if(check_a20_line())
-	    puts("a20 line already enabled\n");
-	else {
-		puts("trying to enable a20 line...");
+	if(!check_a20_line()) {
 		a20_enable_bios();
 		if(!check_a20_line())
-			halt("  [FAIL]\n");
-		puts("  [ OK ]\n");
+			halt("ERR: a20\n");
 	}
 }
 

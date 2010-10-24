@@ -13,16 +13,6 @@
 
 struct PML4E *g_pmle4 = 0;
 
-/*** tell processor where the page tables are ***/
-__asm__(".global load_pt           \n"
-		"load_pt:                  \n"
-		"    push %edx             \n"
-		"    movl g_pmle4, %edx    \n"
-		"    movl %edx,    %cr3    \n"
-		"    pop %edx              \n"
-		"    ret");
-
-
 /************************************************************************************************************
  * Create a 64bit virtual -> physical page mapping
  * takes 1) virtual page base ( PAGE_SIZE aligned )
@@ -34,22 +24,16 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
 	struct PDPE  *pdpe;
 	struct PDE   *pde;
 
-	printf("pt_map_page() 0x%lx -> 0x%lx\n",virt,phy);
-
 	if(pml4e == 0) {
-		printf("if(pml4e == 0) {\n");
 		g_pmle4 =
 		pml4e	= (struct PML4E *)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PML4E));
-		printf("pml4e @ 0x%x\n", g_pmle4);
 	}
 
 	pml4e += 0x1ff & (virt >> 39);
 
 	pdpe = pt_get_pdpe(pml4e);
 	if(pdpe == 0) {
-		printf("if(pdpe == 0) {\n");
 		pml4e->bits.PageDirectoryPtr52 = (int)(pdpe = (struct PDPE*)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PDPE)));
-		printf("pdpe @ 0x%x\n", pdpe);
 		pml4e->bits.attr.P   = 1;  // present
 		pml4e->bits.attr.RW  = 1;  // writable
 		pml4e->bits.attr.US  = 1;  // user
@@ -59,9 +43,7 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
 
 	pde = pt_get_pde(pdpe);
 	if(pde == 0) {
-		printf("if(pde == 0) {\n");
 		pdpe->bits.PageDirectory52 = (int)(pde = (struct PDE*)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PDE)));
-		printf("ppe @ 0x%x\n", pde);
 		pdpe->bits.attr.P  = 1; // present
 		pdpe->bits.attr.RW = 1; // writable
 		pdpe->bits.attr.US  = 1;  // user
@@ -76,18 +58,13 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
 	pde->bits.attr.G  = 1; // global
 	pde->bits.attr.US  = 1;  // user
 	pde->bits.attr.PWT = 1;  // write through
-
-
-	printf("pml4e @0x%x (0x%lx)\n",pml4e,pml4e->bits.PageDirectoryPtr52);
-	printf("pdpe  @0x%x (0x%lx)\n",pdpe, pdpe->bits.PageDirectory52);
-	printf("pde   @0x%x (0x%lx)\n",pde,pde->bits.PhysicalPage52);
 }
 
 
 /************************************************************************************************************
  * Create a page table structure for use in long mode by our bootloader.
  * The first 1 megabyte will be identity mapped.
- * high-mem will be mapped to virtual address 0x8000000000
+ * high-mem will be mapped to virtual address 0x80printf("new heap 0x%x\n", _heap_start);00000000
  * we will map untill we run out of physical memory, or fill a whole pdpe ( max 1 gig with 2meg pages )
  */
 void setup_pt() {
@@ -150,6 +127,5 @@ void setup_pt() {
 	    		return;
 	    }
 	}
-	printf("mapped %ld Megabytes of memory\n", (total_hi)/(1024 * 1024));
 }
 

@@ -100,7 +100,6 @@ static inline __attribute__ ((__always_inline__)) struct PDE* pt_get_pde(struct 
 }
 
 void setup_pt();
-void load_pt();
 
 #endif /*** __PAGE_TRANSLATION_H ***/
 

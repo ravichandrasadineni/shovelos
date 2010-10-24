@@ -38,9 +38,9 @@ void __attribute__((noreturn))
 
   setup_gdt();
 
-  puts("trying to enter long mode!!!\n");
+  printf("FreeMem 0x%x\n", 0xffff - alloc(0));
 
-  enter_long_mode();
+  //enter_long_mode();
 
   halt("HALTING...");
 }

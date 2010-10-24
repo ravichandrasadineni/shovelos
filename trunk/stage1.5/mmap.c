@@ -5,7 +5,6 @@
 #include "alloc.h"
 #include "print.h"
 
-
 /***********************************************************
  * read memory map from BIOS ( use int 15h EAX=e820h )
  * takes: nothing
@@ -73,8 +72,9 @@ __asm__("_bios_15h_e820h:\n"
 	   mem.size = ((int)alloc(0) - (int)mem.map) / sizeof(struct mmap_e820h_reg);
 
 	   if(mem.size) {
-		 int i=0;
 
+#if defined(DEBUG)
+		 int i=0;
 		 puts("memory map:\n");
 
 		 for(i=0;i<mem.size;i++) {
@@ -87,6 +87,7 @@ __asm__("_bios_15h_e820h:\n"
 				  mem.map[i].l.l64,
 				  types[mem.map[i].type]);
 		 }
+#endif /*** DEBUG ***/
 	   }
 	   else {
 		 halt("failed to read memory map!\n");
