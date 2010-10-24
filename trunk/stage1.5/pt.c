@@ -34,17 +34,20 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
 	struct PDPE  *pdpe;
 	struct PDE   *pde;
 
+	printf("pt_map_page() 0x%lx -> 0x%lx\n",virt,phy);
+
 	if(pml4e == 0) {
+		printf("if(pml4e == 0) {\n");
 		g_pmle4 =
 		pml4e	= (struct PML4E *)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PML4E));
 		printf("pml4e @ 0x%x\n", g_pmle4);
 	}
 
-
 	pml4e += 0x1ff & (virt >> 39);
 
 	pdpe = pt_get_pdpe(pml4e);
 	if(pdpe == 0) {
+		printf("if(pdpe == 0) {\n");
 		pml4e->bits.PageDirectoryPtr52 = (int)(pdpe = (struct PDPE*)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PDPE)));
 		printf("pdpe @ 0x%x\n", pdpe);
 		pml4e->bits.attr.P   = 1;  // present
@@ -56,6 +59,7 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
 
 	pde = pt_get_pde(pdpe);
 	if(pde == 0) {
+		printf("if(pde == 0) {\n");
 		pdpe->bits.PageDirectory52 = (int)(pde = (struct PDE*)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PDE)));
 		printf("ppe @ 0x%x\n", pde);
 		pdpe->bits.attr.P  = 1; // present
@@ -88,7 +92,7 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
  */
 void setup_pt() {
 
-	uint64_t vh = 0x8000000000; // virtual hi-mem address
+	uint64_t vh = 0x0000000000   ; // virtual hi-mem address
 	uint64_t vl = 0x0000000000; // virtual lo-mem address
 	uint64_t pb = 0; // physical base
 	uint64_t pl = 0; // physical length
@@ -128,26 +132,24 @@ void setup_pt() {
 	    	}
 	    	else {
 
-	    		return ; // disable hi-mem ?
+	    		if(vh==0)
+	    			vh = vl;
 
 	    		/*** map high-mem ***/
 	    		pt_map_page(vh,pb);
 	    		vh += PAGE_SIZE;
-	    		total_hi += PAGE_SIZE;
-
-	    		// mapping more than 1 gig high-mem would require another pdpe table on our very limited heap!
-	    		// and 1 is WAY more than enough for a bootloader.
-	    		// provides upto 1 gig with a 2Meg pages!
-	    		if(total_hi >= (PAGE_SIZE * PAGE_TABLE_SIZE))
-	    			return;
 	    	}
 	    	pb += PAGE_SIZE;
 	    	if(pl > PAGE_SIZE)
 	    		pl -= PAGE_SIZE;
 	    	else
 	    		pl = 0;
+
+	    	total_hi += PAGE_SIZE;
+	    	if(total_hi >= (PAGE_SIZE * PAGE_TABLE_SIZE))
+	    		return;
 	    }
 	}
-	printf("mapped %ld Megabytes of high memory at 0x8000000000\n", (vh - 0x8000000000)/(1024 * 1024));
+	printf("mapped %ld Megabytes of memory\n", (total_hi)/(1024 * 1024));
 }
 

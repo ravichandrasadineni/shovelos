@@ -12,10 +12,6 @@ __asm__(".global enter_long_mode   \n"
         "  push %ebp               \n"
 		"  mov  %esp, %ebp         \n"
 
-//		"  push $msg            \n"
-//		"  call putndec         \n" // progress marker. delete me
-//		"  pop  %eax            \n"
-
 		"  mov $0xa0, %eax   \n"    // Set PAE and PGE
 		"  mov %eax,  %cr4   \n"
 
@@ -28,27 +24,26 @@ __asm__(".global enter_long_mode   \n"
 		"  or $0x00000100, %eax  \n"
 		"  wrmsr                \n" // 	Enable Long Mode
 
+
+
 		"  movl %cr0,%ebx		\n" //	Activate long mode
 		"  orl  $0x80000001, %ebx  \n" //	by enabling paging and protection simultaneously
 		"  movl %ebx, %cr0       \n"	//	skipping protected mode entirely
 
-//		"  call load_gdt        \n" //	load global descriptor table
-		"    lgdt gdt_reg   \n"
+		"    movw gdt_reg, %eax \n"
+		"    lgdt (%eax)   \n"
 
-//		"  push $msg            \n"
-//	"  call putndec         \n" // progress marker. delete me
-///		"  pop  %eax                \n"
-
-		"  ljmp $8, $long_main  \n" // long jump to long mode (code segment descriptor at offset 8)
+		"  jmp $8, $long_main  \n" // long jump to long mode (code segment descriptor at offset 8)
 
 		"  pop %ebp          \n"
 		"  ret               \n"
 
-		"long_hello:                  \n"
-		".asciz \"HELLO LONG MODE\"   \n"
-		"long_main:                   \n"
+//		".code64 \n"
 		"  cli                        \n"
-		"  jmp   long_main            \n"
-		"  push $long_hello           \n"
-		"  jmp   halt                 \n");
+		"long_main:                   \n"
+	//	" movl $16, %eax              \n"
+	//	" movl %eax, %ds              \n"
+//		"  push $msg                 \n"
+//		"  call halt                  \n"
+		"  jmp   long_main            \n");
 
