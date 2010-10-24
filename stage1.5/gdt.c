@@ -8,11 +8,6 @@
 
 struct GDT_REG *gdt_reg = 0;
 
-__asm__(".global load_gdt   \n"
-		"load_gdt:          \n"
-		"    lgdt gdt_reg   \n"
-		"    ret");
-
 void setup_gdt() {
 
 	uint64_t *gdt_base = 0;
@@ -26,7 +21,7 @@ void setup_gdt() {
 
 	gdt_reg->size = 8 * 3; /* space for null, code and data descriptors */
 	gdt_base      = (uint64_t*)zalloc(8 * 3);
-	gdt_reg->base = gdt_base;
+	gdt_reg->base = (int)gdt_base;
 
 	cs = (struct GDT_CS*)gdt_base+1;
 	ds = (struct GDT_DS*)gdt_base+2;
@@ -42,8 +37,5 @@ void setup_gdt() {
 	/*** DATA DESCRIPTOR ***/
 	ds->type = 2; /*** data segment ***/
 	ds->P    = 1; /*** present ***/
-
-	for(int i=0; i<3; i++)
-		printf("gdt[%d] = 0x%lx\n",i, gdt_base[i]);
 }
 

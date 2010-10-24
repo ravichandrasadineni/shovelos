@@ -44,7 +44,6 @@ struct GDT_REG {
 } __attribute__((packed));
 
 void setup_gdt();
-void load_gdt();
 
 #endif /*** __GDT_H ***/
 
