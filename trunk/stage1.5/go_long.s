@@ -8,6 +8,7 @@
 
 .global enter_long_mode
 .global return_from_long_mode
+.global real_stack
 
 real_stack:
   .long 0
