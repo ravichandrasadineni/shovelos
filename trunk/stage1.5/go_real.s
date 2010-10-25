@@ -12,7 +12,7 @@ exit_long_mode:
   push $8
   xorq %rcx,%rcx
   mov $compat_mode, %ecx
-  push rcx
+  push %rcx
   retf
 compat_mode:
 
@@ -26,9 +26,13 @@ compat_mode:
   mov real_stack, %esp
 
   #Disable Paging and protection
-    movl %cr0, %eax
-    andl $0x7FFFFFFE, %eax
-    mov %eax, %cr0
+    movq %cr0, %rax
+    andq $0x7FFFFFFE, %rax
+    movq %rax, %cr0
+
+#    movl %cr0,%ebx
+#    orl  $0x80000001, %ebx
+#    movl %ebx, %cr0
 
   #Deactivate Long Mode
     movl $0xc0000080, %ecx # EFER MSR number.
@@ -36,6 +40,7 @@ compat_mode:
     btc $8, %eax
     wrmsr
 
+.code16
   # Jump back to realmode code
-    ljmp $0, $return_from_long_mode
+    jmp return_from_long_mode
 
