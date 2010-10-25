@@ -7,6 +7,7 @@
 #include "gdt.h"
 #include "print.h"
 #include "mode.h"
+#include "alloc.h"
 
 int enable_a20_line();
 
@@ -17,8 +18,12 @@ void __attribute__((noreturn))
 	for(;;);
 }
 
+extern int _heap_start;
+
 void __attribute__((noreturn))
   cmain() {
+
+  _heap_start = (&_heap_start)+1;
 
   cls();
 
@@ -38,7 +43,7 @@ void __attribute__((noreturn))
 
   setup_gdt();
 
-  printf("FreeMem 0x%x\n", 0xffff - alloc(0));
+  printf("FreeMem 0x%x\n", 0xffff - (int)alloc(0));
 
   //enter_long_mode();
 

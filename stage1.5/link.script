@@ -38,6 +38,7 @@ SECTIONS
 	_heap_start = .;
 	SHORT(. + 0x04);
 	SHORT(0x0000);
+	SHORT(0x0000);
   }
 
 	/DISCARD/ :
