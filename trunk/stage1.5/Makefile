@@ -1,36 +1,49 @@
 
+LONG_OBJS = go_real.long.o
  
-OBJS = entry.o main.o print.o mmap.o a20.o alloc.o mem.o math64.o bios_disk.o pt.o gdt.o go_long.o 
-#go_real.o
+REAL_OBJS = entry.real.o \
+		main.real.o \
+		print.real.o \
+		mmap.real.o \
+		a20.real.o \
+		alloc.real.o \
+		mem.real.o \
+		math64.real.o \
+		bios_disk.real.o \
+		pt.real.o \
+		gdt.real.o \
+		go_long.real.o 
 
 .PHONY: all clean
 
 all : stage1.5.bin
 
+# Convert an elf to a flat
 %.bin : %.elf
 	objcopy -O binary $< $@
 
+# Link real and long mode objects into an elf.
 stage1.5.elf : $(OBJS) link.script
-	$(LD) -Map link.map -melf_i386 -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o stage1.5.elf.tmp $(OBJS)
-	objcopy -O elf64-x86-64 stage1.5.elf.tmp
-	gcc -c -ffreestanding -nostdinc -o go_real.o go_real.s
-	$(LD) -Map link.map -melf_x86_64 -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o stage1.5.elf stage1.5.elf.tmp
-	# go_real.o
-#	$(LD) -Map link.map -melf_i386 -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o stage1.5.elf stage1.5.elf.tmp
-#	$(LD) -Map link.map -melf_x86_64 -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o stage1.5.elf $(OBJS)
+	$(LD) -Map link.map -melf_i386 -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o stage1.5.elf $(REAL_OBJS) $(LONG_OBJS)
 	
+# Compile a real-mode source file.
+%.real.o : %.c
+	gcc -c -std=c99 -m32 -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc -o $@ $<
+
+# Compile a long-mode source file.
+%.long.o : %.c
+	gcc -c -std=c99 -m64 -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc -o $@ $<
+
+# Assemble a real-mode object.
+%.real.o : %.s
+	gcc -c -m32 -ffreestanding -o $@ $<
+
+# Assemble a long-mode object.
+%.long.o : %.s
+	gcc -c -m64 -ffreestanding -o $@ $<
+
 clean:
 	rm -f *~
 	rm -f *.o
 	rm -f stage1.5.elf
 	rm -f stage1.5.bin
-
-%.o : %.c
-	gcc -c -std=c99 -m32 -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc -o $@ $<
-#	objcopy -O elf64-x86-64 $@
-
-
-%.o : %.s
-	gcc -c -std=c99 -m32 -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc -o $@ $<
-#	objcopy -O elf64-x86-64 $@
-
