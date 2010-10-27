@@ -30,10 +30,6 @@ compat_mode:
     andq $0x7FFFFFFE, %rax
     movq %rax, %cr0
 
-#    movl %cr0,%ebx
-#    orl  $0x80000001, %ebx
-#    movl %ebx, %cr0
-
   #Deactivate Long Mode
     movl $0xc0000080, %ecx # EFER MSR number.
     rdmsr
