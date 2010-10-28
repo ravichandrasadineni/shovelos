@@ -18,7 +18,7 @@ void *alloc(unsigned short size) {
 	int  sp = read_sp();
 
 	if(_heap_start + size >= sp) {
-		printf("alloc(0x%x) err! heap=0x%x, stack=0x%x\n",size, _heap_start, sp);
+		printf("alloc(0x%x) err! heap(0x%x)=0x%x, stack=0x%x\n",size, &_heap_start,_heap_start, sp);
 		halt("");
 	}
 

@@ -23,11 +23,10 @@ extern int _heap_start;
 void __attribute__((noreturn))
   cmain() {
 
-  _heap_start = (&_heap_start)+1;
+	alloc(0); //delete me
 
+//  _heap_start = (&_heap_start)+1;
   cls();
-
-  alloc(0); //delete me
 
   puts("ShovelOS Stage 1.5\n");
 
