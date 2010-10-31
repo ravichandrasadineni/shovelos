@@ -8,30 +8,43 @@
 /*** global descriptor ( code segment ) ***/
 struct GDT_CS {
 
-	uint8_t _ignored1[5];    /* 40 bits */
-	unsigned _ignored2 : 2;  /*  2 bits */
+	unsigned short seg_lim15_0; 	  /* 16 bits */
+	unsigned short seg_base15_0;	  /* 16 bits */
+	unsigned char seg_base23_16; 	  /*  8 bits */
+
+	unsigned _ignored2 : 1;  /*  1 bits */
+	unsigned R         : 1;  /*  1 bits */
 	unsigned C         : 1;  /*  1 bits */
 	unsigned type      : 2;  /*  2 bits */
 	unsigned DPL       : 2;  /*  2 bits */
 	unsigned P         : 1;  /*  1 bits */
-	unsigned _ignored3 : 5;  /*  5 bits */
+	unsigned seg_lim19_16  : 4;   /*  4 bits */
+	unsigned _ignored3 : 1;  /*  1 bits */
 	unsigned L         : 1;  /*  1 bits */
 	unsigned D         : 1;  /*  1 bits */
-	unsigned _ignored4 : 9;  /*  9 bits */
+	unsigned _ignored4 : 1;  /*  1 bits */
+	unsigned char seg_base31_24; /* 8 bits */
 
 } __attribute__((packed));
 
 /*** global descriptor ( data segment ) ***/
 struct GDT_DS {
 
-	uint8_t _ignored1[5];    /* 40 bits */
+	unsigned short seg_lim15_0;  	  /* 16 bits */
+	unsigned short seg_base15_0; 	  /* 16 bits */
+	unsigned char seg_base23_16; 	  /*  8 bits */
 
-	unsigned _ignored2 : 3;  /*  3 bits */
+	unsigned _ignored2 : 1;  /*  1 bits */
+	unsigned W : 1;  /*  1 bits */
+	unsigned _ignored3 : 1;  /*  1 bits */
 	unsigned type      : 2;  /*  2 bits */
-	unsigned _ignored3 : 2;  /*  2 bits */
+	unsigned _ignored4 : 2;  /*  2 bits */
 
 	unsigned P         : 1;  /*  1 bits */
-	unsigned _ignored4 : 16; /* 16 bits */
+	unsigned seg_lim19_16  : 4;   /*  4 bits */
+	unsigned _ignored5 : 4;  /*  4 bits */
+
+	unsigned char seg_base31_24; /* 8 bits */
 
 } __attribute__((packed));
 

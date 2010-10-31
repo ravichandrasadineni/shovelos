@@ -24,6 +24,10 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
 	struct PDPE  *pdpe;
 	struct PDE   *pde;
 
+#if defined(DEBUG)
+	printf("map 0x%lx -> 0x%lx\n",virt, phy);
+#endif
+
 	if(pml4e == 0) {
 		g_pmle4 =
 		pml4e	= (struct PML4E *)zalloc_align(PAGE_TABLE_ALIGNLENT, PAGE_TABLE_SIZE * sizeof(struct PML4E));
