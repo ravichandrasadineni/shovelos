@@ -161,9 +161,11 @@ int puts(const char *s) {
       write a number to the screen, in hex
 ***********************************************************************/
 int putnhex(uint64_t n, int longmode) {
+#if(DEBUG)
     short s;         // shift
     for(s=longmode ? 60 : 28; s>=0; s-=4)
         putc(num[(n>>s)&15]);
+#endif
     return 8;
 }
 
@@ -172,6 +174,7 @@ int putnhex(uint64_t n, int longmode) {
       write an unsigned number to the screen, in dec
 ***********************************************************************/
 int putndecu(uint64_t n) {
+#if(DEBUG)
 	uint64_t   s=1000000000;
 	s          *=1000000000; // s = 100000000000000000 generates compiler warning.
     short h;         	  // digit
@@ -182,6 +185,8 @@ int putndecu(uint64_t n) {
             putc(num[h]);
         }
     return l;
+#endif
+    return 0;
 }
 
 /***********************************************************************

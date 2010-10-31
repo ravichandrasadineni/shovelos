@@ -32,6 +32,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
  *
  *		This code would normally be linked in from libgcc.a. */
 
+#if defined(DEBUG)
 
 #include "16bitreal.h"
 #include "inttypes.h"
@@ -321,4 +322,6 @@ __umoddi3 (UDWtype u, UDWtype v)
 
   return w;
 }
+
+#endif /*** DEBUG ***/
 

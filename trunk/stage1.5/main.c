@@ -23,18 +23,11 @@ extern int _heap_start;
 void __attribute__((noreturn))
   cmain() {
 
-	alloc(0); //delete me
-
-//  _heap_start = (&_heap_start)+1;
   cls();
 
   puts("ShovelOS Stage 1.5\n");
 
-  alloc(0); //delete me
-
   enable_a20_line();
-
-  alloc(0); //delete me
 
   read_mmap();
 
@@ -42,9 +35,11 @@ void __attribute__((noreturn))
 
   setup_gdt();
 
-  printf("FreeMem 0x%x\n", 0xffff - (int)alloc(0));
+  himem();
 
-  //enter_long_mode();
+#if defined(DEBUG)
+  printf("FreeMem 0x%x\n", 0xffff - (int)alloc(0));
+#endif
 
   halt("HALTING...");
 }
