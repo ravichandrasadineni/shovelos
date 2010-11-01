@@ -4,7 +4,6 @@
 #include "mmap.h"
 #include "inttypes.h"
 #include "pt.h"
-#include "gdt.h"
 #include "print.h"
 #include "mode.h"
 #include "alloc.h"
@@ -32,8 +31,6 @@ void __attribute__((noreturn))
   read_mmap();
 
   setup_pt();
-
-  setup_gdt();
 
   himem();
 

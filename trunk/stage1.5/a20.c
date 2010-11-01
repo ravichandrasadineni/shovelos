@@ -47,7 +47,7 @@ int a20_enable_bios();
 __asm__(
 
     "a20_enable_bios:\n"
-        "movl $0x2401, %eax    \n"
+        "movl $0x2401, %eax   \n"
 		"int $0x15            \n"
 		"movl $1, %eax        \n"
 		"jnc .success         \n"

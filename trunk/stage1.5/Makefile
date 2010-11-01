@@ -15,7 +15,6 @@ SRC32_C = main.c \
 		  mem.c \
 		  bios_disk.c \
 		  pt.c \
-		  gdt.c \
 		  math64.c
 
 OBJ64=$(SRC64_S:.s=.64.o) $(SRC64_C:.c=.64.o)
@@ -30,7 +29,7 @@ stage1.5.elf : $(OBJ64) $(OBJ32) link.script
 	$(LD) -s -Map link.map -static -nodefaultlibs -nostdlib --nmagic --oformat elf32-i386 -melf_i386 -Tlink.script -o stage1.5.elf $(OBJ64) $(OBJ32)
 	
 %.32.o : %.c 
-	gcc -c -std=c99 -m32 -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc -o $@ $<
+	gcc -c -DDEBUG=1 -std=c99 -m32 -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc -o $@ $<
 	
 %.64.o : %.c
 	gcc -c -std=c99 -m64 -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc -o $@ $<
