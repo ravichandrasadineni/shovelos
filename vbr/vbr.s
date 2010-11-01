@@ -106,7 +106,7 @@ next_sig:
   ###############################################################
   movw $jmpstr, %si       # Goodbye message
   call puts
-  ljmp $0x07e0, $0x0100   # JUMP to newly loaded Stage 1.5
+  ljmp $0x0000, $0xb000   # JUMP to newly loaded Stage 1.5
 
   ###############################################################
   ### ERROR - REPORT IT AND HALT                              ###

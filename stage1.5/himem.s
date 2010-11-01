@@ -16,7 +16,7 @@ himem:
   mov $0xa0, %eax							# Set PAE and PGE
   mov %eax,  %cr4
 
-  movl g_pmle4, %edx						# Load page tables
+  movl $_pml4e, %edx						# Load page tables
   movl %edx,    %cr3
 
   mov $0xC0000080, %ecx						# Enable long mode
@@ -28,7 +28,7 @@ himem:
   orl  $0x80000001, %ebx					# to enter compatability mode.
   movl %ebx, %cr0
 
-  movl gdt_reg, %eax						# Load GDT
+  movl $_gdt_reg, %eax						# Load GDT
   lgdt (%eax)
 
   jmp $8, $long_main						# jump to long mode

@@ -4,19 +4,39 @@ SECTIONS
 {
 	. = 0x7e00;
 
-	.sig : AT(0x7e00)
+	.head : AT(0x7e00)
 	{
-		SHORT(0x6853); /* "hS" */
-		SHORT(0x766f); /* "vo" */
-		SHORT(0x7453); /* "tS" */
-		SHORT(0x6761); /* "ga" */
-		SHORT(0x3165); /* "1e" */
-		SHORT(0x352E); /* "5." */
+	    /* ascii "ShovStage1.5" */
+	    LONG(0x766f6853);
+		LONG(0x67617453);
+		LONG(0x352E3165);
+		
+		/* 64bit GDT */
+		LONG(0x00000000); LONG(0x00000000); /* null descriptor */
+		LONG(0x0000FFFF); LONG(0x002F9A00); /* long mode code descriptor */
+		LONG(0x0000FFFF); LONG(0x000F9A00); /* compatibility mode code descriptor */
+		LONG(0x0000FFFF); LONG(0x000F9200); /* data segment descriptor */
+		
+		/***  64bit GDT register ***/
+		_gdt_reg = .;		 /*** GDT register address ***/
+		SHORT(0x20);		 /*** size of GDT (8bytes * 4 entries) ***/
+		LONG(. - 0x22);      /*** address of GDT (lsb) ***/
+		LONG(0x00000000);	 /*** address of GDT (msb) ***/
+		
+		/*** allocate memory for 64-bit page tables ***/
+		. = ALIGN(0x1000);
+		_pml4e = .;
+		. += 0x1000;
+		_pdpe = .;
+		. += 0x1000;
+		_pde = .;
+		. += 0x1000;
 	}
 
-    . = 0x7f00;
+    
+    . = 0xb000;
 
-	.text : AT(0x7f00)
+	.text : AT(0xb000)
 	{
 		_text_start = .;
 		*(.text);
@@ -38,8 +58,7 @@ SECTIONS
   {
 	_heap_start = .;
 	SHORT(. + 0x04);
-	SHORT(0x0000);
-	SHORT(0x0000);
+	LONG(0x00000000);
   }
 
 	/DISCARD/ :

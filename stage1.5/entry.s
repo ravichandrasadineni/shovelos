@@ -17,3 +17,6 @@ main:
 
 
 
+//	movl $0x2401, %eax        # enable a20
+//	int $0x15
+
