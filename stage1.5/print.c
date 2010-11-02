@@ -70,7 +70,7 @@ __asm__("scroll:\n"
             "rep  \n"                         /* 24 lines, times 80 columns */
             "movsw\n"                         /* scroll! */
             "movw $0x0f20, %ax\n"             /* white on black space */
-            "movl $0x00003160, %edi\n"        /* dst = start of line 79 */
+            "movl $0x00000f00, %edi\n"        /* dst = start of line 24 */
             "movl $0x00000050, %ecx\n"
             "rep  \n"                         /* 80 columns */
             "stosw\n"                         /* blank last line */
