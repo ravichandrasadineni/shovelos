@@ -9,8 +9,7 @@ SRC32_S = entry.s \
 # 32bit c source
 SRC32_C = main.c \
 		  print.c \
-	      mmap.c \
-		  a20.c \
+              mmap.c \
 		  alloc.c \
 		  mem.c \
 		  bios_disk.c \

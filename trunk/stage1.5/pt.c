@@ -11,7 +11,6 @@
 #include "alloc.h"
 #include "print.h"
 
-//struct PML4E *g_pmle4 = 0;
 extern struct PML4E _pml4e;
 extern struct PDPE _pdpe;
 extern struct PDP _pde;
@@ -35,31 +34,31 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
 
 	pdpe = pt_get_pdpe(pml4e);
 	if(pdpe == 0) {
-		pml4e->bits.PageDirectoryPtr52 = (int)(pdpe = (struct PDPE*)&_pdpe);
-		pml4e->bits.attr.P   = 1;  // present
-		pml4e->bits.attr.RW  = 1;  // writable
-		pml4e->bits.attr.US  = 1;  // user
-		pml4e->bits.attr.PWT = 1;  // write through
+		pml4e->bits.PageDirectoryPtr52  = (int)(pdpe = (struct PDPE*)&_pdpe);
+		pml4e->bits.PageDirectoryPtr52 |=	PT_PRESENT_FLAG 		|
+								PT_WRITABLE_FLAG		|
+								PT_USER_FLAG		|
+								PT_WRITE_THROUGH_FLAG 	;
 	}
 	pdpe += 0x1ff & (virt >> 30);
 
 	pde = pt_get_pde(pdpe);
 	if(pde == 0) {
-		pdpe->bits.PageDirectory52 = (int)(pde = (struct PDE*)&_pde);
-		pdpe->bits.attr.P  = 1; // present
-		pdpe->bits.attr.RW = 1; // writable
-		pdpe->bits.attr.US  = 1;  // user
-		pdpe->bits.attr.PWT = 1;  // write through
+		pdpe->bits.PageDirectory52  = (int)(pde = (struct PDE*)&_pde);
+		pdpe->bits.PageDirectory52 |=	PT_PRESENT_FLAG 		|
+							PT_WRITABLE_FLAG		|
+							PT_USER_FLAG		|
+							PT_WRITE_THROUGH_FLAG 	;
 	}
 	pde += 0x1ff & (virt >> 21);
 
-	pde->bits.PhysicalPage52 = phy;
-	pde->bits.attr.P  = 1; // present
-	pde->bits.attr.RW = 1; // writable
-	pde->bits.attr.PS = 1; // terminal table
-	pde->bits.attr.G  = 1; // global
-	pde->bits.attr.US  = 1;  // user
-	pde->bits.attr.PWT = 1;  // write through
+	pde->bits.PhysicalPage52  = phy				|
+					    PT_PRESENT_FLAG 		|
+					    PT_WRITABLE_FLAG		|
+					    PT_USER_FLAG			|
+					    PT_WRITE_THROUGH_FLAG 	|
+					    PT_TERMINAL_FLAG      	|
+					    PT_GLOBAL_FLAG        	;
 }
 
 
