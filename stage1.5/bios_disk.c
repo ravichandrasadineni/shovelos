@@ -110,6 +110,8 @@ int disk_read_sector( unsigned char bios_drive, unsigned long long sector, void 
 	return extended_read_sectors_from_drive(bios_drive, &dap);
 }
 
+
+
 /******************************************************************************************************
  *  disk_read
  *     read absolute disk address to given address
@@ -118,7 +120,6 @@ int disk_read_sector( unsigned char bios_drive, unsigned long long sector, void 
  *           3) read to address ( in data segment )
  *     returns 0 on success, non-zero on error.
  */
-
 #if(SUPPORT_RANDOM_READS)
 
 static char *buffer = 0;
