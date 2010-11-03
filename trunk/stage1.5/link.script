@@ -4,12 +4,17 @@ SECTIONS
 {
 	. = 0x7e00;
 
+      /*** file magick, config data, hard coded GDT, and pre-allocated aligned space for page tables ***/
 	.head : AT(0x7e00)
 	{
-	    /* ascii "ShovStage1.5" */
-	    LONG(0x766f6853);
+	      /* file magick. ascii "ShovStage1.5" */
+	      LONG(0x766f6853);
 		LONG(0x67617453);
 		LONG(0x352E3165);
+
+		/*** root sector (CONFIGURED BY INSTALLER - 0ffset 0xc) (default first partition) ****/
+            _root_sector = .;
+            LONG(0x0040); 
 		
 		/* 64bit GDT */
 		LONG(0x00000000); LONG(0x00000000); /* null descriptor */
@@ -18,9 +23,9 @@ SECTIONS
 		LONG(0x0000FFFF); LONG(0x000F9200); /* data segment descriptor */
 		
 		/***  64bit GDT register ***/
-		_gdt_reg = .;		 /*** GDT register address ***/
-		SHORT(0x20);		 /*** size of GDT (8bytes * 4 entries) ***/
-		LONG(. - 0x22);      /*** address of GDT (lsb) ***/
+		_gdt_reg = .;	 /*** GDT register address ***/
+		SHORT(0x20);	 /*** size of GDT (8bytes * 4 entries) ***/
+		LONG(. - 0x22);    /*** address of GDT (lsb) ***/
 		LONG(0x00000000);	 /*** address of GDT (msb) ***/
 		
 		/*** allocate memory for 64-bit page tables ***/
@@ -32,10 +37,8 @@ SECTIONS
 		_pde = .;
 		. += 0x1000;
 	}
-
     
-    . = 0xb000;
-
+      . = 0xb000;
 	.text : AT(0xb000)
 	{
 		_text_start = .;
@@ -58,7 +61,7 @@ SECTIONS
   {
 	_heap_start = .;
 	SHORT(. + 0x04);
-	LONG(0x00000000);
+	SHORT(0x00000000);
   }
 
 	/DISCARD/ :
