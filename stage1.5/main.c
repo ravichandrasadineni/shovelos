@@ -8,8 +8,6 @@
 #include "mode.h"
 #include "alloc.h"
 
-int enable_a20_line();
-
 void __attribute__((noreturn))
   halt(char *msg) {
 
@@ -25,8 +23,6 @@ void __attribute__((noreturn))
   cls();
 
   puts("ShovelOS Stage 1.5\n");
-
-  enable_a20_line();
 
   read_mmap();
 
