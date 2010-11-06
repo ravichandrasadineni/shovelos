@@ -12,29 +12,31 @@
 #include "print.h"
 
 extern struct PML4E _pml4e;
-extern struct PDPE _pdpe;
-extern struct PDP _pde;
+extern struct PDPE _pdpe_ident;
+extern struct PDE _pde_ident;
+extern struct PDPE _pdpe_hi;
+extern struct PDE _pde_hi;
 
 /************************************************************************************************************
  * Create a 64bit virtual -> physical page mapping
  * takes 1) virtual page base ( PAGE_SIZE aligned )
  *       2) physical page base ( PAGE_SIZE aligned )
  */
-void pt_map_page(uint64_t virt, uint64_t phy) {
+static void pt_map_page(uint64_t virt, uint64_t phy, struct PDPE* pdpe_base, struct PDE* pde_base) {
 
 	struct PML4E *pml4e = &_pml4e;
 	struct PDPE  *pdpe;
 	struct PDE   *pde;
 
-#if defined(DEBUG)
-	printf("map 0x%lx -> 0x%lx\n",virt, phy);
+#ifdef DEBUG
+	printf("pt_map_page 0x%lx -> 0x%lx\n",virt,phy);
 #endif
 
 	pml4e += 0x1ff & (virt >> 39);
 
 	pdpe = pt_get_pdpe(pml4e);
 	if(pdpe == 0) {
-		pml4e->bits.PageDirectoryPtr52  = (int)(pdpe = (struct PDPE*)&_pdpe);
+		pml4e->bits.PageDirectoryPtr52  = (int)(pdpe = pdpe_base);
 		pml4e->bits.PageDirectoryPtr52 |=	PT_PRESENT_FLAG 		|
 								PT_WRITABLE_FLAG		|
 								PT_USER_FLAG		|
@@ -44,7 +46,7 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
 
 	pde = pt_get_pde(pdpe);
 	if(pde == 0) {
-		pdpe->bits.PageDirectory52  = (int)(pde = (struct PDE*)&_pde);
+		pdpe->bits.PageDirectory52  = (int)(pde = pde_base);
 		pdpe->bits.PageDirectory52 |=	PT_PRESENT_FLAG 		|
 							PT_WRITABLE_FLAG		|
 							PT_USER_FLAG		|
@@ -70,8 +72,8 @@ void pt_map_page(uint64_t virt, uint64_t phy) {
  */
 void setup_pt() {
 
-	uint64_t vh = 0x0000000000   ; // virtual hi-mem address
-	uint64_t vl = 0x0000000000; // virtual lo-mem address
+	uint64_t vh = 0xFFFF800000000000; // virtual hi-mem address
+	uint64_t vl = 0x0000000000000000; // virtual lo-mem address
 	uint64_t pb = 0; // physical base
 	uint64_t pl = 0; // physical length
 	uint64_t total_hi = 0; // total hi-mem mapped.
@@ -105,16 +107,13 @@ void setup_pt() {
 
 	    	if(pb < 0x100000) {
 	    		/*** identity map low-mem ***/
-	    		pt_map_page(vl,pb);
+	    		pt_map_page(vl,pb,&_pdpe_ident,&_pde_ident);
 	    		vl += PAGE_SIZE;
 	    	}
 	    	else {
 
-	    		if(vh==0)
-	    			vh = vl;
-
 	    		/*** map high-mem ***/
-	    		pt_map_page(vh,pb);
+	    		pt_map_page(vh,pb,&_pdpe_hi,&_pde_hi);
 	    		vh += PAGE_SIZE;
 	    	}
 	    	pb += PAGE_SIZE;

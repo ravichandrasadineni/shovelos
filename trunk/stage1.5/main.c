@@ -1,11 +1,8 @@
 
 #include "16bitreal.h"
-
-#include "mmap.h"
 #include "inttypes.h"
 #include "pt.h"
 #include "print.h"
-#include "mode.h"
 #include "alloc.h"
 
 void __attribute__((noreturn))
@@ -23,8 +20,6 @@ void __attribute__((noreturn))
   cls();
 
   puts("ShovelOS Stage 1.5\n");
-
-  read_mmap();
 
   setup_pt();
 
