@@ -1,6 +1,6 @@
 
 .PHONY: all clean
-all : stage1.5.bin
+all : stage1.5.ext2.bin
 
 # 32bit assembler source
 SRC32_S = entry.s \
@@ -24,8 +24,8 @@ OBJ32=$(SRC32_S:.s=.32.o) $(SRC32_C:.c=.32.o)
 	objcopy -O binary $< $@
 
 # Link real and long mode objects into an elf.
-stage1.5.elf : $(OBJ64) $(OBJ32) link.script
-	$(LD) -s -Map link.map -static -nodefaultlibs -nostdlib --nmagic --oformat elf32-i386 -melf_i386 -Tlink.script -o stage1.5.elf $(OBJ64) $(OBJ32)
+stage1.5.ext2.elf : $(OBJ64) $(OBJ32) link.script
+	$(LD) -s -Map link.map -static -nodefaultlibs -nostdlib --nmagic --oformat elf32-i386 -melf_i386 -Tlink.script -o $@ $(OBJ64) $(OBJ32)
 	
 %.32.o : %.c 
 	gcc -c -DDEBUG=1 -std=c99 -m32 -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc -o $@ $<
@@ -42,7 +42,8 @@ stage1.5.elf : $(OBJ64) $(OBJ32) link.script
 clean:
 	rm -f *~
 	rm -f *.o
-	rm -f stage1.5.elf
-	rm -f stage1.5.bin
+	rm -f *.elf
+	rm -f *.bin
+
 	
 	
