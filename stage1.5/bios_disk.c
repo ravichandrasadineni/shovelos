@@ -120,8 +120,6 @@ int disk_read_sector( unsigned char bios_drive, unsigned long long sector, void 
  *           3) read to address ( in data segment )
  *     returns 0 on success, non-zero on error.
  */
-#if(SUPPORT_RANDOM_READS)
-
 static char *buffer = 0;
 static int bps = 0;
 
@@ -161,5 +159,5 @@ int disk_read( unsigned char bios_drive, unsigned long long abs_address, unsigne
 	}
 	return 0;
 }
-#endif /*** SUPPORT_RANDOM_READS ***/
+
 
