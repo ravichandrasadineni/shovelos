@@ -100,6 +100,10 @@ int disk_read_sector( unsigned char bios_drive, unsigned long long sector, void 
 
 	static struct disk_address_packet dap;
 
+#ifdef DEBUG
+	printf("disk_read_sector(0x%x,0x%lx,0x%x\n",bios_drive,sector,dst);
+#endif
+
 	dap.packet_size = 0x10;
 	dap.reserved0 = dap.reserved1 = 0;
 	dap.sectors = 1;
@@ -123,12 +127,15 @@ int disk_read_sector( unsigned char bios_drive, unsigned long long sector, void 
 static char *buffer = 0;
 static int bps = 0;
 
-int disk_read( unsigned char bios_drive, unsigned long long abs_address, unsigned short abs_size, void* dst) {
+int disk_read(unsigned long long abs_address, unsigned short abs_size, void* dst) {
 
 	int ret;
 
 	if(!bps)
-		bps = bytes_per_sector(bios_drive);
+		bps = bytes_per_sector(_root_disk);
+
+    // absolute partition address to absolute disk address
+	abs_address += _root_sector * bps;
 
 	while(abs_size) {
 
@@ -136,20 +143,24 @@ int disk_read( unsigned char bios_drive, unsigned long long abs_address, unsigne
 		unsigned short offset     = abs_address % bps;
 		unsigned short thisread   = bps - offset;
 
-		if(offset || (abs_size < bps)) {
+		if(offset || (abs_size > bps)) {
 			// not reading a whole sector, we need to buffer, and selectively copy.
 
 			if(!buffer)
 				buffer = (char*)alloc(bps);
 
-			if((ret = disk_read_sector( bios_drive, sector, buffer )) != 0)
+			if((ret = disk_read_sector( _root_disk, sector, buffer )) != 0)
 				return ret;
 
+#ifdef DEBUG
+			printf("memcpy(0x%x, 0x%x + 0x%x, 0x%x)\n", dst, buffer , offset, thisread);
+			for(;;);
+#endif
 			memcpy(dst, buffer + offset, thisread);
 		}
 		else {
 			// reading exactly one sector, let the bios write directly to destination.
-			if((ret = disk_read_sector( bios_drive, sector, dst )) != 0)
+			if((ret = disk_read_sector( _root_disk, sector, dst )) != 0)
 				return ret;
 		}
 
@@ -159,5 +170,4 @@ int disk_read( unsigned char bios_drive, unsigned long long abs_address, unsigne
 	}
 	return 0;
 }
-
 

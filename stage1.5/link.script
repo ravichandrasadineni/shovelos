@@ -12,7 +12,11 @@ SECTIONS
 		  LONG(0x67617453);
 		  LONG(0x352E3165);
 
-		/*** root sector (CONFIGURED BY INSTALLER - 0ffset 0xc) (default first partition) ****/
+		/*** root disk (CONFIGURED BY INSTALLER - 0ffset 0xc) (default first disk) ****/
+            _root_disk = .;
+            SHORT(0x0080); 
+
+		/*** root sector (CONFIGURED BY INSTALLER - 0ffset 0xe) (default first partition) ****/
             _root_sector = .;
             LONG(0x0040); 
 		

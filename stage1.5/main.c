@@ -4,6 +4,7 @@
 #include "pt.h"
 #include "print.h"
 #include "alloc.h"
+#include "fs/ext2/ext2.h"
 
 void __attribute__((noreturn))
   halt(char *msg) {
@@ -21,9 +22,17 @@ void __attribute__((noreturn))
 
   puts("ShovelOS Stage 1.5\n");
 
-  setup_pt();
+  int isext2 = fs_is_ext2();
+  if(isext2 < 0)
+	  puts("DISK ERROR\n");
+  else if(isext2 > 0)
+	  puts("NOT EXT2\n");
+  else
+	  puts("EXT2 !!!\n");
 
-  himem();
+//  setup_pt();
+
+//  himem();
 
 #if defined(DEBUG)
   printf("FreeMem 0x%x\n", 0xffff - (int)alloc(0));

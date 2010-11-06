@@ -9,12 +9,13 @@ SRC32_S = entry.s \
 # 32bit c source
 SRC32_C = main.c \
 		  print.c \
-              mmap.c \
+          mmap.c \
 		  alloc.c \
 		  mem.c \
 		  bios_disk.c \
 		  pt.c \
-		  math64.c
+		  math64.c \
+		  fs/ext2/ext2.c
 
 OBJ64=$(SRC64_S:.s=.64.o) $(SRC64_C:.c=.64.o)
 OBJ32=$(SRC32_S:.s=.32.o) $(SRC32_C:.c=.32.o)
@@ -42,6 +43,7 @@ stage1.5.ext2.elf : $(OBJ64) $(OBJ32) link.script
 clean:
 	rm -f *~
 	rm -f *.o
+	rm -f */*/*.o
 	rm -f *.elf
 	rm -f *.bin
 
