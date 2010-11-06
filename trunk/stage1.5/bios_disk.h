@@ -43,5 +43,10 @@ struct ext_drive_param_buffer {
 	unsigned int           edd_ptr;
 };
 
+int disk_read( unsigned long long abs_address, unsigned short abs_size, void* dst);
+
+extern short _root_disk;
+extern int   _root_sector;
+
 #endif /*** __BIOS_DISK_H ***/
 
