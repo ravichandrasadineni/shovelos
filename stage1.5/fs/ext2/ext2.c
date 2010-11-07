@@ -10,16 +10,36 @@
 #include "../../bios_disk.h"
 #include "ext2.h"
 
-int fs_is_ext2() {
+static uint32_t ext2_block_size = 0;	/*** block size ***/
+static uint32_t ext2_bpg = 0;			/*** blocks per group ***/
+static uint32_t ext2_ipg = 0;			/*** i-nodes per group ***/
 
-    int magic = 0xFFFF;
+int fs_init() {
 
-    if(disk_read(EXT2_SUPERBLOCK_OFFSET + EXT2_SUPERBLOCK_MAGIC_OFFSET,  EXT2_SUPERBLOCK_MAGIC_SIZE, &magic) != 0)
-    	return -1; // DISK ERROR
+    int magic = 0;
 
-    if(magic != EXT2_SUPERBLOCK_MAGIC_VALUE)
-    	return 1; // NOT EXT2
+    disk_read(EXT2_SUPERBLOCK_OFFSET + EXT2_SB_SIG_OFFSET, EXT2_SB_SIG_SIZE, &magic);
+    disk_read(EXT2_SUPERBLOCK_OFFSET + EXT2_SB_BS_OFFSET,  EXT2_SB_BS_SIZE,  &ext2_block_size);
+    disk_read(EXT2_SUPERBLOCK_OFFSET + EXT2_SB_BPG_OFFSET, EXT2_SB_BPG_SIZE, &ext2_bpg);
+    disk_read(EXT2_SUPERBLOCK_OFFSET + EXT2_SB_IPG_OFFSET, EXT2_SB_IPG_SIZE, &ext2_ipg);
 
-    return 0; // FS IS EXT2
+    if(magic != EXT2_SB_SIG_VALUE)
+    	halt("cannot find ext2 formatted boot partition");
+
+    switch(ext2_block_size)
+    {
+    default:
+    case 0:
+    	ext2_block_size = 1024;
+    	break;
+    case 1:
+    	ext2_block_size = 1024 * 2;
+    	break;
+    case 2:
+    	ext2_block_size = 1024 * 4;
+    	break;
+    }
+
+    return 0; // SUCCESS
 }
 

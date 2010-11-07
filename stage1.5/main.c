@@ -6,13 +6,6 @@
 #include "alloc.h"
 #include "fs/ext2/ext2.h"
 
-void __attribute__((noreturn))
-  halt(char *msg) {
-
-	puts(msg);
-	for(;;);
-}
-
 extern int _heap_start;
 
 void __attribute__((noreturn))
@@ -22,13 +15,7 @@ void __attribute__((noreturn))
 
   puts("ShovelOS Stage 1.5\n");
 
-  int isext2 = fs_is_ext2();
-  if(isext2 < 0)
-	  puts("DISK ERROR\n");
-  else if(isext2 > 0)
-	  puts("NOT EXT2\n");
-  else
-	  puts("EXT2 !!!\n");
+  fs_init();
 
 //  setup_pt();
 
