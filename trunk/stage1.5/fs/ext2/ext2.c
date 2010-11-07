@@ -12,8 +12,9 @@
 
 int fs_is_ext2() {
 
-    short magic = 0xFFFF;
-    if(disk_read(512 + EXT2_SUPERBLOCK_OFFSET + EXT2_SUPERBLOCK_MAGIC_OFFSET,  EXT2_SUPERBLOCK_MAGIC_SIZE, &magic) != 0)
+    int magic = 0xFFFF;
+
+    if(disk_read(EXT2_SUPERBLOCK_OFFSET + EXT2_SUPERBLOCK_MAGIC_OFFSET,  EXT2_SUPERBLOCK_MAGIC_SIZE, &magic) != 0)
     	return -1; // DISK ERROR
 
     if(magic != EXT2_SUPERBLOCK_MAGIC_VALUE)

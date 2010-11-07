@@ -8,7 +8,7 @@
 #ifndef __STAGE_1_5_FS_EXT2_EXT2_H
 #define __STAGE_1_5_FS_EXT2_EXT2_H
 
-#define EXT2_SUPERBLOCK_OFFSET 			1024	/*** first super-block is 1024 into file-system ***/
+#define EXT2_SUPERBLOCK_OFFSET 			1024
 #define EXT2_SUPERBLOCK_SIZE   			1024
 #define EXT2_SUPERBLOCK_MAGIC_OFFSET	56
 #define EXT2_SUPERBLOCK_MAGIC_SIZE		2

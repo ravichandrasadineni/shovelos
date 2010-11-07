@@ -18,7 +18,7 @@ SECTIONS
 
 		/*** root sector (CONFIGURED BY INSTALLER - 0ffset 0xe) (default first partition) ****/
             _root_sector = .;
-            LONG(0x0040); 
+            LONG(0x003F); 
 		
 		/* 64bit GDT */
 		LONG(0x00000000); LONG(0x00000000); /* null descriptor */
