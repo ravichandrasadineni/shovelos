@@ -27,6 +27,9 @@ main:
     ljmp $0x0000, $cmain
 
 
-
-
-
+.globl halt
+halt:
+    add $4, %esp
+	call	puts
+.halt_loop:
+	jmp .halt_loop
