@@ -16,12 +16,12 @@
 #define ALIGN_UP(x)     ((x & (PAGE_TABLE_ALIGNLENT-1)) ? ALIGN_DOWN(x+PAGE_TABLE_ALIGNLENT) : x)
 
 
-#define PT_PRESENT_FLAG  	(1<<0)
-#define PT_WRITABLE_FLAG 	(1<<1)
-#define PT_USER_FLAG     	(1<<2)
+#define PT_PRESENT_FLAG  		(1<<0)
+#define PT_WRITABLE_FLAG 		(1<<1)
+#define PT_USER_FLAG     		(1<<2)
 #define PT_WRITE_THROUGH_FLAG	(1<<3)
-#define PT_TERMINAL_FLAG      (1<<7)
-#define PT_GLOBAL_FLAG        (1<<8)
+#define PT_TERMINAL_FLAG    	(1<<7)
+#define PT_GLOBAL_FLAG        	(1<<8)
 
 /*** Page map - level 4 offset table ***/
 struct PML4E {

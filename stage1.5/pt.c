@@ -38,9 +38,9 @@ static void pt_map_page(uint64_t virt, uint64_t phy, struct PDPE* pdpe_base, str
 	if(pdpe == 0) {
 		pml4e->bits.PageDirectoryPtr52  = (int)(pdpe = pdpe_base);
 		pml4e->bits.PageDirectoryPtr52 |=	PT_PRESENT_FLAG 		|
-								PT_WRITABLE_FLAG		|
-								PT_USER_FLAG		|
-								PT_WRITE_THROUGH_FLAG 	;
+											PT_WRITABLE_FLAG		|
+											PT_USER_FLAG			|
+											PT_WRITE_THROUGH_FLAG 	;
 	}
 	pdpe += 0x1ff & (virt >> 30);
 
@@ -48,9 +48,9 @@ static void pt_map_page(uint64_t virt, uint64_t phy, struct PDPE* pdpe_base, str
 	if(pde == 0) {
 		pdpe->bits.PageDirectory52  = (int)(pde = pde_base);
 		pdpe->bits.PageDirectory52 |=	PT_PRESENT_FLAG 		|
-							PT_WRITABLE_FLAG		|
-							PT_USER_FLAG		|
-							PT_WRITE_THROUGH_FLAG 	;
+										PT_WRITABLE_FLAG		|
+										PT_USER_FLAG			|
+										PT_WRITE_THROUGH_FLAG 	;
 	}
 	pde += 0x1ff & (virt >> 21);
 
