@@ -1,12 +1,9 @@
 
-
 #include "16bitreal.h"
 #include "bios_disk.h"
 #include "mem.h"
 #include "alloc.h"
 #include "print.h"
-
-#define SUPPORT_RANDOM_READS 0
 
 /******************************************************************************************************
  * int get_ds_reg
