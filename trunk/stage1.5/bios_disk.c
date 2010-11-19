@@ -29,8 +29,8 @@ __asm__("extended_read_drive_parameters:      \n"
 		"  pushl   %edx                       \n"
 		"  pushl   %esi                       \n"
 	    "  movb    $0x48,      %ah            \n"
-		"  movb    12(%esp),  %dl            \n" // parameter 1, bios drive
-		"  movw    16(%esp),  %si            \n" // parameter 2, ptr to result buffer
+		"  movb    12(%esp),  %dl             \n" // parameter 1, bios drive
+		"  movw    16(%esp),  %si             \n" // parameter 2, ptr to result buffer
 		"  int     $0x13                      \n" // call bios 13h
 	    "  xorl    %eax ,     %eax            \n" // clear return var
 		"  jnc     erdp.ret                   \n" // exit on no error
