@@ -6,8 +6,6 @@
 #include "alloc.h"
 #include "fs/ext2/ext2.h"
 
-extern int _heap_start;
-
 void __attribute__((noreturn))
   cmain() {
 
@@ -17,9 +15,9 @@ void __attribute__((noreturn))
 
   fs_init();
 
-//  setup_pt();
+  setup_pt();
 
-//  himem();
+  himem();
 
 #if defined(DEBUG)
   printf("FreeMem 0x%x\n", 0xffff - (int)alloc(0));
