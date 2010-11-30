@@ -16,4 +16,19 @@ void *memset(void* dst, int c, int size) {
 
 	return dst;
 }
+/***
+ * string compare:
+ * Takes two strings.
+ * returns non-zero if they differ.
+ */
+int strcmp(const char *s1, const char *s2) {
+
+	int index,compare;
+
+	for(index=0; s1[index] || s2[index]; index++)
+		if((compare = (s1[index] - s2[index])))
+			return compare;
+
+	return 0;
+}
 
