@@ -6,5 +6,7 @@ void *memcpy(void *dst,const void* src, int size);
 
 void *memset(void* dst, int c, int s);
 
+int strcmp(const char *s1, const char *s2);
+
 #endif /*** __MEM_H ***/
 
