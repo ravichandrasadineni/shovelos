@@ -4,15 +4,15 @@ SECTIONS
 {
 	. = 0x7e00;
 
-      /*** file magick, config data, hard coded GDT, and pre-allocated aligned space for page tables ***/
+      /*** file magick, config data, hard coded GDT ***/
 	.head : AT(0x7e00)
 	{
-	      /* file magick. ascii "ShovStage1.5" */
-	      LONG(0x766f6853);
-		  LONG(0x67617453);
-		  LONG(0x352E3165);
+	    /* file magick. ascii "ShovStage1.5" */
+            LONG(0x766f6853);
+            LONG(0x67617453);
+            LONG(0x352E3165);
 
-		/*** root disk (CONFIGURED BY INSTALLER - 0ffset 0xc) (default first disk) ****/
+            /*** root disk (CONFIGURED BY INSTALLER - 0ffset 0xc) (default first disk) ****/
             _root_disk = .;
             SHORT(0x0080); 
 
@@ -20,73 +20,63 @@ SECTIONS
             _root_sector = .;
             LONG(0x003F); 
 		
-		/* 64bit GDT */
-		LONG(0x00000000); LONG(0x00000000); /* null descriptor */
-		LONG(0x0000FFFF); LONG(0x002F9A00); /* long mode code descriptor */
-		LONG(0x0000FFFF); LONG(0x000F9A00); /* compatibility mode code descriptor */
-		LONG(0x0000FFFF); LONG(0x000F9200); /* data segment descriptor */
+            /* 64bit GDT */
+            LONG(0x00000000); LONG(0x00000000); /* null descriptor */
+            LONG(0x0000FFFF); LONG(0x002F9A00); /* long mode code descriptor */
+            LONG(0x0000FFFF); LONG(0x000F9A00); /* compatibility mode code descriptor */
+            LONG(0x0000FFFF); LONG(0x000F9200); /* data segment descriptor */
 		
-		/***  64bit GDT register ***/
-		_gdt_reg = .;	 /*** GDT register address ***/
-		SHORT(0x20);	 /*** size of GDT (8bytes * 4 entries) ***/
-		LONG(. - 0x22);    /*** address of GDT (lsb) ***/
-		LONG(0x00000000);	 /*** address of GDT (msb) ***/
-		
-		/*** available high memory ***/
-		_virt_high_start = .;
-		LONG(0x00000000);LONG(0x00000000);
-		_virt_high_end = .;
-		LONG(0x00000000);LONG(0x00000000);
-		
-		/*** allocate memory for 64-bit page tables ***/
-		. = ALIGN(0x1000);
-		_pml4e = .;
-		. += 0x1000;
-		_pdpe_ident = .;
-		. += 0x1000;
-		_pde_ident = .;
-		. += 0x1000;
-		_pdpe_hi = .;
-		. += 0x1000;
-		_pde_hi = .;
-		. += 0x1000;
-	}
-    
-      . = 0xd000;
+            /***  64bit GDT register ***/
+            _gdt_reg = .;	 /*** GDT register address ***/
+            SHORT(0x20);	 /*** size of GDT (8bytes * 4 entries) ***/
+            LONG(. - 0x22);      /*** address of GDT (lsb) ***/
+            LONG(0x00000000);	 /*** address of GDT (msb) ***/
+        }
+	
+        .data :
+        {
+            *(.bss);
+            *(.bss*);
+            *(.data);
+            *(.rodata);
+            *(.COMMON);
+
+            /*** allocate memory for 64-bit page tables ***/
+            . = ALIGN(0x1000);
+            _pml4e = .;
+            . += 0x1000;
+            _pdpe_ident = .;
+            . += 0x1000;
+            _pde_ident = .;
+            . += 0x1000;
+            _pdpe_hi = .;
+            . += 0x1000;
+            _pde_hi = .;
+            . += 0x1000;
+        }
+	
+        . = 0xd000;
 	.text : AT(0xd000)
 	{
-		_text_start = .;
-		*(.text);
-		_text_end = .;
+            *(.text);
 	}
 
-	.data : 
-	{
-		_data_start = .;
-		*(.bss);
-		*(.bss*);
-		*(.data);
-		*(.rodata);
-		*(.COMMON);
-		_data_end = .;
-	}
-
-  .heap : 
-  {
-	_heap_start = .;
-	SHORT(. + 0x04);
-	SHORT(0x00000000);
-  }
+        .heap : 
+        {
+	    _heap_start = .;
+            SHORT(. + 0x04);
+            SHORT(0x00000000);
+        }
 
 	/DISCARD/ :
 	{
-		*(.note*);
-		*(.iplt*);
-		*(.igot*);
-		*(.rel*);
-		*(.rel.text);
-		*(.comment);
-	}
+                *(.note*);
+                *(.iplt*);
+                *(.igot*);
+                *(.rel*);
+                *(.rel.text);
+                *(.comment);
+        }
 }
 
 
