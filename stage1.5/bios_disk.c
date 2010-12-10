@@ -26,18 +26,16 @@ __asm__("get_ds_reg:\n"
 int extended_read_drive_parameters(unsigned char bios_drive, struct ext_drive_param_buffer* out);
 
 __asm__("extended_read_drive_parameters:      \n"
-		"  pushl   %edx                       \n"
 		"  pushl   %esi                       \n"
 	    "  movb    $0x48,      %ah            \n"
-		"  movb    12(%esp),  %dl             \n" // parameter 1, bios drive
-		"  movw    16(%esp),  %si             \n" // parameter 2, ptr to result buffer
+		"  movb     8(%esp),  %dl             \n" // parameter 1, bios drive
+		"  movw    12(%esp),  %si             \n" // parameter 2, ptr to result buffer
 		"  int     $0x13                      \n" // call bios 13h
 	    "  xorl    %eax ,     %eax            \n" // clear return var
 		"  jnc     erdp.ret                   \n" // exit on no error
 		"  movb    $1 ,       %al             \n" // set error return flag
 		"erdp.ret:                            \n"
 		"  popl    %esi                       \n"
-		"  popl    %edx                       \n"
 		"  ret" );
 
 
@@ -52,10 +50,9 @@ __asm__("extended_read_drive_parameters:      \n"
 int extended_read_sectors_from_drive(unsigned char bios_drive, struct disk_address_packet *dap);
 
 __asm__("extended_read_sectors_from_drive:       \n"
-		"  pushl      %edx                       \n"
 		"  pushl      %esi                       \n"
-		"  movb    12(%esp),   %dl               \n" // bios disk to dl
-		"  movw    16(%esp),   %si               \n" // D.A.P address ( DS:SI )
+		"  movb     8(%esp),   %dl               \n" // bios disk to dl
+		"  movw    12(%esp),   %si               \n" // D.A.P address ( DS:SI )
 		"  movb      $0x42 ,   %ah               \n" // bios function 42h
 		"  int       $0x13                       \n" // call bios 13h
 		"  xorl       %eax ,   %eax              \n" // clear return var
@@ -63,7 +60,6 @@ __asm__("extended_read_sectors_from_drive:       \n"
 		"  movb         $1 ,   %al               \n" // set error return flag
         "ersfd.ret:                                   \n"
 		"  popl   %esi                           \n"
-		"  popl   %edx                           \n"
 		"  ret");
 
 

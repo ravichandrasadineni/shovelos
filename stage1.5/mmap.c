@@ -16,7 +16,6 @@ __asm__("_bios_15h_e820h:\n"
 
   "push %edi\n"
   "push %ebx\n"
-  "push %ecx\n"
   "push $0x0018\n"				  // alloc parameter
 
   "xorl %ebx,         %ebx\n"     // clear ebx
@@ -41,8 +40,7 @@ __asm__("_bios_15h_e820h:\n"
   "jmp .rmm_next\n"               // next next region
 ".rmm_exit:\n"
 
-  "pop %ecx\n" // pop alloc parameter
-  "pop %ecx\n" // pop ecx
+  "pop %ebx\n" // pop alloc parameter
   "pop %ebx\n" // pop ebx
   "pop %edi\n" // pop edi
 

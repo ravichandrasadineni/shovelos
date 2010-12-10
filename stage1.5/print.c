@@ -58,24 +58,31 @@ __asm__("scroll:\n"
             "push %ds\n"
             "push %edi\n"
             "push %esi\n"
-            "push %ecx\n"
             "cld\n"
 
             "movw $0xb800, %ax\n"
             "movw %ax, %es\n"                 /* set extra segment to start of video memory */
             "movw %ax, %ds\n"                 /* set data segment to start of video memory */
+
+// TODO: This smaller than rep movsw ?
+//            "push $0xF00     \n"
+//            "push $0x0a0     \n"
+//            "push $0         \n"
+//            "call memcpy     \n"
+//            "subl $12, %esp  \n"
+            
             "movl $0x000000a0, %esi\n"        /* src = start of line 1 */
             "movl $0x00000000, %edi\n"        /* dst = start of line 0 */
             "movl $0x00000780, %ecx\n"
             "rep  \n"                         /* 24 lines, times 80 columns */
             "movsw\n"                         /* scroll! */
+
             "movw $0x0f20, %ax\n"             /* white on black space */
             "movl $0x00000f00, %edi\n"        /* dst = start of line 24 */
             "movl $0x00000050, %ecx\n"
             "rep  \n"                         /* 80 columns */
             "stosw\n"                         /* blank last line */
 
-            "pop %ecx\n"
             "pop %esi\n"
             "pop %edi\n"
             "pop %ds\n"
@@ -92,7 +99,6 @@ __asm__(".global cls\n"
             "push %es\n"
             "push %edi\n"
             "push %esi\n"
-            "push %ecx\n"
             "cld\n"
 
             "movb $0, screen_x\n"            /* reset screen cords */
@@ -106,7 +112,6 @@ __asm__(".global cls\n"
             "rep  \n"                         /* 25 lines, times 80 columns */
             "stosw\n"                         /* cls! */
 
-            "pop %ecx\n"
             "pop %esi\n"
             "pop %edi\n"
             "pop %es\n"
