@@ -1,4 +1,17 @@
 
+/***
+    0x7c00 -> 0x7eff: Bootloader ( 512 bytes )
+        We could over-write this for an extra 512 bytes of un-initialised vars.
+
+    0x7e00 -> 0xffff: stage1.5.bin. ( 33279 bytes )
+	Bootloader software. Accessable by C and assembler.
+
+    0x10000 -> 0x7ffff: uninitialised memory. ( 458751 bytes )
+	Memory accessable by assembler only.
+        * 0x10000 -> 0x14fff 64bit page tables.
+
+***/
+
 ENTRY(main);
 SECTIONS
 {
@@ -41,7 +54,11 @@ SECTIONS
             *(.rodata);
             *(.COMMON);
 
-            /*** allocate memory for 64-bit page tables ***/
+            /*** allocate memory for 64-bit page tables 
+
+
+               NOTE: in the process of moving these above 16bit address-space
+
             . = ALIGN(0x1000);
             _pml4e = .;
             . += 0x1000;
@@ -53,6 +70,7 @@ SECTIONS
             . += 0x1000;
             _pde_hi = .;
             . += 0x1000;
+	    ***/
         }
 	
         . = 0xd000;
@@ -66,6 +84,16 @@ SECTIONS
 	    _heap_start = .;
             SHORT(. + 0x04);
             SHORT(0x00000000);
+        }
+
+        .highmem :
+        {
+            /*** page tables in segment 0x1000 ***/
+            _pml4e = 0x00000;        /* actual 1000:0000 */
+            _pdpe_ident = 0x01000;   /* actual 1000:1000 */
+            _pde_ident = 0x02000;    /* actual 1000:2000 */
+            _pdpe_hi = 0x03000;      /* actual 1000:3000 */
+            _pde_hi = 0x04000;       /* actual 1000:4000 */
         }
 
 	/DISCARD/ :

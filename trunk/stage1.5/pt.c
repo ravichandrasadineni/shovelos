@@ -22,6 +22,25 @@ extern struct PDE _pde_hi;
  * takes 1) virtual page base ( PAGE_SIZE aligned )
  *       2) physical page base ( PAGE_SIZE aligned )
  */
+
+__asm__(".global pt_map_page        \n"
+		"pt_map_page:               \n"
+		"   pushl %ebp              \n"
+		"   movl  %esp, %ebp        \n"
+
+		"   pushl $_pml4e           \n"    // struct PML4E *pml4e = &_pml4e;
+		"   subl  $8,  %esp         \n"    // struct PDPE  *pdpe;
+		                                   // struct PDE   *pde;
+
+		"   movl 12(%ebp), %eax     \n"    // eax virt (hi-dword)
+		"   shrl $7,       %eax     \n"    // eax >>= 39
+		"   andl $0x1ff,   %eax     \n"    // eax  &= 0x1ff
+		"   addl %eax,    -4(%ebp)  \n"    // pmle4 += eax
+
+		"   popl %ebp               \n"
+		"   ret" );
+
+
 static void pt_map_page(uint64_t virt, uint64_t phy, struct PDPE* pdpe_base, struct PDE* pde_base) {
 
 	struct PML4E *pml4e = &_pml4e;
