@@ -88,12 +88,12 @@ SECTIONS
 
         .highmem :
         {
-            /*** page tables in segment 0x1000 ***/
-            _pml4e = 0x00000;        /* actual 1000:0000 */
-            _pdpe_ident = 0x01000;   /* actual 1000:1000 */
-            _pde_ident = 0x02000;    /* actual 1000:2000 */
-            _pdpe_hi = 0x03000;      /* actual 1000:3000 */
-            _pde_hi = 0x04000;       /* actual 1000:4000 */
+            /*** page tables in segment 0x1000 - not directly accessible to c ***/
+            _pml4e = 0x10000;        /* actual 1000:0000 */
+            _pdpe_ident = 0x11000;   /* actual 1000:1000 */
+            _pde_ident = 0x12000;    /* actual 1000:2000 */
+            _pdpe_hi = 0x13000;      /* actual 1000:3000 */
+            _pde_hi = 0x14000;       /* actual 1000:4000 */
         }
 
 	/DISCARD/ :
