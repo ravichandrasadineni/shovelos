@@ -2,27 +2,45 @@
 #include "16bitreal.h"
 #include "mem.h"
 
-#define _286_memcpy
-#define _286_memset
-#define _286_strcmp
 
-#ifdef _286_memcpy
+/********************************************************************
+ * memcpy(dst,src,size)
+ *   1) dst ( 32bit segment:offset )
+ *   2) src ( 32bit segment:offset )
+ *   3) size in bytes
+ *
+ * limitations:
+ *    cannot span segments
+ */
+__asm__(".global memcpy           \n"
+		"memcpy:                  \n"
+		"pushl   %edi             \n"
+		"pushl   %esi             \n"
+		"pushl   %ds              \n"
+		"pushl   %es              \n"
+							     	  // setup destination (es:edi)
+		"movl 20(%esp),    %edi   \n" // edi = dst
+		"movl %edi,        %es    \n" // es  = dst
+		"andl $0xffff,     %edi   \n" // edi &= 0xffff
+		"andl $0ffff0000,  %es    \n" // es  &= 0xffff0000
+		"shrl $4,          %es    \n" // es  >>= 4;
 
-	__asm__(".global memcpy        \n"
-			"memcpy:               \n"
-			"pushl   %edi          \n"
-			"pushl   %esi          \n"
-			"movl 12(%esp), %edi   \n"
-			"movl 16(%esp), %esi   \n"
-			"movl 20(%esp), %ecx   \n"
-			"rep                   \n"
-			"movsb                 \n"
-			"popl    %esi          \n"
-			"popl    %edi          \n"
-			"ret");
-#endif
+								       // setup source (ds::esi)
+		"movl 24(%esp),     %esi   \n" // esi = src
+		"movl %esi,         %ds    \n" // ds  = src
+		"andl $0xffff,      %esi   \n" // esi &= 0xffff
+		"andl $0ffff0000,   %ds    \n" // ds  &= 0xffff0000
+		"shrl $4,           %ds    \n" // ds  >>= 16;
 
-#ifdef _286_memset
+		"movl 28(%esp),     %ecx   \n" // ecx = size
+		"rep                       \n"
+		"movsb                     \n" // copy!
+		"popl    %es               \n"
+		"popl    %ds               \n"
+		"popl    %esi              \n"
+		"popl    %edi              \n"
+		"ret");
+
 
 	__asm__(".global memset        \n"
 			"memset:               \n"
@@ -34,9 +52,7 @@
 			"stosb                 \n"
 			"popl    %edi          \n"
 			"ret");
-#endif
 
-#ifdef _286_strcmp
 
 	__asm__(".global strcmp        \n"
 			"strcmp:               \n"
@@ -61,38 +77,5 @@
 "._286_strcmp_ret:                     \n"
 			"ret");
 
-#endif
 
-#ifdef _C_memcpy
-	void *memcpy(void *dst,const void* src, int size) {
-
-		while(size--)
-			((char*)dst)[size] = ((char*)src)[size];
-
-		return dst;
-	}
-
-#endif
-
-#ifdef _C_memset
-	void *memset(void* dst, int c, int size) {
-		while(size--)
-			((char*)dst)[size] = (char)c;
-
-		return dst;
-	}
-#endif
-
-#ifdef _C_strcmp
-	int strcmp(const char *s1, const char *s2) {
-
-		int index,compare;
-
-		for(index=0; s1[index] || s2[index]; index++)
-			if((compare = (s1[index] - s2[index])))
-				return compare;
-
-		return 0;
-	}
-#endif
 
