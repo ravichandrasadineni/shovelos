@@ -89,23 +89,13 @@ struct PDE {
 			unsigned G					: 1;	/*** GLOBAL PAGE BIT ***/
 			unsigned AVL 				: 3;	/*** AVAILABLE TO SOFTWARE ***/
 			unsigned PAT 				: 1;	/*** PAGE ATTRIBUTE BIT ***/
-			unsigned RESERVED_MBZ			: 8;	/*** RESERVED BITS ***/
+			unsigned RESERVED_MBZ		: 8;	/*** RESERVED BITS ***/
 			char     _padding[5];   			/*** 40 BYTES PADDING ***/
 			unsigned Available			: 11;	/*** ??? ***/
 			unsigned NX 				: 1; 	/*** NO EXECUTE BIT ***/
 		} attr;
 	} bits;
 }__attribute__((packed));
-
-static inline __attribute__ ((__always_inline__)) struct PDPE* pt_get_pdpe(struct PML4E *pmle4) {
-
-	return (struct PDPE*)(int)ALIGN_DOWN( pmle4->bits.PageDirectoryPtr52 );
-}
-
-static inline __attribute__ ((__always_inline__)) struct PDE* pt_get_pde(struct PDPE *pdpe) {
-
-	return (struct PDE*)(int)ALIGN_DOWN( pdpe->bits.PageDirectory52 );
-}
 
 void setup_pt();
 
