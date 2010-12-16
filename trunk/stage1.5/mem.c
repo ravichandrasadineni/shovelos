@@ -5,12 +5,12 @@
 
 /********************************************************************
  * memcpy(dst,src,size)
- *   1) dst ( 32bit segment:offset )
- *   2) src ( 32bit segment:offset )
+ *   1) dst ( 32bit segment:offset far pointer)
+ *   2) src ( 32bit segment:offset far pointer)
  *   3) size in bytes
  *
  * limitations:
- *    cannot span segments
+ *    cannot span segments ?
  */
 __asm__(".global memcpy           \n"
 		"memcpy:                  \n"
@@ -30,7 +30,7 @@ __asm__(".global memcpy           \n"
 		"movl %esi,         %ds    \n" // ds  = src
 		"andl $0xffff,      %esi   \n" // esi &= 0xffff
 		"andl $0ffff0000,   %ds    \n" // ds  &= 0xffff0000
-		"shrl $4,           %ds    \n" // ds  >>= 16;
+		"shrl $4,           %ds    \n" // ds  >>= 4;
 
 		"movl 28(%esp),     %ecx   \n" // ecx = size
 		"rep                       \n"
