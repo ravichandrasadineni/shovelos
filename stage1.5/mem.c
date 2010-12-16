@@ -3,17 +3,16 @@
 #include "mem.h"
 
 
+
+
 /********************************************************************
  * memcpy(dst,src,size)
- *   1) dst ( 32bit segment:offset far pointer)
- *   2) src ( 32bit segment:offset far pointer)
+ *   1) dst ( 20bit address ) ( 0x00000 -> 0xfffff )
+ *   2) src ( 20bit address ) ( 0x00000 -> 0xfffff )
  *   3) size in bytes
- *
- * limitations:
- *    cannot span segments ?
  */
-__asm__(".global memcpy           \n"
-		"memcpy:                  \n"
+__asm__(".global memcpy_far       \n"
+		"memcpy_far:              \n"
 		"pushl   %edi             \n"
 		"pushl   %esi             \n"
 		"pushl   %ds              \n"
@@ -23,18 +22,43 @@ __asm__(".global memcpy           \n"
 		"movl %edi,        %es    \n" // es  = dst
 		"andl $0xffff,     %edi   \n" // edi &= 0xffff
 		"andl $0ffff0000,  %es    \n" // es  &= 0xffff0000
-		"shrl $4,          %es    \n" // es  >>= 4;
+		"shll $12,         %es    \n" // es  <<= 12;
 
 								       // setup source (ds::esi)
 		"movl 24(%esp),     %esi   \n" // esi = src
 		"movl %esi,         %ds    \n" // ds  = src
 		"andl $0xffff,      %esi   \n" // esi &= 0xffff
 		"andl $0ffff0000,   %ds    \n" // ds  &= 0xffff0000
-		"shrl $4,           %ds    \n" // ds  >>= 4;
+		"shll $12,          %ds    \n" // ds  <<= 12;
 
-		"movl 28(%esp),     %ecx   \n" // ecx = size
-		"rep                       \n"
-		"movsb                     \n" // copy!
+		"xorl %ecx,         %ecx   \n"
+    ".loop:                        \n"
+		"cmpl   %ecx,    28(%esp)  \n"	// increment counter and test for exit
+		"je    .eloop              \n"
+		"incl   %ecx               \n"
+
+	    "ds movb (%esi),     %al   \n"	// copy byte
+		"es movb    %al,   (%edi)  \n"
+
+										// INCREMENT DST seg:offset
+		"incl %edi                 \n"
+		"cmpl $0x10000, %edi       \n"
+		"jne .done_edi             \n"
+		"addl $0x1000,   %es        \n"
+		"xorl %edi,     %edi       \n"
+	".done_edi:                    \n"
+
+										// INCREMENT SRC seg:offset
+		"incl %esi                 \n"
+		"cmpl $0x10000, %esi       \n"
+		"jne .done_esi             \n"
+		"addl $0x1000,  %ed        \n"
+		"xorl %esi,     %esi       \n"
+	".done_esi:                    \n"
+
+		"jmp .loop                 \n"
+	".eloop:                       \n"
+
 		"popl    %es               \n"
 		"popl    %ds               \n"
 		"popl    %esi              \n"

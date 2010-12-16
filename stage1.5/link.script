@@ -1,6 +1,6 @@
 
 /***
-    0x7c00 -> 0x7eff: Bootloader ( 512 bytes )
+    0x7c00 -> 0x7dff: Bootloader ( 512 bytes )
         We could over-write this for an extra 512 bytes of un-initialised vars.
 
     0x7e00 -> 0xffff: stage1.5.bin. ( 33279 bytes )
