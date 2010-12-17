@@ -1,12 +1,22 @@
+################################################################################
+#  mem.s
+#  Author: cds ( chris.stones _AT_ gmail.com )
+#  17th Dec 2010
+#  
+#  i286 memcpy, memset and strcmp.
+#
+#  all given addresses are 20bit offsets from absolute zero.
+#  any pre-set extra/data segments are ignored.
+#
+################################################################################
 
 .code16
-
 
 ################################################################
 # void memcpy(void* dst,void* src,int size)
 #
-#   1) dst ( 20bit address ) ( 0x00000 -> 0xfffff )
-#   2) src ( 20bit address ) ( 0x00000 -> 0xfffff )
+#   1) dst ( 20bit address ) ( absolute 0x00000 -> 0xfffff )
+#   2) src ( 20bit address ) ( absolute 0x00000 -> 0xfffff )
 #   3) size in bytes
 ################################################################
 .global memcpy
@@ -43,7 +53,7 @@
                                              # INCREMENT DST seg:offset
             incl     %edi
             cmpl     $0x10000,    %edi
-            jne     .mc_edi
+            jne      .mc_edi
             movl     %es,         %edx
             addl     $0x1000,     %edx
             movl     %edx,        %es
@@ -72,7 +82,7 @@
 ################################################################
 # void memset(void* dst,int fill,int size)
 #
-#   1) dst ( 20bit address ) ( 0x00000 -> 0xfffff )
+#   1) dst ( 20bit address ) ( absolute 0x00000 -> 0xfffff )
 #   2) fill byte
 #   3) size in bytes
 ################################################################
@@ -114,8 +124,8 @@
 ################################################################
 # int strcmp(void* s1, void* s2)
 #
-#   1) s1 ( 20bit address ) ( 0x00000 -> 0xfffff )
-#   2) s2 ( 20bit address ) ( 0x00000 -> 0xfffff )
+#   1) s1 ( 20bit address ) ( absolute 0x00000 -> 0xfffff )
+#   2) s2 ( 20bit address ) ( absolute 0x00000 -> 0xfffff )
 ################################################################
 .global strcmp
             strcmp:
@@ -153,7 +163,27 @@
             cmpw     $0,          %ax        # both zero? return zero
             jz       .sc_end
 
-            inc      %ecx                    # same, not terminal, continue
+                                             # same, not terminal, continue
+
+                                             # INCREMENT DST seg:offset
+            incl     %edi
+            cmpl     $0x10000,    %edi
+            jne      .sc_edi
+            movl     %es,         %edx
+            addl     $0x1000,     %edx
+            movl     %edx,        %es
+            xorl     %edi,        %edi
+    .sc_edi:
+                                             # INCREMENT SRC seg:offset
+            incl     %esi
+            cmpl     $0x10000,    %esi
+            jne      .sc_esi
+            movl     %ds,         %edx
+            addl     $0x1000,     %edx
+            movl     %edx,        %ds
+            xorl     %esi,        %esi
+    .sc_esi:
+
             jmp      .sc_loop
 
     .sc_end:
@@ -165,5 +195,40 @@
 
             ret
 
+################################################################
+# int mkaddr20(int seg, int offset)
+#   1) segment register
+#   2) 16bit offset
+# returns 20bit absolute address
+################################################################
+.global mkaddr20
+            mkaddr20:
+            movl     4(%esp),     %eax
+            shll     $4,          %eax
+            addl     8(%esp),     %eax
+            ret
 
+################################################################
+# int addds(int offset)
+#   1) 16bit offset
+# returns 20bit absolute address of offset into data segment
+################################################################            
+.global addds
+            addds:
+            movl     %ds,         %eax
+            shll     $4,          %eax
+            addl     4(%esp),     %eax
+            ret
+
+################################################################
+# int addes(int offset)
+#   1) 16bit offset
+# returns 20bit absolute address of offset into extra segment
+################################################################                        
+.global addes
+            addes:
+            movl     %es,         %eax
+            shll     $4,          %eax
+            addl     4(%esp),     %eax
+            ret        
 
