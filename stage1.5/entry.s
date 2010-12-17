@@ -12,7 +12,7 @@ main:
     movw     %ax, %ds
     movw     %ax, %ss
     movw     %ax, %es
-    movw $0xffff, %sp
+    movl $0xffff, %esp
 
 #############################################
 # Enable A20 Line
@@ -21,8 +21,16 @@ main:
     int $0x15
 
 #############################################
-#
+# Zero memory
 #############################################
+    pushl $0x0200
+    pushl $0x0000
+    pushl $0x7c00
+    call  memset
+    movl  $0x70000, 8(%esp)
+    movl  $0x10000, 0(%esp)
+    call  memset
+    movw  $0xffff, %sp
 
 #############################################
 # Jump to c main
