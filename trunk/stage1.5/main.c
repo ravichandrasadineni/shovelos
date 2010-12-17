@@ -6,12 +6,17 @@
 #include "alloc.h"
 #include "fs/ext2/ext2.h"
 
+extern void* _pml4e;
+
 void __attribute__((noreturn))
   cmain() {
 
   cls();
 
   puts("ShovelOS Stage 1.5\n");
+
+  /*** hack alert -  we should clear ALL ram... for now, just hard coded page table address ***/
+  memset(0x10000,0,0x5000);
 
   fs_init();
 

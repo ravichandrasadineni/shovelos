@@ -23,6 +23,14 @@
 #define PT_TERMINAL_FLAG    	(1<<7)
 #define PT_GLOBAL_FLAG        	(1<<8)
 
+/*
+_pml4e = 0x10000;
+            _pdpe_ident = 0x11000;
+            _pde_ident = 0x12000;
+            _pdpe_hi = 0x13000;
+            _pde_hi = 0x14000;
+            */
+
 /*** Page map - level 4 offset table ***/
 struct PML4E {
 

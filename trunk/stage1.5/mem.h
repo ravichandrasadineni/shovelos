@@ -3,8 +3,6 @@
 #define __MEM_H
 
 void *memcpy(void *dst,const void* src, int size);
-void *memcpy_far(void *dst,const void* src, int size);
-
 
 void *memset(void* dst, int c, int s);
 

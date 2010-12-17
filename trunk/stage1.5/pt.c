@@ -11,32 +11,25 @@
 #include "alloc.h"
 #include "print.h"
 
-extern struct PML4E _pml4e;
-extern struct PDPE _pdpe_ident;
-extern struct PDE _pde_ident;
-extern struct PDPE _pdpe_hi;
-extern struct PDE _pde_hi;
+extern int _pml4e;
+extern int _pdpe_ident;
+extern int _pde_ident;
+extern int _pdpe_hi;
+extern int _pde_hi;
 
 
 /*** write a 64bit page table entry to a far address ***/
-static void write_far_64( uint32_t far_addr32, uint64_t value ) {
+static void write64( uint32_t addr20, uint64_t value ) {
 
-	memcpy_far( far_addr32, &value, 8);
+	memcpy(addr20, &value, 8);
 }
 
-/*** read a 64bit page table entry to a far address ***/
-static uint64_t read_far_64( uint32_t far_addr32 ) {
+static uint32_t pt_get_addr(uint32_t addr20) {
 
-	uint64_t result = 0;
+	uint64_t pt = 0 ;
 
-	memcpy_far( &result, far_addr32, 8);
+	memcpy( &pt, (const void*)addr20, 8);
 
-	return result;
-}
-
-static uint32_t pt_get_far_addr(uint32_t far_addr32) {
-
-	uint64_t pt = read_far_64( far_addr32 );
 	return (uint32_t)ALIGN_DOWN( pt );
 }
 
@@ -45,9 +38,9 @@ static uint32_t pt_get_far_addr(uint32_t far_addr32) {
  * takes 1) virtual page base ( PAGE_SIZE aligned )
  *       2) physical page base ( PAGE_SIZE aligned )
  */
-static void pt_map_page(uint64_t virt, uint64_t phy, struct PDPE* pdpe_base, struct PDE* pde_base) {
+static void pt_map_page(uint64_t virt, uint64_t phy, int pdpe_base, int pde_base) {
 
-	uint32_t pml4e = &_pml4e;
+	uint32_t pml4e = 0x10000; //&_pml4e;
 	uint32_t pdpe;
 	uint32_t pde;
 
@@ -57,7 +50,7 @@ static void pt_map_page(uint64_t virt, uint64_t phy, struct PDPE* pdpe_base, str
 
 	pml4e += 0x1ff & (virt >> 39);
 
-	pdpe = pt_get_far_addr(pml4e);
+	pdpe = pt_get_addr(pml4e);
 	if(pdpe == 0) {
 
 		uint64_t data  = (pdpe = pdpe_base)        |
@@ -66,11 +59,11 @@ static void pt_map_page(uint64_t virt, uint64_t phy, struct PDPE* pdpe_base, str
 		        		 PT_USER_FLAG              |
 		        		 PT_WRITE_THROUGH_FLAG     ;
 
-		write_far_64(pml4e, data);
+		write64(pml4e, data);
 	}
 	pdpe += 0x1ff & (virt >> 30);
 
-	pde = pt_get_far_addr(pdpe);
+	pde = pt_get_addr(pdpe);
 	if(pde == 0) {
 
 		uint64_t data  = (pde = pde_base)          |
@@ -79,7 +72,7 @@ static void pt_map_page(uint64_t virt, uint64_t phy, struct PDPE* pdpe_base, str
 		        		 PT_USER_FLAG              |
 		        		 PT_WRITE_THROUGH_FLAG     ;
 
-		write_far_64(pdpe, data);
+		write64(pdpe, data);
 	}
 	pde += 0x1ff & (virt >> 21);
 
@@ -92,7 +85,7 @@ static void pt_map_page(uint64_t virt, uint64_t phy, struct PDPE* pdpe_base, str
         		PT_TERMINAL_FLAG        |
         		PT_GLOBAL_FLAG          ;
 
-        write_far_64(pde, data);
+        write64(pde, data);
 	}
 }
 
@@ -139,13 +132,15 @@ void setup_pt() {
 
 	    	if(pb < 0x100000) {
 	    		/*** identity map low-mem ***/
-	    		pt_map_page(vl,pb,&_pdpe_ident,&_pde_ident);
+	    		//pt_map_page(vl,pb,_pdpe_ident,_pde_ident);
+	    		pt_map_page(vl,pb,0x11000,0x12000);
 	    		vl += PAGE_SIZE;
 	    	}
 	    	else {
 
 	    		/*** map high-mem ***/
-	    		pt_map_page(vh,pb,&_pdpe_hi,&_pde_hi);
+	    		//pt_map_page(vh,pb,_pdpe_hi,_pde_hi);
+	    		pt_map_page(vh,pb,0x13000,0x14000);
 	    		vh += PAGE_SIZE;
 	    	}
 	    	pb += PAGE_SIZE;
