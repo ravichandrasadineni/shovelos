@@ -46,39 +46,24 @@ SECTIONS
             LONG(0x00000000);	 /*** address of GDT (msb) ***/
         }
 	
-        .data :
+       
+	   
+    . = 0x7e40;
+	.text : AT(0x7e40)
+	{
+            *(.text);
+	}
+
+ .data :
         {
             *(.bss);
             *(.bss*);
             *(.data);
             *(.rodata);
             *(.COMMON);
-
-            /*** allocate memory for 64-bit page tables 
-
-
-               NOTE: in the process of moving these above 16bit address-space
-
-            . = ALIGN(0x1000);
-            _pml4e = .;
-            . += 0x1000;
-            _pdpe_ident = .;
-            . += 0x1000;
-            _pde_ident = .;
-            . += 0x1000;
-            _pdpe_hi = .;
-            . += 0x1000;
-            _pde_hi = .;
-            . += 0x1000;
-	    ***/
-        }
-	
-        . = 0xd000;
-	.text : AT(0xd000)
-	{
-            *(.text);
-	}
-
+            _data_end = .;
+	    }
+	    
         .heap : 
         {
 	    _heap_start = .;
@@ -86,15 +71,6 @@ SECTIONS
             SHORT(0x00000000);
         }
 
-        .highmem :
-        {
-            /*** page tables in segment 0x1000 - not directly accessible to c ***/
-            _pml4e = 0x10000;        /* actual 1000:0000 */
-            _pdpe_ident = 0x11000;   /* actual 1000:1000 */
-            _pde_ident = 0x12000;    /* actual 1000:2000 */
-            _pdpe_hi = 0x13000;      /* actual 1000:3000 */
-            _pde_hi = 0x14000;       /* actual 1000:4000 */
-        }
 
 	/DISCARD/ :
 	{

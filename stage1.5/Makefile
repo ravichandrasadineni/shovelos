@@ -4,14 +4,14 @@ all : stage1.5.ext2.bin
 
 # 32bit assembler source
 SRC32_S = entry.s \
-		  himem.s
+		  himem.s \
+		  mem.s
 		
 # 32bit c source
 SRC32_C = main.c \
 		  print.c \
           mmap.c \
 		  alloc.c \
-		  mem.c \
 		  bios_disk.c \
 		  pt.c \
 		  math64.c \
