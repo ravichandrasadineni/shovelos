@@ -8,5 +8,12 @@ void *memset(void* dst, int c, int s);
 
 int strcmp(const char *s1, const char *s2);
 
+int mkaddr20(uint32_t seg, void* offset);
+
+int addds(void* offset);
+int addes(void* offset);
+
+
+
 #endif /*** __MEM_H ***/
 
