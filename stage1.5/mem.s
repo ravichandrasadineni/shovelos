@@ -10,7 +10,7 @@
 #
 ################################################################################
 
-.code16
+.code16gcc
 
 ################################################################
 # void memcpy(void* dst,void* src,int size)
@@ -76,7 +76,7 @@
             popl     %ds
             popl     %esi
             popl     %edi
-            ret
+            retl
 
 
 ################################################################
@@ -89,7 +89,7 @@
 .global memset
             memset:
             pushl    %edi
-            pushl    %es
+			pushl    %es
 						         # setup destination (es:edi)
             movl     12(%esp),    %edi       # edi = dst
             andl     $0x0ffff,    %edi       # edi &= 0xffff
@@ -118,7 +118,7 @@
     .ms_end:
             popl     %es
             popl     %edi
-            ret
+            retl
 
 
 ################################################################
@@ -193,42 +193,4 @@
             popl     %edi
             popl     %es
 
-            ret
-
-################################################################
-# int mkaddr20(int seg, int offset)
-#   1) segment register
-#   2) 16bit offset
-# returns 20bit absolute address
-################################################################
-.global mkaddr20
-            mkaddr20:
-            movl     4(%esp),     %eax
-            shll     $4,          %eax
-            addl     8(%esp),     %eax
-            ret
-
-################################################################
-# int addds(int offset)
-#   1) 16bit offset
-# returns 20bit absolute address of offset into data segment
-################################################################            
-.global addds
-            addds:
-            movl     %ds,         %eax
-            shll     $4,          %eax
-            addl     4(%esp),     %eax
-            ret
-
-################################################################
-# int addes(int offset)
-#   1) 16bit offset
-# returns 20bit absolute address of offset into extra segment
-################################################################                        
-.global addes
-            addes:
-            movl     %es,         %eax
-            shll     $4,          %eax
-            addl     4(%esp),     %eax
-            ret        
-
+            retl
