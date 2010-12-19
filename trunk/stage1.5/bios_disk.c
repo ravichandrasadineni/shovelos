@@ -36,7 +36,7 @@ __asm__("extended_read_drive_parameters:      \n"
 		"  movb    $1 ,       %al             \n" // set error return flag
 		"erdp.ret:                            \n"
 		"  popl    %esi                       \n"
-		"  ret" );
+		"  retl" );
 
 
 

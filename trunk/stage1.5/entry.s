@@ -30,7 +30,7 @@ main:
     movl  $0x70000, 8(%esp)
     movl  $0x10000, 0(%esp)
     call  memset
-    movw  $0xffff, %sp
+    movl  $0xffff, %esp
 
 #############################################
 # Jump to c main
