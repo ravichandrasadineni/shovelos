@@ -21,7 +21,7 @@ extern int _pde_hi;
 /*** write a 64bit page table entry to a far address ***/
 static void write64( uint32_t addr20, uint64_t value ) {
 
-	memcpy(addr20, &value, 8);
+	memcpy((void*)addr20, &value, 8);
 }
 
 static uint32_t pt_get_addr(uint32_t addr20) {

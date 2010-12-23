@@ -5,8 +5,11 @@
 #include "print.h"
 #include "alloc.h"
 #include "fs/ext2/ext2.h"
+#include "bios_disk.h"
 
 extern void* _pml4e;
+
+void himem();
 
 void __attribute__((noreturn))
   cmain() {
