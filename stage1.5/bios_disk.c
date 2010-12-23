@@ -6,17 +6,6 @@
 #include "print.h"
 
 /******************************************************************************************************
- * int get_ds_reg
- *     return current data segment.
- */
-int get_ds_reg();
-__asm__("get_ds_reg:\n"
-		"  xorl %eax, %eax    \n"
-		"  movw  %ds,  %ax    \n"
-		"  ret "
-		);
-
-/******************************************************************************************************
  *   extended_read_drive_parameters
  *     call bios extended read sectors function.
  *     takes 1) BIOS disk ( 0x80 for C:, etc )
@@ -86,18 +75,19 @@ int bytes_per_sector(unsigned char bios_disk) {
  *     call bios extended read sectors function.
  *     takes 1) BIOS disk ( 0x80 for C:, etc )
  *           2) initialised disk address packet.
- *           3) read to address ( in data segment )
+ *           3) read to address ( 20bit address )
  *     returns 0 on success, non-zero on error.
  */
 int disk_read_sector( unsigned char bios_drive, unsigned long long sector, void *dst ) {
 
 	static struct disk_address_packet dap;
+	int addr20 = (int)dst;
 
 	dap.packet_size = 0x10;
 	dap.reserved0 = dap.reserved1 = 0;
 	dap.sectors = 1;
-	dap.mem_addr.seg.segment = get_ds_reg();
-	dap.mem_addr.seg.offset = (unsigned short)(int)dst;
+	dap.mem_addr.seg.segment = (addr20>>4) & 0xf000; // 20bit address
+	dap.mem_addr.seg.offset =  (addr20   ) & 0xffff; // 20bit address (unsigned short)(int)dst;
 	dap.disk_addr.sector = sector;
 
 	return extended_read_sectors_from_drive(bios_drive, &dap);
@@ -109,22 +99,15 @@ int disk_read_sector( unsigned char bios_drive, unsigned long long sector, void 
  *  disk_read
  *     read absolute disk address to given address
  *     takes 1) BIOS disk ( 0x80 for C:, etc )
- *           2) initialised disk address packet.
- *           3) read to address ( in data segment )
- *     returns 0 on success, non-zero on error.
+ *           2) disk relative address in bytes
+ *           3) read size in bytes
+ *           4) read to address ( 20bit address  )
+ *     returns 0 on success.
  */
-static char *buffer = 0;
-static int bps = 0;
-
-int disk_read(unsigned long long abs_address, unsigned short abs_size, void* dst) {
+int disk_read( struct disk* disk, unsigned long long abs_address, unsigned short abs_size, void* dst) {
 
 	int ret;
-
-	if(!bps)
-		bps = bytes_per_sector(_root_disk);
-
-    // absolute partition address to absolute disk address
-	abs_address += _root_sector * bps;
+    int bps = bytes_per_sector(disk->bios_drive);
 
 	while(abs_size) {
 
@@ -132,23 +115,20 @@ int disk_read(unsigned long long abs_address, unsigned short abs_size, void* dst
 		unsigned short offset     = abs_address % bps;
 		unsigned short thisread   = bps - offset;
 
-		if(offset || (abs_size != bps)) {
-			// not reading a whole sector, we need to buffer, and selectively copy.
+		if(thisread > abs_size)
+			thisread = abs_size;
 
-			if(!buffer)
-				buffer = (char*)alloc(bps);
+		if(offset || (thisread != bps)) {
 
-			if((ret = disk_read_sector( _root_disk, sector, buffer )) != 0)
+			// not reading a whole sector, read to the disk buffer!
+			if((ret = disk_read_sector( disk->bios_drive, sector, (void*)0x20000 )) != 0)
 				return ret;
 
-			if(thisread > abs_size)
-				thisread = abs_size;
-
-			memcpy(dst, buffer + offset, thisread);
+			memcpy(dst, (void*)(0x20000 + offset), thisread);
 		}
 		else {
 			// reading exactly one sector, let the bios write directly to destination.
-			if((ret = disk_read_sector( _root_disk, sector, dst )) != 0)
+			if((ret = disk_read_sector( disk->bios_drive, sector, dst )) != 0)
 				return ret;
 		}
 
@@ -158,4 +138,61 @@ int disk_read(unsigned long long abs_address, unsigned short abs_size, void* dst
 	}
 	return 0;
 }
+
+/******************************************************************************************************
+ *  partition_read
+ *     read absolute partition address to given address
+ *     takes 1) opened partition struct.
+ *           2) partition relative address in bytes
+ *           3) read size in bytes
+ *           4) read to address ( 20bit address  )
+ *     returns 0 on success, non-zero on error.
+ */
+int partition_read( struct partition *part, unsigned long long abs_address, unsigned short abs_size, void* dst) {
+
+	int bps = bytes_per_sector(part->disk->bios_drive);
+
+	return disk_read(part->disk,abs_address + bps * part->start_sector, abs_size, dst);
+}
+
+/******************************************************************************************************
+ *  open_disk
+ *     create a disk structure
+ *     takes 1) bios disk code.
+ *     returns zero filled struct on error.
+ */
+struct disk open_disk(uint8_t bios_disk) {
+
+    struct disk d;
+
+    memset(&d,0,sizeof d);
+
+    if(bytes_per_sector(bios_disk))
+    	d.bios_drive = bios_disk; // TODO: better way to detect disk presence?
+
+    return d;
+}
+
+/******************************************************************************************************
+ *  open_partition
+ *     create a partition structure
+ *     takes 1) opened disk structure
+ *           2) partition number
+ *     returns zero filled struct on error.
+ */
+struct partition open_partition(struct disk* disk, uint8_t pnum) {
+
+	uint16_t part_base;
+	struct partition p;
+	memset(&p,0,sizeof p);
+
+	part_base = 0x01BE + pnum * 0x10;
+
+	p.disk = disk;
+	disk_read(disk,  8 + part_base, 4,&(p.start_sector));
+	disk_read(disk, 12 + part_base, 4,&(p.sectors));
+
+	return p;
+}
+
 
