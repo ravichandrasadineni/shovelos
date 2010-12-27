@@ -48,7 +48,9 @@ struct ext_drive_param_buffer {
 struct disk {
 
 	uint8_t  bios_drive;
-};
+	uint16_t sector_bytes;
+
+} __attribute__((packed)) ;
 
 struct partition {
 

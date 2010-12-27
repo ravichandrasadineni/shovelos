@@ -17,13 +17,14 @@ int fs_init();
 /****************************************************************************************/
 /********************** SUPERBLOCK FIELD OFFSETS / SIZES ********************************/
 /****************************************************************************************/
-
 #define EXT2_SUPERBLOCK_OFFSET 			1024
 #define EXT2_SUPERBLOCK_SIZE   			1024
 #define EXT2_SB_INODES_OFFSET	    	   0		/*** total i-nodes ***/
 #define EXT2_SB_INODES_SIZE	     		   4
 #define EXT2_SB_BLOCKS_OFFSET	    	   4		/*** total blocks ***/
 #define EXT2_SB_BLOCKS_SIZE	     		   4
+#define EXT2_SB_BLOCK0_OFFSET             20        /*** block number of first superblock ***/
+#define EXT2_SB_BLOCK0_SIZE                4
 #define EXT2_SB_BS_OFFSET       		  24		/*** log2(block_size)-10 ***/
 #define EXT2_SB_BS_SIZE          		   4
 #define EXT2_SB_BPG_OFFSET      		  32		/*** blocks per group ***/
@@ -33,20 +34,19 @@ int fs_init();
 #define EXT2_SB_SIG_OFFSET	    		  56		/*** SUPERBLOCK MAGIC ***/
 #define EXT2_SB_SIG_SIZE	     		   2
 #define EXT2_SB_SIG_VALUE			  0xEF53
+#define EXT2_SB_MAJVER_OFFSET             76		/*** ext2 major version ***/
+#define EXT2_SB_MAJVER_SIZE                4
+/*** ext2 version 1.0 and above ***/
+#define EXT2_SB_INODE_SIZE_OFFSET         88		/*** inode structure size***/
+#define EXT2_SB_INODE_SIZE_SIZE            2
 
 
 /****************************************************************************************/
 /******************* GROUP DESCRIPTOR FIELD OFFSETS / SIZES *****************************/
 /****************************************************************************************/
 
-#define EXT2_GD_BLK_BMP_OFFSET			   0		/*** block usage bitmap block address ***/
-#define EXT2_GD_BLK_BMP_SIZE			   4
-#define EXT2_GD_INO_BMP_OFFSET			   4		/*** i-node usage block address  ***/
-#define EXT2_GD_INO_BMP_SIZE			   4
 #define EXT2_GD_INO_TBL_OFFSET			   8		/*** starting block address of i-node table ***/
 #define EXT2_GD_INO_TBL_SIZE			   4
-#define EXT2_GD_UDIRS_OFFSET			  16		/*** number of directories in group ***/
-#define EXT2_GD_UDIRS_SIZE			  	   2
 
 /****************************************************************************************/
 /************************ INODE FIELD OFFSETS / SIZES ***********************************/

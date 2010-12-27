@@ -2,6 +2,8 @@
 #ifndef __MEM_H
 #define __MEM_H
 
+#define DISK_BUFFER ((uint8_t*)0x20000)
+
 void *memcpy(void *dst,const void* src, int size);
 
 void *memset(void* dst, int c, int s);

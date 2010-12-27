@@ -107,24 +107,23 @@ int disk_read_sector( unsigned char bios_drive, unsigned long long sector, void 
 int disk_read( struct disk* disk, unsigned long long abs_address, unsigned short abs_size, void* dst) {
 
 	int ret;
-    int bps = bytes_per_sector(disk->bios_drive);
 
 	while(abs_size) {
 
-		unsigned long long sector = abs_address / bps;
-		unsigned short offset     = abs_address % bps;
-		unsigned short thisread   = bps - offset;
+		unsigned long long sector = abs_address / disk->sector_bytes;
+		unsigned short offset     = abs_address % disk->sector_bytes;
+		unsigned short thisread   = disk->sector_bytes - offset;
 
 		if(thisread > abs_size)
 			thisread = abs_size;
 
-		if(offset || (thisread != bps)) {
+		if(offset || (thisread != disk->sector_bytes)) {
 
 			// not reading a whole sector, read to the disk buffer!
-			if((ret = disk_read_sector( disk->bios_drive, sector, (void*)0x20000 )) != 0)
+			if((ret = disk_read_sector( disk->bios_drive, sector, DISK_BUFFER )) != 0)
 				return ret;
 
-			memcpy(dst, (void*)(0x20000 + offset), thisread);
+			memcpy(dst, (void*)(DISK_BUFFER + offset), thisread);
 		}
 		else {
 			// reading exactly one sector, let the bios write directly to destination.
@@ -150,9 +149,7 @@ int disk_read( struct disk* disk, unsigned long long abs_address, unsigned short
  */
 int partition_read( struct partition *part, unsigned long long abs_address, unsigned short abs_size, void* dst) {
 
-	int bps = bytes_per_sector(part->disk->bios_drive);
-
-	return disk_read(part->disk,abs_address + bps * part->start_sector, abs_size, dst);
+	return disk_read(part->disk,abs_address + part->disk->sector_bytes * part->start_sector, abs_size, dst);
 }
 
 /******************************************************************************************************
@@ -167,7 +164,9 @@ struct disk open_disk(uint8_t bios_disk) {
 
     memset(&d,0,sizeof d);
 
-    if(bytes_per_sector(bios_disk))
+    d.sector_bytes = bytes_per_sector(bios_disk);
+
+    if(d.sector_bytes)
     	d.bios_drive = bios_disk; // TODO: better way to detect disk presence?
 
     return d;
