@@ -11,8 +11,9 @@
 int fs_init();
 
 /*** the only two inode mode fields we are interested in ***/
-#define S_IFREG	8000	/* regular file */
-#define S_IFDIR	4000	/* directory */
+#define S_IFREG	0x8000	/* regular file */
+#define S_IFDIR	0x4000	/* directory */
+#define S_IFSYM 0xA000  /* symbolic link */
 
 /****************************************************************************************/
 /********************** SUPERBLOCK FIELD OFFSETS / SIZES ********************************/

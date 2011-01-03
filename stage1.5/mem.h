@@ -3,6 +3,7 @@
 #define __MEM_H
 
 #define DISK_BUFFER ((uint8_t*)0x20000)
+#define ADHOC_COMM  ((uint8_t*)0x30000)
 
 void *memcpy(void *dst,const void* src, int size);
 
