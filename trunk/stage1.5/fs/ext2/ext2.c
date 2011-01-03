@@ -25,16 +25,15 @@ struct superblock {
 	uint32_t block0;
 } superblock ;
 
-struct direntry {
+struct dirent {
 	uint32_t inode;
 	uint16_t size;
-	uint8_t  namelen8;    /*** depending on feature flags ***/
-	uint8_t  type;        /*** depending on feature flags ***/
+	uint16_t  _padding;    /*** Ignoring these fields as they are just optimisations, and depend of feature flags. ***/
 	char     name[256];
-} direntry;
+} dirent;
 
 static void parse_superblock();
-void read_root();
+void ext2_shuffle_hi();
 
 int fs_init() {
 
@@ -50,7 +49,7 @@ int fs_init() {
 
     parse_superblock();
 
-    read_root();
+    ext2_shuffle_hi();
 
     return 0; // SUCCESS
 }
@@ -147,11 +146,33 @@ static uint32_t ext2_read_phy_32(uint64_t addr64) {
 	return ret;
 }
 
+static uint16_t ext2_read_phy_16(uint64_t addr64) {
+
+	uint16_t ret = 0;
+
+	partition_read(&partition, addr64, sizeof ret, &ret);
+
+	return ret;
+}
+
 static uint32_t ext2_filesize(uint32_t inode) {
 
-	uint64_t phy = get_inode_phy_addr64(inode);
+	return ext2_read_phy_32(get_inode_phy_addr64(inode) + EXT2_IN_SIZE_OFFSET);
+}
 
-	return ext2_read_phy_32(phy + EXT2_IN_SIZE_OFFSET);
+static uint32_t ext2_isdir(uint32_t inode) {
+
+	return ext2_read_phy_16(get_inode_phy_addr64(inode) + EXT2_IN_MODE_OFFSET) & S_IFDIR;
+}
+
+static uint32_t ext2_isreg(uint32_t inode) {
+
+	return ext2_read_phy_16(get_inode_phy_addr64(inode) + EXT2_IN_MODE_OFFSET) & S_IFREG;
+}
+
+static uint32_t ext2_issym(uint32_t inode) {
+
+	return ext2_read_phy_16(get_inode_phy_addr64(inode) + EXT2_IN_MODE_OFFSET) & S_IFSYM;
 }
 
 static void read_inode_block(uint32_t inode, uint32_t block, uint16_t offset, uint16_t size, void* dst) {
@@ -227,30 +248,62 @@ static void read_inode(uint32_t inode, uint64_t offset, uint16_t size, void* dst
 	}
 }
 
-char testbuffer[100] = {0,};
+static uint32_t ext2_find_kernel() {
 
-void read_root() {
-
-	uint32_t off=0;
+	uint32_t offset=0;
 	uint32_t size = ext2_filesize(2);
 
-	while(off < size) {
+	while(offset < size) {
 
-		read_inode(2,off,sizeof direntry, &direntry);
-	    printf("%d %d %d /%s\n", direntry.inode, direntry.size, direntry.type, direntry.name);
-	    off+=direntry.size;
+		read_inode(2,offset,sizeof dirent, &dirent);
 
-	    if(strcmp("hello1.txt", direntry.name) == 0) {
+		if(strcmp("shovelos.kernel", dirent.name) == 0) {
 
-	    	int sz = ext2_filesize(direntry.inode);
-	    	if(sz>sizeof testbuffer)
-	    		sz = sizeof testbuffer;
+			if(!ext2_isreg(dirent.inode))
+				halt("shovelos.kernel is not a regular file!");
 
-	    	printf("FOUND %s\n", direntry.name);
+			return dirent.inode;
+		}
 
-	    	read_inode(direntry.inode, 0, sz, testbuffer);
+		offset+=dirent.size;
+	}
 
-	    	printf("  contents: \"%s\"\n",testbuffer);
-	    }
+	halt("cannot find /shovelos.kernel");
+}
+
+void shuffle_high();
+
+void ext2_shuffle_hi() {
+
+	uint32_t inode = ext2_find_kernel();
+	uint32_t ksize = ext2_filesize(inode);
+	uint64_t off   = 0;
+	uint64_t dst   = 0xFFFF800000000000;
+	uint16_t thisread = 0;
+	uint64_t temp     = 0;
+	uint64_t shuffle_params[4];
+
+	while(ksize > 0) {
+
+		thisread = ksize > 4096 ? 4096 : (uint16_t)ksize;
+
+		read_inode(inode,off,thisread, DISK_BUFFER + disk.sector_bytes);
+
+		/*** soooooo ugly! ***/
+		memset(shuffle_params,0,sizeof shuffle_params);
+		shuffle_params[0] = dst;
+		shuffle_params[1] = (uint64_t)(DISK_BUFFER + disk.sector_bytes);
+		shuffle_params[2] = thisread;
+		shuffle_params[3] = 0;
+
+		memcpy(ADHOC_COMM, shuffle_params, sizeof shuffle_params);
+
+		shuffle_high();
+
+		dst   += thisread;
+		ksize -= thisread;
+		off   += thisread;
 	}
 }
+
+

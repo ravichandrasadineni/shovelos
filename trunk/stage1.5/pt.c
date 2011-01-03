@@ -30,7 +30,7 @@ static uint32_t pt_get_addr(uint32_t addr20) {
 
 	memcpy( &pt, (const void*)addr20, 8);
 
-	return (uint32_t)ALIGN_DOWN( pt );
+	return  (uint32_t)ALIGN_DOWN( pt );
 }
 
 /************************************************************************************************************
@@ -48,9 +48,10 @@ static void pt_map_page(uint64_t virt, uint64_t phy, int pdpe_base, int pde_base
 	printf("pt_map_page 0x%lx -> 0x%lx\n",virt,phy);
 #endif
 
-	pml4e += 0x1ff & (virt >> 39);
+	pml4e += 8 * (0x1ff & (virt >> 39));
 
 	pdpe = pt_get_addr(pml4e);
+
 	if(pdpe == 0) {
 
 		uint64_t data  = (pdpe = pdpe_base)        |
@@ -61,8 +62,7 @@ static void pt_map_page(uint64_t virt, uint64_t phy, int pdpe_base, int pde_base
 
 		write64(pml4e, data);
 	}
-	pdpe += 0x1ff & (virt >> 30);
-
+	pdpe += 8 * (0x1ff & (virt >> 30));
 	pde = pt_get_addr(pdpe);
 	if(pde == 0) {
 
@@ -74,7 +74,7 @@ static void pt_map_page(uint64_t virt, uint64_t phy, int pdpe_base, int pde_base
 
 		write64(pdpe, data);
 	}
-	pde += 0x1ff & (virt >> 21);
+	pde += 8 * (0x1ff & (virt >> 21));
 
 	{
         uint64_t data = phy             |
@@ -132,14 +132,12 @@ void setup_pt() {
 
 	    	if(pb < 0x100000) {
 	    		/*** identity map low-mem ***/
-	    		//pt_map_page(vl,pb,_pdpe_ident,_pde_ident);
 	    		pt_map_page(vl,pb,0x11000,0x12000);
 	    		vl += PAGE_SIZE;
 	    	}
 	    	else {
 
 	    		/*** map high-mem ***/
-	    		//pt_map_page(vh,pb,_pdpe_hi,_pde_hi);
 	    		pt_map_page(vh,pb,0x13000,0x14000);
 	    		vh += PAGE_SIZE;
 	    	}
@@ -150,7 +148,7 @@ void setup_pt() {
 	    		pl = 0;
 
 	    	total_hi += PAGE_SIZE;
-	    	if(total_hi >= (PAGE_SIZE * PAGE_TABLE_SIZE))
+ 			if(total_hi >= (PAGE_SIZE * PAGE_TABLE_SIZE))
 	    		return;
 	    }
 	}

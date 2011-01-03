@@ -9,15 +9,14 @@
 
 .code16
 
-.global himem
-himem:
+.global shuffle_high
+shuffle_high:
 
-  pusha										# store current state
+  pushal										# store current state
 
   mov $0xa0, %eax							# Set PAE and PGE
   mov %eax,  %cr4
 
-  #movl $_pml4e, %edx						# Load page tables
   movl $0x10000, %edx						# Load page tables
   movl %edx,    %cr3
 
@@ -42,6 +41,29 @@ himem:
 .code64
 long_main:
 
+  mov $24, %rax									# setup 64bit segments
+  mov %rax,%ds
+  mov %rax,%ss
+  mov %rax,%es
+  mov %rax,%gs
+  mov %rax,%fs
+
+   movq $0x30000,  %rax
+   movq  0(%rax),  %rdi
+   movq  8(%rax),  %rsi
+   movq 16(%rax),  %rcx
+
+   rep movsb
+
+   cmpq $0, 20(%rax)
+   je   exit_long_mode
+
+   movl %esp, %eax
+   andl $0xffff, %eax
+   subl $8,      %eax
+   movq $0xFFFF800000000000, %rcx
+   movq %rcx, (%rax)
+   jmpq  *(%rax)
 
 ##############################################
 #  RETURN TO REAL MODE                       #
@@ -53,13 +75,11 @@ long_main:
   mov %eax,%es
   mov %eax,%gs
   mov %eax,%fs
-
-.code64
 												# fake a far-return frame
-  push $16										# push compataility mode code selector
+  pushq $16										# push compataility mode code selector
   xorq %rcx,%rcx
   movw $compat_mode, %cx
-  push %rcx										# push return address
+  pushq %rcx										# push return address
   retfq											# far-return to compatability mode
 compat_mode:
 
@@ -77,6 +97,6 @@ compat_mode:
 
     jmp $0, $return_from_long_mode				# and finaly, reset cs
 return_from_long_mode:
-  popa
-  ret
+  popal
+  retl
 
