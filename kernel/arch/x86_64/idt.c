@@ -338,6 +338,6 @@ void _x86_64_load_idt() {
 	struct idt_t idt13 = PRESENT_ISR(8, 0, INTERRUPT , 0, ((uint64_t)&dummy));
 	idt[13] = idt13;
 
-	_x86_64_asm_lidt(&idtr);
+//	_x86_64_asm_lidt(&idtr);
 }
 

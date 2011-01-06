@@ -175,13 +175,12 @@ static uint32_t ext2_issym(uint32_t inode) {
 	return ext2_read_phy_16(get_inode_phy_addr64(inode) + EXT2_IN_MODE_OFFSET) & S_IFSYM;
 }
 
-static void read_inode_block(uint32_t inode, uint32_t block, uint16_t offset, uint16_t size, void* dst) {
+static void read_inode_block(uint32_t inode, uint32_t block, uint32_t offset, uint16_t size, void* dst) {
 
 	uint64_t direct0 = 12;
 	uint64_t indirect1 = (superblock.block_size/4);
 	uint64_t indirect2 = indirect1 * indirect1;
 	uint64_t indirect3 = indirect1 * indirect2;
-
 	uint64_t phy = get_inode_phy_addr64(inode);
 
 	if(block < direct0) {
@@ -233,13 +232,16 @@ static void read_inode_block(uint32_t inode, uint32_t block, uint16_t offset, ui
 	halt("read_inode_block - overflow");
 }
 
-static void read_inode(uint32_t inode, uint64_t offset, uint16_t size, void* dst) {
+/*** FIXME - size limited to superblock.block_size ***/
+static void read_inode(uint32_t inode, uint32_t offset, uint16_t size, void* dst) {
 
-	uint32_t block = (uint32_t)(offset / superblock.block_size);
-	uint32_t off   = (uint32_t)(offset % superblock.block_size);
+	uint32_t block = offset / superblock.block_size;
+	uint32_t off   = offset % superblock.block_size;
+
+	if(size > superblock.block_size)
+		halt("FIXME: read_inode");
 
 	if((off + size) > superblock.block_size) {
-
 		read_inode_block(inode,block,off,superblock.block_size - off,dst);
 		read_inode_block(inode,block+1,0,size-(superblock.block_size - off),dst);
 	}
@@ -277,7 +279,7 @@ void ext2_shuffle_hi() {
 
 	uint32_t inode = ext2_find_kernel();
 	uint32_t ksize = ext2_filesize(inode);
-	uint64_t off   = 0;
+	uint32_t off   = 0;
 	uint64_t dst   = 0xFFFF800000000000;
 	uint16_t thisread = 0;
 	uint64_t temp     = 0;
@@ -285,7 +287,7 @@ void ext2_shuffle_hi() {
 
 	while(ksize > 0) {
 
-		thisread = ksize > 4096 ? 4096 : (uint16_t)ksize;
+		thisread = ksize > superblock.block_size ? superblock.block_size : (uint16_t)ksize;
 
 		read_inode(inode,off,thisread, DISK_BUFFER + disk.sector_bytes);
 

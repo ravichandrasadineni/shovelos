@@ -121,7 +121,7 @@ int disk_read( struct disk* disk, unsigned long long abs_address, unsigned short
 
 			// not reading a whole sector, read to the disk buffer!
 			if((ret = disk_read_sector( disk->bios_drive, sector, DISK_BUFFER )) != 0)
-				return ret;
+				halt("disk read error!");
 
 			memcpy(dst, (void*)(DISK_BUFFER + offset), thisread);
 		}
