@@ -17,10 +17,14 @@ _x86_64_asm_lgdt:
 
     lgdt (%rdi)
     movq %rdx, %ds
+    movq %rdx, %ss
+    movq %rdx, %es
+    movq %rdx, %fs
+    movq %rdx, %gs
 
     pushq %rsi										# push code selector
     movabsq $.done, %r10
     pushq %r10										# push return address
     retfq											# far-return to new cs descriptor
 .done:
-    ret
+    retq

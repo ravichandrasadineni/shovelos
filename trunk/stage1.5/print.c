@@ -213,7 +213,7 @@ int putndec(sint64_t n) {
     printf ( minimal, only supports %s,x,d,u - no floats, no padding )
       write a formatted string to the screen
 ***********************************************************************/
-int printf(const char * format, ... /*int *_args*/) {
+int printf(const char * format, ... ) {
 
     char c;                // current char
     int special=0;        // special flag ( '%' )
