@@ -7,14 +7,14 @@
 
 #include "x86_64.h"
 
-#define ROWS 24
+#define ROWS 25
 #define COLS 80
 
 /* fixme */
-static void memcpy(const void* dst, void* src, int sz) {
+static void memcpy(void* dst, const void* src, int sz) {
 
-	uint8_t *d = dst;
-	uint8_t *s = src;
+	uint8_t *d = (uint8_t*)dst;
+	const uint8_t *s = (const uint8_t*)src;
 	while(sz--)
 		*d++ = *s++;
 }
@@ -33,8 +33,8 @@ struct console {
 
 struct console console = {
     (struct console_mem *const)0xb8000, /* PC video address   */
+    0,                                  /* start at left      */
     ROWS-1,                             /* start at bottom    */
-    0,                                  /* start left aligned */
     0x0f00,                             /* white on black     */
 };
 
@@ -54,7 +54,7 @@ int putc(char c) {
     switch(c) {
         case '\n':
         	console.xpos = 0;
-            if(console.ypos>=ROWS)
+            if(console.ypos>=ROWS-1)
                 scroll();
             else
                 ++console.ypos;
@@ -69,7 +69,7 @@ int putc(char c) {
              ++console.xpos;
              if(console.xpos>=COLS) {
             	 console.xpos = 0;
-	             if(console.ypos>=ROWS)
+	             if(console.ypos>=ROWS-1)
 	                 scroll();
 	             else
 	                 ++console.ypos;
@@ -90,12 +90,13 @@ int puts(const char *s) {
     return i;
 }
 
+
 int kprintf(const char * format, ... ) {
 
 	char c;
 	int  l=0;
 	int special=0;
-	uint64_t  **args = (uint64_t**)(&format+1);
+	char  **args = (char**)(&format+1);
 
     while((c = *format++)) {
 
@@ -105,8 +106,9 @@ int kprintf(const char * format, ... ) {
         	switch(c) {
         	case 's':
         	case 'S':
-        		l += puts((const char*)*args++);
-        		break;
+        	    l += puts(*args++);
+			    break;
+
         	default:
         		l += putc(c);
         		break;
