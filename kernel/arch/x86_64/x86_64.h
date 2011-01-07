@@ -10,6 +10,8 @@
 
 #include <inttypes.h>
 
+#define memcpy __builtin_memcpy
+
 void _x86_64_load_gdt();
 void _x86_64_asm_lgdt(void* gdtr, uint64_t cs, uint64_t ds);
 

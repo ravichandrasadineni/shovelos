@@ -13,10 +13,7 @@ int main() {
 	_x86_64_load_idt();
 	_x86_64_load_gdt();
 
-	kprintf("-%s-", "shovelos.kernel -\"HELLO WORLD!\"\n");
-	kprintf("-s-", "abcdefg\n");
-	kprintf("-s-", "ABCDEFG\n");
-	kprintf("-s-", "1234567\n");
+	kprintf("shovelos.kernel -\"HELLO WORLD!\"\n");
 
 	for(;;);
 	return 0;

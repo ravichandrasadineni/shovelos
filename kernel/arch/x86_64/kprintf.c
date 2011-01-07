@@ -7,18 +7,10 @@
 
 #include <stdarg.h>
 #include <inttypes.h>
+#include <arch/arch.h>
 
 #define ROWS 25
 #define COLS 80
-
-/* fixme */
-static void memcpy(void* dst, const void* src, int sz) {
-
-	uint8_t *d = (uint8_t*)dst;
-	const uint8_t *s = (const uint8_t*)src;
-	while(sz--)
-		*d++ = *s++;
-}
 
 struct console_mem {
 	uint16_t chars[ROWS][COLS];
@@ -50,7 +42,7 @@ static void scroll() {
 		console.mem->chars[r][c] = console.colour;
 }
 
-static int putc(char c) {
+static int putc(int c) {
 
     switch(c) {
         case '\n':
@@ -66,7 +58,7 @@ static int putc(char c) {
              return 0;
 
          default:
-             console.mem->chars[console.ypos][console.xpos] = console.colour | c;
+             console.mem->chars[console.ypos][console.xpos] = (uint16_t)(console.colour | c);
              ++console.xpos;
              if(console.xpos>=COLS) {
             	 console.xpos = 0;
@@ -97,6 +89,18 @@ static int putx(uint32_t n) {
     sint16_t s;   // shift
     uint8_t  x;
     for(s=28; s>=0; s-=4)
+    	if((x = (n>>s)&15) || l)
+            l += putc( x + ((x<10) ? '0' : ('a'-10)));
+
+    return l;
+}
+
+static int putlx(uint64_t n) {
+
+	int      l=0;
+    sint16_t s;   // shift
+    uint8_t  x;
+    for(s=60; s>=0; s-=4)
     	if((x = (n>>s)&15) || l)
             l += putc( x + ((x<10) ? '0' : 'a' ));
 
@@ -167,30 +171,39 @@ int kprintf(const char * format, ... ) {
                     l += puts( va_arg(va, const char*) );
 			        break;
 
+        	    case 'c':
+        	         l += putc( va_arg(va, uint32_t) );
+                     break;
+
         	    case 'd':
         	    case 'i':
-        	    	l += putd( va_args(va, sint32_t) );
+        	    	l += putd( va_arg(va, sint32_t) );
         	        break;
 
 				case 'u':
-					l += putu( va_args(va, uint32_t) );
+					l += putu( va_arg(va, uint32_t) );
 					break;
 
 				case 'x':
 				case 'X':
-					l += putx( va_args(va, uint32_t) );
+					l += putx( va_arg(va, uint32_t) );
 					break;
 
 				case 'l':
 
 					if(*format == 'l') {
 						++format;
-						l += putll( va_args(va, sint64_t) );
+						l += putll( va_arg(va, sint64_t) );
 					}
 
 					if(*format == 'u') {
 						++format;
-						l += putlu( va_args(va, uint64_t) );
+						l += putlu( va_arg(va, uint64_t) );
+					}
+
+					if(*format == 'x' || *format == 'X') {
+						++format;
+						l += putlx( va_arg(va, uint64_t) );
 					}
 
                     break;
