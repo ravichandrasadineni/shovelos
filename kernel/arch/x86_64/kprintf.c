@@ -5,8 +5,8 @@
  *      Author: cds
  */
 
-#include "x86_64.h"
 #include <stdarg.h>
+#include <inttypes.h>
 
 #define ROWS 25
 #define COLS 80
@@ -50,7 +50,7 @@ static void scroll() {
 		console.mem->chars[r][c] = console.colour;
 }
 
-int putc(char c) {
+static int putc(char c) {
 
     switch(c) {
         case '\n':
@@ -79,7 +79,7 @@ int putc(char c) {
      }
 }
 
-int puts(const char *s) {
+static int puts(const char *s) {
 
     short i=0;
     char c;
@@ -91,13 +91,70 @@ int puts(const char *s) {
     return i;
 }
 
+static int putx(uint32_t n) {
+
+	int      l=0;
+    sint16_t s;   // shift
+    uint8_t  x;
+    for(s=28; s>=0; s-=4)
+    	if((x = (n>>s)&15) || l)
+            l += putc( x + ((x<10) ? '0' : 'a' ));
+
+    return l;
+}
+
+static int putu(uint32_t n) {
+
+    uint32_t   d = 1000000000; // divisor
+    sint16_t   h;              // digit
+    sint16_t   l = 0;          // wrote length
+    for(; d>=1; d/=10)
+        if((h = ((n/d)%10)) || l || (d<=1)) {
+            ++l;
+            putc('0' + h);
+	    }
+    return l;
+}
+
+static int putd(sint32_t n) {
+
+    if(n>=0)
+    	return putu((sint32_t)n);
+
+    return putc('-') + putd((sint32_t)(-n));
+}
+
+static int putlu(uint64_t n) {
+
+    uint64_t d  = 1000000000;
+	         d *= 1000000000;
+
+    sint16_t   h;              // digit
+    sint16_t   l = 0;          // wrote length
+    for(; d>=1; d/=10)
+        if((h = ((n/d)%10)) || l || (d<=1)) {
+            ++l;
+            putc('0' + h);
+	    }
+    return l;
+}
+
+static int putll(sint64_t n) {
+
+    if(n>=0)
+    	return putlu((uint64_t)n);
+
+    return putc('-') + putlu((uint64_t)(-n));
+}
 
 int kprintf(const char * format, ... ) {
 
+	va_list va;
 	char c;
 	int  l=0;
 	int special=0;
-	char  **args = (char**)(&format+1);
+
+	va_start(va, format);
 
     while((c = *format++)) {
 
@@ -105,16 +162,42 @@ int kprintf(const char * format, ... ) {
         	special = 0;
 
         	switch(c) {
-        	case 's':
-        	case 'S':
-        	{
-        		char *str = args*
-        	    l += puts(str);
-			    break;
-        	}
-        	default:
-        		l += putc(c);
-        		break;
+
+        	    case 's':
+                    l += puts( va_arg(va, const char*) );
+			        break;
+
+        	    case 'd':
+        	    case 'i':
+        	    	l += putd( va_args(va, sint32_t) );
+        	        break;
+
+				case 'u':
+					l += putu( va_args(va, uint32_t) );
+					break;
+
+				case 'x':
+				case 'X':
+					l += putx( va_args(va, uint32_t) );
+					break;
+
+				case 'l':
+
+					if(*format == 'l') {
+						++format;
+						l += putll( va_args(va, sint64_t) );
+					}
+
+					if(*format == 'u') {
+						++format;
+						l += putlu( va_args(va, uint64_t) );
+					}
+
+                    break;
+
+        	    default:
+        		    l += putc(c);
+        		    break;
         	}
         }
         else if(c=='%')
@@ -122,6 +205,9 @@ int kprintf(const char * format, ... ) {
         else
         	l += putc(c);
     }
+
+    va_end(va);
+
 	return l;
 }
 
