@@ -6,7 +6,7 @@
  */
 
 #include "x86_64.h"
-#include "../../inttypes.h"
+#include <inttypes.h>
 
 struct idt_t {
 
