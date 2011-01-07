@@ -6,6 +6,7 @@
  */
 
 #include "x86_64.h"
+#include <stdarg.h>
 
 #define ROWS 25
 #define COLS 80
@@ -106,9 +107,11 @@ int kprintf(const char * format, ... ) {
         	switch(c) {
         	case 's':
         	case 'S':
-        	    l += puts(*args++);
+        	{
+        		char *str = args*
+        	    l += puts(str);
 			    break;
-
+        	}
         	default:
         		l += putc(c);
         		break;
@@ -119,7 +122,6 @@ int kprintf(const char * format, ... ) {
         else
         	l += putc(c);
     }
-
 	return l;
 }
 
