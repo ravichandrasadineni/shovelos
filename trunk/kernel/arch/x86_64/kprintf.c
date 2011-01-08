@@ -102,7 +102,7 @@ static int putlx(uint64_t n) {
     uint8_t  x;
     for(s=60; s>=0; s-=4)
     	if((x = (n>>s)&15) || l)
-            l += putc( x + ((x<10) ? '0' : 'a' ));
+            l += putc( x + ((x<10) ? '0' : ('a'-10)));
 
     return l;
 }

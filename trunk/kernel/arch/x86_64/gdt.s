@@ -25,6 +25,6 @@ _x86_64_asm_lgdt:
     pushq %rsi										# push code selector
     movabsq $.done, %r10
     pushq %r10										# push return address
-    retfq											# far-return to new cs descriptor
+    retfq											# far-return to new cs descriptor ( the retq below )
 .done:
     retq
