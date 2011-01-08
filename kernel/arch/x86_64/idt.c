@@ -37,7 +37,7 @@ struct idt_t {
         dpl, \
         1, \
         ((target) >> 16) & 0x0000ffff, \
-        ((target) >> 32) & 0x0000ffff, \
+        ((target) >> 32) & 0xffffffff, \
         0 \
 	}
 
@@ -55,10 +55,6 @@ struct idt_t {
         0 \
 	}
 
-void dummy() {
-	for(;;);
-}
-
 static struct idt_t idt[] = {
 
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_000),
@@ -72,9 +68,9 @@ static struct idt_t idt[] = {
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_008),
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_009),
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_010),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_011),
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_011), /*** NOT PRESENT FAULT***/
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_012),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_013), // page fault?
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_013), /*** GENERAL PROTECTION FAULT ***/
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_014),
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_015),
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_016),
@@ -93,22 +89,22 @@ static struct idt_t idt[] = {
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_029),
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_030),
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_031),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_032),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_033),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_034),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_035),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_036),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_037),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_038),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_039),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_040),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_041),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_042),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_043),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_044),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_045),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_046),
-    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_047),
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_032), /*** IRQ  0 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_033), /*** IRQ  1 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_034), /*** IRQ  2 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_035), /*** IRQ  3 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_036), /*** IRQ  4 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_037), /*** IRQ  5 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_038), /*** IRQ  6 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_039), /*** IRQ  7  ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_040), /*** IRQ  8 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_041), /*** IRQ  9 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_042), /*** IRQ 10 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_043), /*** IRQ 11 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_044), /*** IRQ 12 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_045), /*** IRQ 13 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_046), /*** IRQ 14 ***/
+    ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_047), /*** IRQ 15 ***/
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_048),
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_049),
     ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_050),
@@ -316,7 +312,7 @@ static struct idt_t idt[] = {
 	ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_252),
 	ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_253),
 	ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_254),
-	ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_055),
+	ABSENT_ISR  (8, 0, INTERRUPT , 0, &_isr_255),
 };
 
 
@@ -334,10 +330,15 @@ struct idtr_t idtr = {
 
 void _x86_64_load_idt() {
 
+	extern void dummy_isr();
 
-	struct idt_t idt13 = PRESENT_ISR(8, 0, INTERRUPT , 0, ((uint64_t)&dummy));
-	idt[13] = idt13;
+	struct idt_t dummy_int_vector = PRESENT_ISR(8, 0, INTERRUPT , 0, ((uint64_t)&dummy_isr));
 
-//	_x86_64_asm_lidt(&idtr);
+	_8259_remap(0x20,0x28); /* re-map IRQ 0..15 to INT 32..47 */
+
+	for(int irq = 0; irq<256; ++irq)
+		idt[irq] = dummy_int_vector;
+
+	_x86_64_asm_lidt(&idtr);
 }
 

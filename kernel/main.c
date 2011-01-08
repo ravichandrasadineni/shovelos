@@ -15,7 +15,11 @@ int main() {
 
 	kprintf("shovelos.kernel -\"HELLO WORLD!\"\n");
 
-	for(;;);
+	for(;;) {
+//		int key = port_inb(0x60);
+//		if(key)
+//			kprintf("%c",key);
+	}
 	return 0;
 }
 
