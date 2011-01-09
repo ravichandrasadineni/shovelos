@@ -6,7 +6,8 @@
  */
 
 #include <inttypes.h>
-#include <arch/arch.h>
+
+BOOL _x86_64_phy_exists_in_pt(uint64_t phy);
 
 int main() {
 

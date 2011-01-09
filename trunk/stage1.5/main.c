@@ -1,16 +1,16 @@
 
 #include "16bitreal.h"
 #include "inttypes.h"
-#include "pt.h"
 #include "print.h"
 #include "alloc.h"
 #include "fs/ext2/ext2.h"
 #include "bios_disk.h"
 #include "mem.h"
+#include "pt.h"
 
 extern void* _pml4e;
 
-void himem();
+void shuffle_high();
 
 void __attribute__((noreturn))
   cmain() {
@@ -18,8 +18,6 @@ void __attribute__((noreturn))
   cls();
 
   puts("ShovelOS Stage 1.5\n");
-
-  setup_pt();
 
   fs_init();
 

@@ -95,13 +95,14 @@ static void pt_map_page(uint64_t virt, uint64_t phy, int pdpe_base, int pde_base
  * high-mem will be mapped to virtual address 2Meg
  * we will map untill we run out of physical memory, or fill a whole pdpe ( max 1 gig with 2meg pages )
  */
-void setup_pt() {
+void setup_pt(uint32_t needed_himem) {
 
 	uint64_t vh = 0xFFFF800000000000; // virtual hi-mem address
 	uint64_t vl = 0x0000000000000000; // virtual lo-mem address
 	uint64_t pb = 0; // physical base
 	uint64_t pl = 0; // physical length
-	uint64_t total_hi = 0; // total hi-mem mapped.
+	uint64_t total = 0; // total mem mapped.
+	uint64_t total_hi = 0;
 
 	// get physical memory layout.
 	struct mmap_e820h     *mmap = read_mmap();
@@ -140,6 +141,7 @@ void setup_pt() {
 	    		/*** map high-mem ***/
 	    		pt_map_page(vh,pb,0x13000,0x14000);
 	    		vh += PAGE_SIZE;
+	    		total_hi += PAGE_SIZE;
 	    	}
 	    	pb += PAGE_SIZE;
 	    	if(pl > PAGE_SIZE)
@@ -147,8 +149,14 @@ void setup_pt() {
 	    	else
 	    		pl = 0;
 
-	    	total_hi += PAGE_SIZE;
- 			if(total_hi >= (PAGE_SIZE * PAGE_TABLE_SIZE))
+	    	/* allocated all we need! */
+	    	if(total_hi >= needed_himem)
+	    		return;
+
+	    	total += PAGE_SIZE;
+
+	    	/* allocated all we can! */
+ 			if(total >= (PAGE_SIZE * PAGE_TABLE_SIZE))
 	    		return;
 	    }
 	}

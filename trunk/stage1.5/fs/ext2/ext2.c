@@ -10,6 +10,7 @@
 #include "../../bios_disk.h"
 #include "../../mem.h"
 #include "../../print.h"
+#include "../../pt.h"
 #include "ext2.h"
 
 static struct disk disk;
@@ -58,7 +59,7 @@ int fs_init() {
  * parse_superblock
  *   read needed fields from superblock
  */
-static void parse_superblock() {
+void parse_superblock() {
 
 	uint32_t version_major = 0;
 
@@ -75,22 +76,24 @@ static void parse_superblock() {
 	superblock.inode_size = 128; // fixed in version < 1.0
 	if(version_major >= 1)
 		partition_read(&partition,EXT2_SUPERBLOCK_OFFSET + EXT2_SB_INODE_SIZE_OFFSET, EXT2_SB_INODE_SIZE_SIZE, &superblock.inode_size );
+
+	printf("parsed superblock - size %d\n",superblock.block_size);
 }
 
 /*** read an ext2 block ***/
-static void read_block(uint32_t block, void* dst) {
+void read_block(uint32_t block, void* dst) {
 
 	partition_read(&partition, block * superblock.block_size, superblock.block_size, dst );
 }
 
 /*** find the blockgroup containing the given inode ***/
-static uint32_t inode_to_blockgroup(uint32_t inode) {
+uint32_t inode_to_blockgroup(uint32_t inode) {
 
 	return (inode-1) / superblock.inodes_per_block_group;
 }
 
 /*** find inode table block address from blockgroup ***/
-static uint32_t blockgroup_to_inode_table(uint32_t blockgroup) {
+uint32_t blockgroup_to_inode_table(uint32_t blockgroup) {
 
 	int ret = 0;
 	int gd_addr = (superblock.block0 + 1) * superblock.block_size + blockgroup * 32;
@@ -101,13 +104,13 @@ static uint32_t blockgroup_to_inode_table(uint32_t blockgroup) {
 }
 
 /*** find an inodes index within a blockgroup ***/
-static uint32_t inode_to_blockgroup_index(uint32_t inode) {
+uint32_t inode_to_blockgroup_index(uint32_t inode) {
 
 	return (inode-1) % superblock.inodes_per_block_group;
 }
 
 /*** get an inodes on disk address (partition relative) ***/
-static uint64_t get_inode_phy_addr64(uint32_t inode) {
+uint64_t get_inode_phy_addr64(uint32_t inode) {
 
 	uint64_t block  = blockgroup_to_inode_table(  inode_to_blockgroup(inode) );
 	uint64_t inodeidx = inode_to_blockgroup_index(inode);
@@ -117,7 +120,7 @@ static uint64_t get_inode_phy_addr64(uint32_t inode) {
 	return block * blocksize + inodeidx * inodesize;
 }
 
-static void ext2_read_block(uint32_t block, uint16_t offset, uint16_t size, void *dst) {
+void ext2_read_block(uint32_t block, uint16_t offset, uint16_t size, void *dst) {
 
 	uint64_t addr64  = block;
 	         addr64 *= superblock.block_size;
@@ -128,7 +131,7 @@ static void ext2_read_block(uint32_t block, uint16_t offset, uint16_t size, void
 	return;
 }
 
-static uint32_t ext2_read_block_32(uint32_t block, uint16_t offset) {
+uint32_t ext2_read_block_32(uint32_t block, uint16_t offset) {
 
 	uint32_t ret = 0;
 
@@ -137,7 +140,7 @@ static uint32_t ext2_read_block_32(uint32_t block, uint16_t offset) {
 	return ret;
 }
 
-static uint32_t ext2_read_phy_32(uint64_t addr64) {
+uint32_t ext2_read_phy_32(uint64_t addr64) {
 
 	uint32_t ret = 0;
 
@@ -146,7 +149,7 @@ static uint32_t ext2_read_phy_32(uint64_t addr64) {
 	return ret;
 }
 
-static uint16_t ext2_read_phy_16(uint64_t addr64) {
+uint16_t ext2_read_phy_16(uint64_t addr64) {
 
 	uint16_t ret = 0;
 
@@ -155,27 +158,27 @@ static uint16_t ext2_read_phy_16(uint64_t addr64) {
 	return ret;
 }
 
-static uint32_t ext2_filesize(uint32_t inode) {
+uint32_t ext2_filesize(uint32_t inode) {
 
 	return ext2_read_phy_32(get_inode_phy_addr64(inode) + EXT2_IN_SIZE_OFFSET);
 }
 
-static uint32_t ext2_isdir(uint32_t inode) {
+uint32_t ext2_isdir(uint32_t inode) {
 
 	return ext2_read_phy_16(get_inode_phy_addr64(inode) + EXT2_IN_MODE_OFFSET) & S_IFDIR;
 }
 
-static uint32_t ext2_isreg(uint32_t inode) {
+uint32_t ext2_isreg(uint32_t inode) {
 
 	return ext2_read_phy_16(get_inode_phy_addr64(inode) + EXT2_IN_MODE_OFFSET) & S_IFREG;
 }
 
-static uint32_t ext2_issym(uint32_t inode) {
+uint32_t ext2_issym(uint32_t inode) {
 
 	return ext2_read_phy_16(get_inode_phy_addr64(inode) + EXT2_IN_MODE_OFFSET) & S_IFSYM;
 }
 
-static void read_inode_block(uint32_t inode, uint32_t block, uint32_t offset, uint16_t size, void* dst) {
+void read_inode_block(uint32_t inode, uint32_t block, uint32_t offset, uint16_t size, void* dst) {
 
 	uint64_t direct0 = 12;
 	uint64_t indirect1 = (superblock.block_size/4);
@@ -233,7 +236,7 @@ static void read_inode_block(uint32_t inode, uint32_t block, uint32_t offset, ui
 }
 
 /*** FIXME - size limited to superblock.block_size ***/
-static void read_inode(uint32_t inode, uint32_t offset, uint16_t size, void* dst) {
+void read_inode(uint32_t inode, uint32_t offset, uint16_t size, void* dst) {
 
 	uint32_t block = offset / superblock.block_size;
 	uint32_t off   = offset % superblock.block_size;
@@ -250,7 +253,7 @@ static void read_inode(uint32_t inode, uint32_t offset, uint16_t size, void* dst
 	}
 }
 
-static uint32_t ext2_find_kernel() {
+uint32_t ext2_find_kernel() {
 
 	uint32_t offset=0;
 	uint32_t size = ext2_filesize(2);
@@ -285,6 +288,11 @@ void ext2_shuffle_hi() {
 	uint64_t temp     = 0;
 	uint64_t shuffle_params[4];
 
+	/*** setup page tables, identity map lower memory,
+	     and allocate enough hi-memory for kernel ***/
+
+	setup_pt( ksize );
+
 	while(ksize > 0) {
 
 		thisread = ksize > superblock.block_size ? superblock.block_size : (uint16_t)ksize;
@@ -294,7 +302,7 @@ void ext2_shuffle_hi() {
 		/*** soooooo ugly! ***/
 		memset(shuffle_params,0,sizeof shuffle_params);
 		shuffle_params[0] = dst;
-		shuffle_params[1] = (uint64_t)(DISK_BUFFER + disk.sector_bytes);
+		shuffle_params[1] = (uint32_t)(DISK_BUFFER + disk.sector_bytes);
 		shuffle_params[2] = thisread;
 		shuffle_params[3] = 0;
 
