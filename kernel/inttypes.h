@@ -8,6 +8,10 @@
 #ifndef INTTYPES_H_
 #define INTTYPES_H_
 
+#define TRUE  1
+#define FALSE 0
+typedef int BOOL;
+
 typedef char 			    sint8_t;
 typedef unsigned char 	    uint8_t;
 typedef short               sint16_t;

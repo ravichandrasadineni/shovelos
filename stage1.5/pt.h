@@ -105,7 +105,7 @@ struct PDE {
 	} bits;
 }__attribute__((packed));
 
-void setup_pt();
+void setup_pt(uint32_t needed_himem);
 
 #endif /*** __PAGE_TRANSLATION_H ***/
 

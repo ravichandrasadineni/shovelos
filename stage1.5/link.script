@@ -63,6 +63,7 @@ SECTIONS
             *(.data);
             *(.rodata);
             *(.COMMON);
+            *(COMMON);
             _data_end = .;
 	    }
 	    

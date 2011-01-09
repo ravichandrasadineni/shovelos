@@ -11,6 +11,7 @@
 #include <inttypes.h>
 
 #define memcpy __builtin_memcpy
+#define memset __builtin_memset
 
 /*** TODO: move this, only scroll and putc are arch specific ***/
 int  kprintf(const char * fmt, ...);
