@@ -16,6 +16,8 @@
 /*** TODO: move this, only scroll and putc are arch specific ***/
 int  kprintf(const char * fmt, ...);
 
+BOOL _x86_64_phy_exists_in_pt(uint64_t phy);
+
 void _x86_64_load_gdt();
 void _x86_64_asm_lgdt(void* gdtr, uint64_t cs, uint64_t ds);
 

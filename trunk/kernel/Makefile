@@ -1,9 +1,9 @@
 
-.PHONY: all clean arch/arch.a
+.PHONY: all clean arch/arch.a boot/boot.a mm/mm.a
 all : shovelos.kernel
 
 SRC64_C = main.c
-LIBS    = arch/arch.a
+LIBS    = arch/arch.a boot/boot.a mm/mm.a
 
 export KERNEL_ROOT := $(shell pwd)
 
@@ -29,12 +29,20 @@ shovelos.elf : $(OBJ64) $(LIBS) link.script
 arch/arch.a:
 	@make -C arch arch.a
 	
+boot/boot.a:
+	@make -C boot boot.a
+	
+mm/mm.a:
+	@make -C mm mm.a
+	
 clean:
 	@rm -f *~
 	@rm -f *.o
 	@rm -f *.elf
 	@rm -f *.bin
 	@make -C arch clean
+	@make -C mm clean
+	@make -C boot clean
 
 	
 	

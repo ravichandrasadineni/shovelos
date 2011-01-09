@@ -9,6 +9,10 @@
 #define PHY_ALLOC_H_
 
 #include <mm/mm.h>
+#include <inttypes.h>
+
+uint64_t mm_phy_alloc_page() ;
+void mm_phy_free_page(uint64_t page);
 
 static inline uint64_t mm_phy_to_page(uint64_t phy) {
 
@@ -17,7 +21,7 @@ static inline uint64_t mm_phy_to_page(uint64_t phy) {
 
 static inline uint64_t mm_page_to_phy(uint64_t page) {
 
-	return page * PAGE_SIZe;
+	return page * PAGE_SIZE;
 }
 
 static inline uint64_t mm_phy_alloc() {

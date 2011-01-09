@@ -11,6 +11,7 @@
         * 0x10000 -> 0x14fff 64bit page tables.
         * 0x20000 -> 0x2ffff 64k disk buffer.
         * 0x30000 -> 0x3ffff 64k adhoc 16bit/64bit comunication mem
+        * 0x40000 -> 0x4ffff 64k memory map ( multi-boot 1 format )
 
 ***/
 

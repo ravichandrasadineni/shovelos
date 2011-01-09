@@ -4,6 +4,7 @@
 #include "mmap.h"
 #include "alloc.h"
 #include "print.h"
+#include "mem.h"
 
 /***********************************************************
  * read memory map from BIOS ( use int 15h EAX=e820h )
@@ -73,6 +74,22 @@ __asm__("_bios_15h_e820h:\n"
 
 	   if(!mem.size) {
 		 halt("failed to read memory map!\n");
+	   }
+
+	   /* now convert this to multi-boot format for the kernel */
+	   {
+		   uint8_t *dst = MB_MMAP;
+		   uint32_t size32 = mem.size;
+		   struct mmap_e820h_reg *region = mem.map;
+
+		   memcpy(dst, &size32, 4); dst += 4;
+		   for(uint16_t i=0;i<mem.size; ++i)
+		   {
+			   memcpy(dst, &(region->b.b64), 8); dst += 8;
+			   memcpy(dst, &(region->l.l64), 8); dst += 8;
+			   memcpy(dst, &(region->type),  4); dst += 4;
+			   ++region;
+		   }
 	   }
    }
 
