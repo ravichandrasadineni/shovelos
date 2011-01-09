@@ -89,7 +89,7 @@ static int putx(uint32_t n) {
     sint16_t s;   // shift
     uint8_t  x;
     for(s=28; s>=0; s-=4)
-    	if((x = (n>>s)&15) || l)
+    	if((x = (n>>s)&15) || l || !s)
             l += putc( x + ((x<10) ? '0' : ('a'-10)));
 
     return l;
@@ -101,7 +101,7 @@ static int putlx(uint64_t n) {
     sint16_t s;   // shift
     uint8_t  x;
     for(s=60; s>=0; s-=4)
-    	if((x = (n>>s)&15) || l)
+    	if((x = (n>>s)&15) || l || !s)
             l += putc( x + ((x<10) ? '0' : ('a'-10)));
 
     return l;
