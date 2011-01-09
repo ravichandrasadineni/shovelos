@@ -6,8 +6,9 @@
  */
 
 #include <inttypes.h>
-
-BOOL _x86_64_phy_exists_in_pt(uint64_t phy);
+#include <arch/arch.h>
+#include <boot/boot.h>
+#include <mm/mm.h>
 
 int main() {
 
@@ -16,6 +17,11 @@ int main() {
 
 	kprintf("shovelos.kernel -\"HELLO WORLD!\"\n");
 
+	/*** initialise the physical memory allocator ***/
+	mm_phy_init(
+		&_shovboot_phy_exists,
+		&_x86_64_phy_exists_in_pt);
+
 	for(;;) {
 //		int key = port_inb(0x60);
 //		if(key)
@@ -23,5 +29,4 @@ int main() {
 	}
 	return 0;
 }
-
 
