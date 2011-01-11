@@ -32,6 +32,14 @@ void mm_phy_free_page(uint64_t page) {
 	    phy_bitmap[page/64] &= ~(1 << (page % 64));
 }
 
+BOOL mm_phy_check_free_page(uint64_t page) {
+
+	if(page && (phy_bitmap[page/64] & (1 << page % 64)))
+		return TRUE;
+
+	return FALSE;
+}
+
 /****************************************************
  * mm_phy_alloc_page: Allocate the first free page.
  * returns page number, or zero on out of memory.

@@ -8,7 +8,7 @@
  */
 
 #include <inttypes.h>
-#include <mm/mm.h>
+#include <arch/arch.h>
 
 #define MB_MMAP     ((uint32_t*)0x40000) /* THIS ADDRESS CURRENTLY ALSO HARD CODED INTO THE BOOT-LOADER */
 

@@ -9,8 +9,9 @@
 #include <arch/arch.h>
 #include <boot/boot.h>
 #include <mm/mm.h>
+#include <arch/arch.h>
 
-int main() {
+int _start() {
 
 	_x86_64_load_idt();
 	_x86_64_load_gdt();
