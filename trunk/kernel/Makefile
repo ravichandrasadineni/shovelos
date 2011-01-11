@@ -6,8 +6,9 @@ SRC64_C = main.c
 LIBS    = arch/arch.a boot/boot.a mm/mm.a
 
 export KERNEL_ROOT := $(shell pwd)
+export CFLAGS := -I$(KERNEL_ROOT) -Wall -Werror -std=c99 -m64 -Os -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow -ffreestanding -nostdinc -nostdlib
 
-OBJ64=$(SRC64_S:.s=.64.o) $(SRC64_C:.c=.64.o)
+OBJ64=$(SRC64_S:.s=.s.64.o) $(SRC64_C:.c=.c.64.o)
 
 # Convert an elf to a flat
 %.kernel : %.elf
@@ -16,11 +17,13 @@ OBJ64=$(SRC64_S:.s=.64.o) $(SRC64_C:.c=.64.o)
 
 shovelos.elf : $(OBJ64) $(LIBS) link.script
 	@echo Linking   $@
-	@$(LD) -s -Map link.map -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o $@ $(OBJ64) $(LIBS) 
+	@$(LD) -s -Map link.map -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o $@ $(OBJ64) $(LIBS)
+
+	 
 	
-%.64.o : %.c
+%.c.64.o : %.c
 	@echo Compiling $<
-	@gcc -I$(KERNEL_ROOT) -Wall -c -std=c99 -m64 -Os -mcmodel=large -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow -ffreestanding -nostdinc -nostdlib -o $@ $<
+	@gcc $(CFLAGS) -c -o $@ $<
 	
 %.64.o : %.s
 	@echo Assembling $<

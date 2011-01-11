@@ -9,6 +9,7 @@
 #define ARCH_X86_64_H_
 
 #include <inttypes.h>
+#include "pt.h"
 
 #define memcpy __builtin_memcpy
 #define memset __builtin_memset

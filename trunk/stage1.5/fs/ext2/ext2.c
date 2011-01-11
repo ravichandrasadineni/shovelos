@@ -283,7 +283,7 @@ void ext2_shuffle_hi() {
 	uint32_t inode = ext2_find_kernel();
 	uint32_t ksize = ext2_filesize(inode);
 	uint32_t off   = 0;
-	uint64_t dst   = 0xFFFF800000000000;
+	uint64_t dst   = 0xFFFFFFFF80000000;
 	uint16_t thisread = 0;
 	uint64_t temp     = 0;
 	uint64_t shuffle_params[4];

@@ -5,10 +5,12 @@
  *      Author: cds
  */
 
-#include <inttypes.h>
+#include<inttypes.h>
+#include<arch/arch.h>
 
 
 #define PAGE_TABLE_SIZE 512                         /* Entries per table */
+#define PAGE_TABLE_TYPE uint64_t
 #define PAGE_TABLE_ALIGNLENT 0x1000
 
 /* mask out bits under page size */
@@ -52,36 +54,25 @@ BOOL _x86_64_phy_exists_in_pt(uint64_t phy) {
 	return FALSE;
 }
 
+// umm... alignment!
+PAGE_TABLE_TYPE root_pml4e[PAGE_TABLE_SIZE] = {0,};
+PAGE_TABLE_TYPE pdpe_phy[PAGE_TABLE_SIZE]   = {0,};
+PAGE_TABLE_TYPE  pde_phy[PAGE_TABLE_SIZE]   = {0,};
 
-/***************************************************************************************************
- *     x86_64_virt_to_phy
- *       translate a virtual address to its physical address.
- *         takes 1) virtual memory address.
- *         returns: physical memory address.
- */
-uint64_t x86_64_virt_to_phy(uint64_t virt) {
+void map_all() {
 
-	uint64_t *pml4e = 0x0000;
+	for(uint64_t page = 0; page < PAGE_TABLE_SIZE; ++p) {
 
-	/*** page table address */
-	__asm__ __volatile__( "movq %%cr3, %0;"
-			             : "=r" (pml4e) );
+		uint64_t phy  = mm_page_to_phy(page);
 
-	/*** walk page tables ***/
-	pml4e += (PAGE_TABLE_SIZE-1) & (virt >> 39);
-	if(*pml4e & PT_PRESENT_FLAG) {
-		uint64_t *pdpe = (uint64_t*)ALIGN_DOWN(*pml4e);
-		pdpe += (PAGE_TABLE_SIZE-1) & (virt >> 30);
-		if(*pdpe & PT_PRESENT_FLAG) {
-			uint64_t *pde = (uint64_t*)ALIGN_DOWN(*pdpe);
-			pde += (PAGE_TABLE_SIZE-1) & (virt >> 21);
-			if(*pde & PT_PRESENT)
-				return  ALIGN_DOWN(*pde) + virt & (PAGE_SIZE-1); /* found it*/
-		}
+		if(_shovboot_phy_exists(phy))
+			pde_phy[page] = phy                     |
+							PT_PRESENT_FLAG         |
+			        		PT_WRITABLE_FLAG        |
+			        		PT_USER_FLAG            |
+			        		PT_WRITE_THROUGH_FLAG   |
+			        		PT_TERMINAL_FLAG        |
+			        		PT_GLOBAL_FLAG          ;
 	}
-
-	return 0; /* virtual address not mapped */
 }
-
-
 

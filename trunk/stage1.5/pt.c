@@ -97,7 +97,7 @@ static void pt_map_page(uint64_t virt, uint64_t phy, int pdpe_base, int pde_base
  */
 void setup_pt(uint32_t needed_himem) {
 
-	uint64_t vh = 0xFFFF800000000000; // virtual hi-mem address
+	uint64_t vh = 0xFFFFFFFF80000000; // virtual hi-mem address
 	uint64_t vl = 0x0000000000000000; // virtual lo-mem address
 	uint64_t pb = 0; // physical base
 	uint64_t pl = 0; // physical length

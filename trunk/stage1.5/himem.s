@@ -61,7 +61,7 @@ long_main:
    movl %esp, %eax
    andl $0xffff, %eax
    subl $8,      %eax
-   movq $0xFFFF800000000000, %rcx
+   movq $0xFFFFFFFF80000000, %rcx
    movq %rcx, (%rax)
    jmpq  *(%rax)
 
