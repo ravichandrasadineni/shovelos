@@ -5,8 +5,13 @@
 
 #include "inttypes.h"
 
-#define PAGE_SIZE 		0x200000 					/* 2meg pages */
-#define PAGE_TABLE_SIZE 512                         /* enteries per table */
+#define _4K   0x1000
+#define _2MEG 0x200000
+#define _1GIG 0x40000000
+
+
+#define PAGE_SIZE 		 _1GIG
+#define PAGE_TABLE_SIZE 512
 #define PAGE_TABLE_ALIGNLENT 0x1000
 
 /* mask out bits under page size */

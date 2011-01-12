@@ -42,7 +42,14 @@ static void pt_map_page(uint64_t virt, uint64_t phy, int pdpe_base, int pde_base
 
 	uint32_t pml4e = 0x10000; //&_pml4e;
 	uint32_t pdpe;
+
+#if(PAGE_SIZE==_2MEG)
 	uint32_t pde;
+#endif
+
+#if(PAGE_SIZE == _4K)
+	#error 4k_pages_not_implemented
+#endif
 
 #ifdef DEBUG
 	printf("pt_map_page 0x%lx -> 0x%lx\n",virt,phy);
@@ -64,9 +71,17 @@ static void pt_map_page(uint64_t virt, uint64_t phy, int pdpe_base, int pde_base
 	}
 	pdpe += 8 * (0x1ff & (virt >> 30));
 	pde = pt_get_addr(pdpe);
-	if(pde == 0) {
 
+#if(PAGE_SIZE==_2MEG)
+	if(pde == 0) {
 		uint64_t data  = (pde = pde_base)          |
+#endif
+#if(PAGE_SIZE==_1GIG)
+	{
+		uint64_t data  = phy                       |
+		                 PT_GLOBAL_FLAG            |
+				         PT_TERMINAL_FLAG          |
+#endif
 		                 PT_PRESENT_FLAG           |
 		        		 PT_WRITABLE_FLAG          |
 		        		 PT_USER_FLAG              |
@@ -74,8 +89,9 @@ static void pt_map_page(uint64_t virt, uint64_t phy, int pdpe_base, int pde_base
 
 		write64(pdpe, data);
 	}
-	pde += 8 * (0x1ff & (virt >> 21));
 
+#if(PAGE_SIZE==_2MEG)
+	pde += 8 * (0x1ff & (virt >> 21));
 	{
         uint64_t data = phy             |
         		PT_PRESENT_FLAG         |
@@ -87,6 +103,7 @@ static void pt_map_page(uint64_t virt, uint64_t phy, int pdpe_base, int pde_base
 
         write64(pde, data);
 	}
+#endif /*** 2MEG PAGES ***/
 }
 
 /************************************************************************************************************
