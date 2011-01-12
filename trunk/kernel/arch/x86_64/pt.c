@@ -54,25 +54,5 @@ BOOL _x86_64_phy_exists_in_pt(uint64_t phy) {
 	return FALSE;
 }
 
-// umm... alignment!
-PAGE_TABLE_TYPE root_pml4e[PAGE_TABLE_SIZE] = {0,};
-PAGE_TABLE_TYPE pdpe_phy[PAGE_TABLE_SIZE]   = {0,};
-PAGE_TABLE_TYPE  pde_phy[PAGE_TABLE_SIZE]   = {0,};
 
-void map_all() {
-
-	for(uint64_t page = 0; page < PAGE_TABLE_SIZE; ++p) {
-
-		uint64_t phy  = mm_page_to_phy(page);
-
-		if(_shovboot_phy_exists(phy))
-			pde_phy[page] = phy                     |
-							PT_PRESENT_FLAG         |
-			        		PT_WRITABLE_FLAG        |
-			        		PT_USER_FLAG            |
-			        		PT_WRITE_THROUGH_FLAG   |
-			        		PT_TERMINAL_FLAG        |
-			        		PT_GLOBAL_FLAG          ;
-	}
-}
 
