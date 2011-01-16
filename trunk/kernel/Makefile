@@ -3,7 +3,7 @@
 all : shovelos.kernel
 
 SRC64_C = main.c
-LIBS    = arch/arch.a boot/boot.a mm/mm.a
+LIBS    = mm/mm.a arch/arch.a
 
 export KERNEL_ROOT := $(shell pwd)
 export CFLAGS := -I$(KERNEL_ROOT) -Wall -Werror -std=c99 -m64 -Os -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow -ffreestanding -nostdinc -nostdlib
@@ -19,8 +19,6 @@ shovelos.elf : $(OBJ64) $(LIBS) link.script
 	@echo Linking   $@
 	@$(LD) -s -Map link.map -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o $@ $(OBJ64) $(LIBS)
 
-	 
-	
 %.c.64.o : %.c
 	@echo Compiling $<
 	@gcc $(CFLAGS) -c -o $@ $<
@@ -32,9 +30,6 @@ shovelos.elf : $(OBJ64) $(LIBS) link.script
 arch/arch.a:
 	@make -C arch arch.a
 	
-boot/boot.a:
-	@make -C boot boot.a
-	
 mm/mm.a:
 	@make -C mm mm.a
 	
@@ -45,7 +40,6 @@ clean:
 	@rm -f *.bin
 	@make -C arch clean
 	@make -C mm clean
-	@make -C boot clean
 
 	
 	

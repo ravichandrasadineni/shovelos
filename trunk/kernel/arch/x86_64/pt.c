@@ -26,33 +26,35 @@
 #define PT_TERMINAL_FLAG    	(1<<7)
 #define PT_GLOBAL_FLAG        	(1<<8)
 
-/***************************************************************************************************
- *     _x86_64_phy_exists_in_pt - test if a physical address is mapped in the page tables.
- *     This code is used very early during startup to determine how many pages the boot-loader
- *     saw fit to allocate before loading and executing the kernel.
- */
-BOOL _x86_64_phy_exists_in_pt(uint64_t phy) {
+uint64_t virt_to_phy(uint64_t virt) {
 
 	uint64_t *_pml4e = 0x0000;
+	uint64_t *_pdpe  = 0x0000;
+	uint64_t *_pde   = 0x0000;
 
 	__asm__ __volatile__( "movq %%cr3, %0;"
-			             : "=r" (_pml4e) );
+				        : "=r" (_pml4e) );
 
-	for(uint64_t *pml4e = _pml4e; pml4e < _pml4e + PAGE_TABLE_SIZE; ++pml4e)
-		if(*pml4e & PT_PRESENT_FLAG) {
-			uint64_t *base = (uint64_t*)ALIGN_DOWN(*pml4e);
-			for(uint64_t* pdpe = base; pdpe < base + PAGE_TABLE_SIZE; ++pdpe)
-				if(*pdpe & PT_PRESENT_FLAG) {
-					uint64_t *base = (uint64_t*)ALIGN_DOWN(*pdpe);
-					for(uint64_t* pde = base; pde < base + PAGE_TABLE_SIZE; ++pde)
-						if(*pde & PT_PRESENT_FLAG)
-						    if((uint64_t)ALIGN_DOWN(*pde) == phy)
-						    	return TRUE;
-				}
-		}
+	_pml4e  += (0x1ff & (virt >> 39));
+	_pml4e  = PHY_TO_VIRT(_pml4e, uint64_t*);
 
-	return FALSE;
+	if(!(*_pml4e & PT_PRESENT_FLAG))
+		return 0;
+
+	_pdpe  = (uint64_t*)ALIGN_DOWN(*_pml4e);
+	_pdpe += (0x1ff & (virt >> 30));
+	_pdpe  = PHY_TO_VIRT(_pdpe, uint64_t*);
+
+	if(!(*_pdpe & PT_PRESENT_FLAG))
+		return 0;
+
+	_pde  = (uint64_t*)ALIGN_DOWN(*_pdpe);
+	_pde += (0x1ff & (virt >> 21));
+	_pde  = PHY_TO_VIRT(_pde, uint64_t*);
+
+	if(!(*_pde & PT_PRESENT_FLAG))
+		return 0;
+
+	return (uint64_t)ALIGN_DOWN(*_pde);
 }
-
-
 

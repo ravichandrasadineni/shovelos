@@ -4,7 +4,7 @@
 
 #define DISK_BUFFER ((uint8_t*)0x20000)
 #define ADHOC_COMM  ((uint8_t*)0x30000)
-#define MB_MMAP     ((uint8_t*)0x40000) /* THIS ADDRESS CURRENTLY ALSO HARD CODED INTO THE KERNEL */
+#define MB_MMAP     ((uint8_t*)0x40000) // ALSO in himem.s ( parameter 1 to kernel )
 
 void *memcpy(void *dst,const void* src, int size);
 
