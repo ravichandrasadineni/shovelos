@@ -13,31 +13,55 @@ static uint64_t phy_bitmap[(PAGE_MAX/64)+1];
 
 #define PAGES_PER_GROUP ((sizeof phy_bitmap[0]) * 8)
 
-void mm_phy_init(mm_phy_detect_func present, mm_phy_detect_func mapped) {
-
-	/* set all pages to used / unavailable */
-	memset(phy_bitmap, 0xff, sizeof phy_bitmap);
-
-	/* set pages that physically exist, but are not presently in use as free */
-	for(uint64_t p=1; p<PAGE_MAX; ++p) {
-		uint64_t phy = mm_page_to_phy(p);
-		if(present( phy ) && !mapped( phy ))
-			mm_phy_free_page(p);
-	}
-}
-
-void mm_phy_free_page(uint64_t page) {
+static void set_page_free(uint64_t page) {
 
 	if(page)
 	    phy_bitmap[page/64] &= ~(1 << (page % 64));
 }
 
-BOOL mm_phy_check_free_page(uint64_t page) {
+static void set_page_used(uint64_t page) {
 
-	if(page && (phy_bitmap[page/64] & (1 << page % 64)))
-		return TRUE;
+	if(page)
+	    phy_bitmap[page/64] |= (1 << (page % 64));
+}
 
-	return FALSE;
+void mm_phy_init(struct mm_phy_reg *regs, uint64_t regnum) {
+
+	/* set all pages to used / unavailable */
+	memset(phy_bitmap, 0xff, sizeof phy_bitmap);
+
+	/* set pages that physically exist for general purpose as free */
+	for(struct mm_phy_reg* r=regs; r<regs+regnum; r++) {
+
+		if(r->type != MM_PHY_USABLE)
+			continue;
+
+		uint64_t b = r->base & PAGE_SIZE ? ((r->base + PAGE_SIZE) & PAGE_SIZE)  : r->base;
+		uint64_t l = r->base & PAGE_SIZE ? ( r->len  - (r->base   & PAGE_SIZE)) : r->len;
+
+		for(; l>=PAGE_SIZE; l-=PAGE_SIZE, b+=PAGE_SIZE)
+			set_page_free( mm_phy_to_page(b) );
+	}
+
+
+	/* set pages that hold the kernel image as used. */
+	for(uint64_t v = VIRT_KERNEL_BASE; ; v += PAGE_SIZE) {
+		uint64_t p = virt_to_phy(v);
+
+		if(!p)
+			break;
+
+		set_page_used( mm_phy_to_page(p)  );
+	}
+}
+
+/****************************************************
+ * mm_phy_free_page: free given page.
+ */
+void mm_phy_free_page(uint64_t page) {
+
+	if(page)
+		set_page_free(page);
 }
 
 /****************************************************

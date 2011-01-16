@@ -58,12 +58,17 @@ long_main:
    cmpq $0, 20(%rax)
    je   exit_long_mode
 
-   movl %esp, %eax
-   andl $0xffff, %eax
-   subl $8,      %eax
-   movq $0xFFFFFFFF80000000, %rcx
-   movq %rcx, (%rax)
-   jmpq  *(%rax)
+   movq %rsp,     %r10
+   andq $0xffff,  %r10
+   subq $8,       %r10               # allocate uint64 on old stack
+   movq $0xFFFFFFFF80000000, %r11    # set kernel address
+   movq %r11, (%r10)                 # pointer to kernel address
+   movq $0x7ffff, %rsp               # new stack
+   movq $0x40000, %r12               # kernel parameter 2, size of memory map
+   xorq %rsi, %rsi
+   movq (%r12), %rsi
+   movq $0x40004, %rdi               # kernel parameter 1, ptr to memory map struct.
+   jmpq  *(%r10)                     # jump to kernel
 
 ##############################################
 #  RETURN TO REAL MODE                       #

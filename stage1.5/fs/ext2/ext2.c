@@ -77,7 +77,6 @@ void parse_superblock() {
 	if(version_major >= 1)
 		partition_read(&partition,EXT2_SUPERBLOCK_OFFSET + EXT2_SB_INODE_SIZE_OFFSET, EXT2_SB_INODE_SIZE_SIZE, &superblock.inode_size );
 
-	printf("parsed superblock - size %d\n",superblock.block_size);
 }
 
 /*** read an ext2 block ***/

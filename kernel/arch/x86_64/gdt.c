@@ -19,13 +19,14 @@
 #define P             (0x00800000000000)  /*** present ***/
 #define L             (0x20000000000000)  /*** long mode ***/
 #define D             (0x40000000000000)  /*** default op size ***/
+#define W             (0x00020000000000)  /***writable data segment ***/
 
 
 static uint64_t gdt[] = {
 
     0,                      /*** NULL descriptor ***/
     GDT_CS | P | DPL0 | L,  /*** code segment descriptor ***/
-    GDT_DS | P,             /*** data segment descriptor ***/
+    GDT_DS | P | W,         /*** data segment descriptor ***/
 };
 
 struct gdtr_t {
