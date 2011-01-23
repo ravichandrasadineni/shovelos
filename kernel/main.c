@@ -18,12 +18,12 @@ int _start(struct mm_phy_reg *reg, uint64_t len) {
 	_x86_64_load_gdt();
 	_x86_64_load_idt();
 
+	acpi_init();
+
 	kprintf("shovelos.kernel - \"HELLO WORLD!\"\n");
 
+
 	for(;;) {
-//		int key = port_inb(0x60);
-//		if(key)
-//			kprintf("%c",key);
 	}
 	return 0;
 }
