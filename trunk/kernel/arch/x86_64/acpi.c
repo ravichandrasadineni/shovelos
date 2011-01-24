@@ -8,6 +8,38 @@
 #include<mm/mm.h>
 #include<arch/arch.h>
 
+struct rsdp_header {
+
+	struct {
+
+		sint8_t signature[8];
+		uint8_t checksum;
+		sint8_t oemid[6];
+		uint8_t revision;
+		uint32_t rsdt_address;
+	} ver1;
+
+	struct {
+
+		uint32_t length;
+		uint64_t xsdt_address;
+		uint8_t  extended_checksum;
+		uint8_t  reserved[3];
+	} ver2;
+
+} __attribute__((packed));
+
+
+static uint8_t sum(const void * _data, uint64_t len) {
+
+	uint8_t sum = 0;
+	const uint8_t *data = (const uint8_t *)_data;
+
+	while(len--)
+		sum += *data++;
+
+	return sum;
+}
 
 static uint8_t memcmp(const void* s1, const void* s2, uint64_t len) {
 
@@ -20,6 +52,20 @@ static uint8_t memcmp(const void* s1, const void* s2, uint64_t len) {
 			return ret;
 
 	return 0;
+}
+
+static sint8_t validate(const struct rsdp_header* header) {
+
+	if(memcmp(header,"RSD PTR ",8)!=0)
+		return -1; // no magic!
+
+	if(sum(header->ver1, sizeof header->ver1) != 0)
+		return -1; // corrupt or invalid.
+
+      if(header->ver1.revision && (sum(header->ver2, sizeof header->ver2) != 0))
+            return -1; // corrupt of invalid extended data.
+
+	return 0; // all good!
 }
 
 /***
@@ -36,21 +82,21 @@ static const uint8_t* ebda_addr() {
 /***
  * search given range for root system descriptor pointer.
  */
-static const uint8_t* scan_for_rsdp(const uint8_t *_addr, uint64_t size) {
+static const struct rsdp_header* scan_for_rsdp(const uint8_t *_addr, uint64_t size) {
 
 	for(const uint8_t* addr = _addr; addr < _addr + size; addr+=0x10)
-		if(memcmp(addr,"RSD PTR ",8)==0)
-			return addr;
+		if(validate((const struct rsdp_header*)addr)==0)
+			return (const struct rsdp_header*)addr;
 
-	return 0;
+	return (const struct rsdp_header*)0;
 }
 
 /***
  * search for root system descriptor pointer.
  */
-static const uint8_t* find_rsdp() {
+static const struct rsdp_header* find_rsdp() {
 
-	const uint8_t* rsdp;
+	const struct rsdp_header* rsdp;
 
 	/*** search extended BIOS data area ***/
 	{
@@ -65,10 +111,10 @@ static const uint8_t* find_rsdp() {
 	}
 
 	/*** search BIOS main area ***/
-	if((rsdp = scan_for_rsdp((const uint8_t*)0xE0000, 0x20000)))
+	if((rsdp = scan_for_rsdp(PHY_TO_VIRT(0xE0000, const uint8_t*), 0x20000)))
 		return rsdp;
 
-	return 0;
+	return (const struct rsdp_header*)0;
 }
 
 sint8_t acpi_init() {
@@ -79,8 +125,10 @@ sint8_t acpi_init() {
 		kprintf("ACPI: no hardware support\n");
 		return -1;
 	}
-	else
-		kprintf("ACPI: RSDP @ 0x%016lx\n", rsdp);
+
+	kprintf("ACPI: RSDP @ 0x%016lx\n", rsdp);
+	kprintf("      version %d.0\n", rsdp->ver1.revision+1);
+	kprintf("      OEM ID %s\n", rsdp->ver1.oemid);
 
 	return 0;
 }
