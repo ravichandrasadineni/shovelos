@@ -7,6 +7,7 @@
 
 #include<mm/mm.h>
 #include<arch/arch.h>
+#include<lib/string.h>
 
 struct rsdp_header {
 
@@ -41,28 +42,15 @@ static uint8_t sum(const void * _data, uint64_t len) {
 	return sum;
 }
 
-static uint8_t memcmp(const void* s1, const void* s2, uint64_t len) {
-
-	const uint8_t *a = (const uint8_t*)s1;
-	const uint8_t *b = (const uint8_t*)s2;
-	uint8_t ret;
-
-	while(len--)
-		if((ret = ((*a++) - (*b++))))
-			return ret;
-
-	return 0;
-}
-
 static sint8_t validate(const struct rsdp_header* header) {
 
 	if(memcmp(header,"RSD PTR ",8)!=0)
 		return -1; // no magic!
 
-	if(sum(header->ver1, sizeof header->ver1) != 0)
+	if(sum(&(header->ver1), sizeof header->ver1) != 0)
 		return -1; // corrupt or invalid.
 
-      if(header->ver1.revision && (sum(header->ver2, sizeof header->ver2) != 0))
+      if(header->ver1.revision && (sum(&(header->ver2), sizeof header->ver2) != 0))
             return -1; // corrupt of invalid extended data.
 
 	return 0; // all good!
@@ -119,7 +107,7 @@ static const struct rsdp_header* find_rsdp() {
 
 sint8_t acpi_init() {
 
-	const uint8_t* rsdp;
+	const struct rsdp_header * rsdp;
 
 	if(!(rsdp = find_rsdp())) {
 		kprintf("ACPI: no hardware support\n");
