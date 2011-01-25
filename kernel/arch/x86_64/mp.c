@@ -85,7 +85,7 @@ struct ioapic {
 
 } __attribute__ ((packed));
 
-struct io_inturrupt_assignment {
+struct io_interrupt_assignment {
 
 	uint8_t entry_type;
 	uint8_t interrupt_type;
@@ -99,7 +99,7 @@ struct io_inturrupt_assignment {
 
 } __attribute__ ((packed));
 
-struct local_inturrupt_assignment {
+struct local_interrupt_assignment {
 
 	uint8_t entry_type;
 	uint8_t interrupt_type;
@@ -112,13 +112,6 @@ struct local_inturrupt_assignment {
 	uint8_t dst_llapic_intin;
 
 } __attribute__ ((packed));
-
-static inline uint16_t get_var_table_length(enum entry_type e) {
-
-	if(e == Processor)
-		return 20;
-	return 8;
-}
 
 static uint8_t sum(const void * _data, uint64_t len) {
 
@@ -156,7 +149,7 @@ static const uint8_t* ebda_addr() {
 /***
  * search given range for root system descriptor pointer.
  */
-static const struct mp_fp* scan_for_rsdp(const uint8_t *_addr, uint64_t size) {
+static const struct mp_fp* scan_for_fp(const uint8_t *_addr, uint64_t size) {
 
 	for(const uint8_t* addr = _addr; addr < _addr + size; addr+=0x01)
 		if(validate((const struct mp_fp*)addr)==0)
@@ -168,32 +161,98 @@ static const struct mp_fp* scan_for_rsdp(const uint8_t *_addr, uint64_t size) {
 /***
  * search for root system descriptor pointer.
  */
-static const struct mp_fp* find_rsdp() {
+static const struct mp_fp* find_fp() {
 
 	const struct mp_fp* fp;
 
 	/*** search extended BIOS data area ***/
-	if((fp = scan_for_rsdp(ebda_addr(), 0x400)))
+	if((fp = scan_for_fp(ebda_addr(), 0x400)))
 			return fp;
 
 	/*** search BIOS main area ***/
-	if((fp = scan_for_rsdp(PHY_TO_VIRT(0xE0000, const uint8_t*), 0x20000)))
+	if((fp = scan_for_fp(PHY_TO_VIRT(0xE0000, const uint8_t*), 0x20000)))
 		return fp;
 
 	return (const struct mp_fp*)0;
 }
 
+static const struct mp_header *find_header(const struct mp_fp* fp) {
+
+	if(fp) {
+
+		const struct mp_header *h;
+
+		if((h = (const struct mp_header *)(uint64_t)fp->phy_address)) {
+
+			h = PHY_TO_VIRT(h, const struct mp_header *);
+
+
+
+			if( (memcmp(h->signature, "PCMP", sizeof h->signature) == 0) &&
+				(sum(h, h->base_table_length) == 0)) {
+
+				return h;
+			}
+		}
+	}
+	return (const struct mp_header *)0;
+}
+
 sint8_t mp_init() {
 
-	const struct mp_fp * fp;
+	const struct mp_fp *fp;
+	const struct mp_header *header;
 
-	if(!(fp = find_rsdp())) {
-		kprintf("MP: multi-processor support\n");
+	if(!(fp = find_fp())) {
+		kprintf("MP: no multi-processor support\n");
 		return -1;
 	}
 
-	kprintf("MP:   MPFP @ 0x%016lx\n", fp);
-	kprintf("      version %d\n", fp->spec_revision);
+	kprintf("MP:   VERSION %d\n", fp->spec_revision);
+
+	if((header = find_header(fp))) {
+
+		const uint8_t* entry = (const uint8_t*)(header + 1);
+
+		kprintf("MP:   OEM     \"%c%c%c%c%c%c%c%c\"\n",  header->oem_id[0], header->oem_id[1], header->oem_id[2], header->oem_id[3], header->oem_id[4], header->oem_id[5], header->oem_id[6], header->oem_id[7]);
+		kprintf("MP:   PRODUCT \"%c%c%c%c%c%c%c%c%c%c%c%c\"\n", header->product_id[0], header->product_id[1], header->product_id[2], header->product_id[3], header->product_id[4], header->product_id[5], header->product_id[6], header->product_id[7], header->product_id[8], header->product_id[9], header->product_id[10], header->product_id[11]);
+
+		for(uint16_t count = 0; count < header->entry_count; ++count) {
+
+			switch(*entry) {
+				case Processor:
+				{
+					kprintf("MP:   CPU\n");
+					//const struct processor* cpu = (const struct processor*)entry;
+					entry += sizeof(struct processor);
+				}
+				case Bus:
+				{
+					const struct bus* bus = (const struct bus*)entry;
+					entry += sizeof(struct processor);
+					kprintf("MP:   BUS \"%c%c%c%c%c%c\"\n", bus->bus_type_string[0], bus->bus_type_string[1], bus->bus_type_string[2], bus->bus_type_string[3], bus->bus_type_string[4], bus->bus_type_string[5]);
+				}
+				case IOApic:
+				{
+					//const struct ioapic* ioapic = (const struct ioapic*)entry;
+					entry += sizeof(struct ioapic);
+					kprintf("MP:   IOAPIC\n");
+				}
+				case IOInterruptAssignment:
+				{
+					//const struct ioapic* ioapic = (const struct ioapic*)entry;
+					entry += sizeof(struct io_interrupt_assignment);
+					kprintf("MP:   IOInterrupt\n");
+				}
+				case LocalInterruptAssignment:
+				{
+					//const struct local_interrupt_assignment* ioapic = (const struct local_interrupt_assignment*)entry;
+					entry += sizeof(struct local_interrupt_assignment);
+					kprintf("MP:   LocalInterrupt\n");
+				}
+			}
+		}
+	}
 
 
 	return 0;

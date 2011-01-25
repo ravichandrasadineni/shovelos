@@ -15,7 +15,6 @@
 #include "mp.h"
 #include "console.h"
 
-/*** TODO: move this, only scroll and putc are arch specific ***/
 int  kprintf(const char * fmt, ...);
 
 void _x86_64_load_gdt();
