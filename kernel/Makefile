@@ -1,9 +1,9 @@
 
-.PHONY: all clean arch/arch.a boot/boot.a mm/mm.a
+.PHONY: all clean arch/arch.a lib/lib.a boot/boot.a mm/mm.a 
 all : shovelos.kernel
 
 SRC64_C = main.c
-LIBS    = mm/mm.a arch/arch.a
+LIBS    = mm/mm.a lib/lib.a arch/arch.a
 
 export KERNEL_ROOT := $(shell pwd)
 export CFLAGS := -I$(KERNEL_ROOT) -Wall -Werror -std=c99 -m64 -Os -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow -ffreestanding -nostdinc -nostdlib
@@ -33,6 +33,9 @@ arch/arch.a:
 mm/mm.a:
 	@make -C mm mm.a
 	
+lib/lib.a:
+	@make -C lib lib.a
+	
 clean:
 	@rm -f *~
 	@rm -f *.o
@@ -40,6 +43,7 @@ clean:
 	@rm -f *.bin
 	@make -C arch clean
 	@make -C mm clean
+	@make -C lib clean
 
 	
 	

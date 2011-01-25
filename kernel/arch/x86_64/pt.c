@@ -8,6 +8,7 @@
 #include<inttypes.h>
 #include<mm/mm.h>
 #include<arch/arch.h>
+#include <lib/string.h>
 
 
 #define PAGE_TABLE_SIZE 512                         /* Entries per table */

@@ -8,6 +8,7 @@
 #include <mm/mm.h>
 #include <mm/phy_alloc.h>
 #include <arch/arch.h>
+#include <lib/string.h>
 
 static uint64_t phy_bitmap[(PAGE_MAX/64)+1];
 

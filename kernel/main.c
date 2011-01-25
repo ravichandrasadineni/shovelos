@@ -19,8 +19,9 @@ int _start(struct mm_phy_reg *reg, uint64_t len) {
 	_x86_64_load_idt();
 
 	acpi_init();
+	mp_init();
 
-	kprintf("shovelos.kernel - \"HELLO WORLD!\"\n");
+	kprintf("\nshovelos.kernel - \"HELLO WORLD!\"\n");
 
 
 	for(;;) {

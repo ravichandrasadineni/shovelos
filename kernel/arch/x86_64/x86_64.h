@@ -12,10 +12,8 @@
 #include "pt.h"
 #include "lock.h"
 #include "acpi.h"
-
-#define memcpy __builtin_memcpy
-#define memset __builtin_memset
-//#define memcmp __builtin_memcmp
+#include "mp.h"
+#include "console.h"
 
 /*** TODO: move this, only scroll and putc are arch specific ***/
 int  kprintf(const char * fmt, ...);
