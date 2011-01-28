@@ -1,15 +1,17 @@
 /*
- * mp.c
+ * mp.c - Parse the PC multiprocessor tables.
  *
  *  Created on: 25 Jan 2011
- *      Author: Chris Stones
+ *  Author: cds ( chris.stones _AT_ gmail.com )
  */
 
 #include<mm/mm.h>
 #include<arch/arch.h>
 #include<lib/string.h>
 
-/*** multi-processor floating pointer ***/
+#include "mp.h"
+
+/*** multiprocessor floating pointer ***/
 struct mp_fp {
 
 	sint8_t  signature[4]; /*** "_MP_" ***/
@@ -24,7 +26,7 @@ struct mp_fp {
 
 } __attribute__ ((packed));
 
-/*** multi-processor configuration table header ***/
+/*** multiprocessor configuration table header ***/
 struct mp_header {
 
 	sint8_t 	signature[4]; /*** "PCMP" ***/
@@ -52,67 +54,15 @@ enum entry_type {
 	LocalInterruptAssignment=4,
 };
 
-struct processor {
+static inline uint16_t sizeof_type(enum entry_type et) {
 
-	uint8_t entry_type;
-	uint8_t local_apic_id;
-	uint8_t local_apic_version;
-	unsigned flag_en : 1;
-	unsigned flag_bp : 1;
-	unsigned reserved0 : 6;
-	uint32_t cpu_signature;
-	uint32_t feature_flags;
-	uint64_t reserved;
+	if(et == Processor)
+		return 20;
 
-} __attribute__ ((packed));
+	return 8;
+}
 
-struct bus {
-
-	uint8_t entry_type;
-	uint8_t bus_id;
-	sint8_t bus_type_string[6];
-
-} __attribute__ ((packed));
-
-struct ioapic {
-
-	uint8_t entry_type;
-	uint8_t ioapic_id;
-	uint8_t ioapic_version;
-	unsigned flag_en : 1;
-	unsigned reserved0 : 7;
-	uint32_t mmap_ioapic;
-
-} __attribute__ ((packed));
-
-struct io_interrupt_assignment {
-
-	uint8_t entry_type;
-	uint8_t interrupt_type;
-	unsigned flag_po : 1;
-	unsigned flag_el : 1;
-	unsigned reserved0 : 6;
-	uint8_t src_bus_id;
-	uint8_t src_bus_irq;
-	uint8_t dst_ioapic_id;
-	uint8_t dst_ioapic_intin;
-
-} __attribute__ ((packed));
-
-struct local_interrupt_assignment {
-
-	uint8_t entry_type;
-	uint8_t interrupt_type;
-	unsigned flag_po : 1;
-	unsigned flag_el : 1;
-	unsigned reserved0 : 6;
-	uint8_t src_bus_id;
-	uint8_t src_bus_irq;
-	uint8_t dst_lapic_id;
-	uint8_t dst_llapic_intin;
-
-} __attribute__ ((packed));
-
+/*** mp table checksum ***/
 static uint8_t sum(const void * _data, uint64_t len) {
 
 	uint8_t sum = 0;
@@ -124,6 +74,7 @@ static uint8_t sum(const void * _data, uint64_t len) {
 	return sum;
 }
 
+/*** validate floating pointer  ***/
 static sint8_t validate(const struct mp_fp* fp) {
 
 	if(memcmp(fp->signature,"_MP_",4)!=0)
@@ -147,7 +98,7 @@ static const uint8_t* ebda_addr() {
 }
 
 /***
- * search given range for root system descriptor pointer.
+ * search given range for multi-processor floating pointer.
  */
 static const struct mp_fp* scan_for_fp(const uint8_t *_addr, uint64_t size) {
 
@@ -159,7 +110,7 @@ static const struct mp_fp* scan_for_fp(const uint8_t *_addr, uint64_t size) {
 }
 
 /***
- * search for root system descriptor pointer.
+ * search for multi-processor floating pointer.
  */
 static const struct mp_fp* find_fp() {
 
@@ -176,6 +127,9 @@ static const struct mp_fp* find_fp() {
 	return (const struct mp_fp*)0;
 }
 
+/***
+ * get a multiprocessor header from the given floating pointer
+ */
 static const struct mp_header *find_header(const struct mp_fp* fp) {
 
 	if(fp) {
@@ -185,8 +139,6 @@ static const struct mp_header *find_header(const struct mp_fp* fp) {
 		if((h = (const struct mp_header *)(uint64_t)fp->phy_address)) {
 
 			h = PHY_TO_VIRT(h, const struct mp_header *);
-
-
 
 			if( (memcmp(h->signature, "PCMP", sizeof h->signature) == 0) &&
 				(sum(h, h->base_table_length) == 0)) {
@@ -198,65 +150,83 @@ static const struct mp_header *find_header(const struct mp_fp* fp) {
 	return (const struct mp_header *)0;
 }
 
-sint8_t mp_init() {
+/***
+ * iterate the multiprocessor tables.
+ * Use the type-safe wrappers below.
+ */
+static const void* mp_find_next_(enum entry_type type, const void* last) {
 
-	const struct mp_fp *fp;
-	const struct mp_header *header;
+	const struct mp_header *header = find_header( find_fp() );
 
-	if(!(fp = find_fp())) {
-		kprintf("MP: no multi-processor support\n");
-		return -1;
-	}
+	if(header) {
 
-	kprintf("MP:   VERSION %d\n", fp->spec_revision);
+		uint8_t next = last ? 0 : 1;
 
-	if((header = find_header(fp))) {
+		const uint8_t* entry = (const uint8_t*)(header+1);
 
-		const uint8_t* entry = (const uint8_t*)(header + 1);
+		for(uint16_t count=0; count<header->entry_count; ++count) {
 
-		kprintf("MP:   OEM     \"%c%c%c%c%c%c%c%c\"\n",  header->oem_id[0], header->oem_id[1], header->oem_id[2], header->oem_id[3], header->oem_id[4], header->oem_id[5], header->oem_id[6], header->oem_id[7]);
-		kprintf("MP:   PRODUCT \"%c%c%c%c%c%c%c%c%c%c%c%c\"\n", header->product_id[0], header->product_id[1], header->product_id[2], header->product_id[3], header->product_id[4], header->product_id[5], header->product_id[6], header->product_id[7], header->product_id[8], header->product_id[9], header->product_id[10], header->product_id[11]);
-
-		for(uint16_t count = 0; count < header->entry_count; ++count) {
-
-			switch(*entry) {
-				case Processor:
-				{
-					kprintf("MP:   CPU\n");
-					//const struct processor* cpu = (const struct processor*)entry;
-					entry += sizeof(struct processor);
-				}
-				case Bus:
-				{
-					const struct bus* bus = (const struct bus*)entry;
-					entry += sizeof(struct processor);
-					kprintf("MP:   BUS \"%c%c%c%c%c%c\"\n", bus->bus_type_string[0], bus->bus_type_string[1], bus->bus_type_string[2], bus->bus_type_string[3], bus->bus_type_string[4], bus->bus_type_string[5]);
-				}
-				case IOApic:
-				{
-					//const struct ioapic* ioapic = (const struct ioapic*)entry;
-					entry += sizeof(struct ioapic);
-					kprintf("MP:   IOAPIC\n");
-				}
-				case IOInterruptAssignment:
-				{
-					//const struct ioapic* ioapic = (const struct ioapic*)entry;
-					entry += sizeof(struct io_interrupt_assignment);
-					kprintf("MP:   IOInterrupt\n");
-				}
-				case LocalInterruptAssignment:
-				{
-					//const struct local_interrupt_assignment* ioapic = (const struct local_interrupt_assignment*)entry;
-					entry += sizeof(struct local_interrupt_assignment);
-					kprintf("MP:   LocalInterrupt\n");
-				}
+			if(*entry == type) {
+				if(next)
+					return entry;
+				else if(entry == last)
+					next = 1;
 			}
+
+			entry += sizeof_type(*entry);
 		}
 	}
-
 
 	return 0;
 }
 
+const struct mp_processor* mp_find_first_processor(  ) {
 
+	return (const struct mp_processor*)mp_find_next_(Processor, 0);
+}
+
+const struct mp_processor* mp_find_next_processor( const struct mp_processor *last ) {
+
+	return (const struct mp_processor*)mp_find_next_(Processor, last);
+}
+
+const struct mp_bus* mp_find_first_bus(  ) {
+
+	return (const struct mp_bus*)mp_find_next_(Bus, 0);
+}
+
+const struct mp_bus* mp_find_next_bus( const struct mp_bus *last ) {
+
+	return (const struct mp_bus*)mp_find_next_(Bus, last);
+}
+
+const struct mp_ioapic* mp_find_first_io_apic( ) {
+
+	return (const struct mp_ioapic*)mp_find_next_(IOApic, 0);
+}
+
+const struct mp_ioapic* mp_find_next_io_apic( const struct mp_ioapic *last ) {
+
+	return (const struct mp_ioapic*)mp_find_next_(IOApic, last);
+}
+
+const struct mp_io_interrupt_assignment* mp_find_first_io_interrupt( ) {
+
+	return (const struct mp_io_interrupt_assignment*)mp_find_next_(IOInterruptAssignment, 0);
+}
+
+const struct mp_io_interrupt_assignment* mp_find_next_io_interrupt( const struct mp_io_interrupt_assignment *last ) {
+
+	return (const struct mp_io_interrupt_assignment*)mp_find_next_(IOInterruptAssignment, last);
+}
+
+const struct mp_local_interrupt_assignment* mp_find_first_local_interrupt(  ) {
+
+	return (const struct mp_local_interrupt_assignment*)mp_find_next_(LocalInterruptAssignment, 0);
+}
+
+const struct mp_local_interrupt_assignment* mp_find_next_local_interrupt( const struct mp_local_interrupt_assignment *last ) {
+
+	return (const struct mp_local_interrupt_assignment*)mp_find_next_(LocalInterruptAssignment, last);
+}
 
