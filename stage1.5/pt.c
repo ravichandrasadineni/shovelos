@@ -135,6 +135,9 @@ void setup_pt(uint32_t needed_himem) {
 		addr64 += PAGE_SIZE;
 	}
 
+	/*** identity map I/O Apic ***/
+	pt_map_page(0x00000000fec00000,0x00000000fec00000);
+
 	if(needed_himem > PAGE_SIZE)
 		halt("FIXME: kernel > PAGE_SIZE");
 
