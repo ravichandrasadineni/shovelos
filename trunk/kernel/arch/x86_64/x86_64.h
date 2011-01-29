@@ -14,6 +14,7 @@
 #include "acpi.h"
 #include "mp.h"
 #include "console.h"
+#include "ioapic.h"
 
 int  kprintf(const char * fmt, ...);
 
