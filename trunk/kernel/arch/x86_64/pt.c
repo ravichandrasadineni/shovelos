@@ -67,8 +67,9 @@ sint64_t mmap(uint64_t phy, uint64_t virt, uint64_t *_pml4e) {
 	uint64_t *_pde   = 0x0000;
 
 	if(!_pml4e) {
-		__asm__ __volatile__( "movq %%cr3, %0;"
-							: "=r" (_pml4e) );
+		__asm__ __volatile__( 
+		  "movq %%cr3, %0;"
+		  "=r" (_pml4e) );
 	}
 
 	_pml4e  += (0x1ff & (virt >> 39));

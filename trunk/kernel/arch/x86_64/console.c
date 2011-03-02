@@ -14,7 +14,7 @@
 #define COLS 80
 
 struct console_mem {
-	uint16_t chars[ROWS][COLS];
+    uint16_t chars[ROWS][COLS];
 };
 
 struct console {
@@ -34,42 +34,42 @@ struct console console = {
 
 static void scroll() {
 
-	int r,c;
+    int r,c;
 
-	for(r=0;r<ROWS-1;++r)
-		memcpy(console.mem->chars[r],console.mem->chars[r+1], sizeof console.mem->chars[0]);
+    for (r=0;r<ROWS-1;++r)
+        memcpy(console.mem->chars[r],console.mem->chars[r+1], sizeof console.mem->chars[0]);
 
-	for(c=0;c<COLS;++c)
-		console.mem->chars[r][c] = console.colour;
+    for (c=0;c<COLS;++c)
+        console.mem->chars[r][c] = console.colour;
 }
 
 int cons_putc(int c) {
 
-    switch(c) {
-        case '\n':
-        	console.xpos = 0;
-            if(console.ypos>=ROWS-1)
+    switch (c) {
+    case '\n':
+        console.xpos = 0;
+        if (console.ypos>=ROWS-1)
+            scroll();
+        else
+            ++console.ypos;
+
+        return 1;
+
+    case '\r':
+        return 0;
+
+    default:
+        console.mem->chars[console.ypos][console.xpos] = (uint16_t)(console.colour | c);
+        ++console.xpos;
+        if (console.xpos>=COLS) {
+            console.xpos = 0;
+            if (console.ypos>=ROWS-1)
                 scroll();
             else
                 ++console.ypos;
-
-            return 1;
-
-         case '\r':
-             return 0;
-
-         default:
-             console.mem->chars[console.ypos][console.xpos] = (uint16_t)(console.colour | c);
-             ++console.xpos;
-             if(console.xpos>=COLS) {
-            	 console.xpos = 0;
-	             if(console.ypos>=ROWS-1)
-	                 scroll();
-	             else
-	                 ++console.ypos;
-             }
-             return 1;
-     }
+        }
+        return 1;
+    }
 }
 
 
