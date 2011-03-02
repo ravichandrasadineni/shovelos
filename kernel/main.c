@@ -20,17 +20,6 @@ int _start(struct mm_phy_reg *reg, uint64_t len) {
 
 //	acpi_init();
 
-	for(const struct mp_ioapic *ioapic  = mp_find_first_io_apic();
-								ioapic != 0;
-								ioapic  = mp_find_next_io_apic( ioapic )) {
-
-		void* base = (void*)(uint64_t)ioapic->mmap_ioapic;
-		uint8_t ver = io_apic_read32(base, IOAPICVER) & 0xff;
-		uint16_t max = io_apic_read32(base, IOAPICVER) >> 16;
-
-		kprintf("FOUND AN IOAPIC ID %d (ver %d, max %d) @ 0x%8x\n", ioapic->ioapic_id, ver, max ,ioapic->mmap_ioapic);
-
-	}
 
 	for(const struct mp_processor *cpu  = mp_find_first_processor();
 								   cpu != 0;

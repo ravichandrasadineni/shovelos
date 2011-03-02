@@ -12,6 +12,6 @@
 
 uint16_t ioapic_detect();
 
-void ioapic_configure();
+uint16_t ioapic_configure();
 
 #endif /* IOAPIC_H_ */
