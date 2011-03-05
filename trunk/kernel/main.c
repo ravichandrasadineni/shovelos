@@ -30,8 +30,6 @@ int _start(struct mm_phy_reg *reg, uint64_t len) {
 
 	kprintf("\nshovelos.kernel - \"HELLO WORLD!\"\n");
 
-//	*((uint32_t*)(0xfec00000)) = 0;
-
 	for(;;) {
 	}
 	return 0;

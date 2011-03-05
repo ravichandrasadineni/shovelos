@@ -19,9 +19,10 @@ SRC32_C = main.c \
           mmap.c \
 		  alloc.c \
 		  pt.c \
-		  math64.c 
+		  math64.c \
+		  mem.c
 
-OBJ32=$(SRC32_S:.s=.32.o) $(SRC32_C:.c=.32.o)
+OBJ32=$(SRC32_S:.s=.s.32.o) $(SRC32_C:.c=.c.32.o)
 
 # flatten an elf
 %.bin : %.elf
@@ -33,11 +34,11 @@ stage1.5.ext2.elf : $(OBJ32) $(LIBS) link.script
 	@echo Linking $@
 	@$(LD) $(LDFLAGS) -o $@ $(OBJ64) $(OBJ32) $(LIBS)
 	
-%.32.o : %.c
+%.c.32.o : %.c
 	@echo Compiling $< 
 	@gcc $(CFLAGS) -o $@ $<
 
-%.32.o : %.s
+%.s.32.o : %.s
 	@echo Assembling $<
 	@gcc $(CFLAGS) -o $@ $<
 	
