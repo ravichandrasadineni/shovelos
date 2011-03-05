@@ -18,6 +18,8 @@
 #define S_IFDIR	0x4000	/* directory */
 #define S_IFSYM 0xA000  /* symbolic link */
 
+#define EXT2_ROOT_INODE					  2
+
 /****************************************************************************************/
 /********************** SUPERBLOCK FIELD OFFSETS / SIZES ********************************/
 /****************************************************************************************/
@@ -317,16 +319,6 @@ void read_inode(uint32_t inode, uint32_t offset, uint16_t size, void* dst) {
 	}
 }
 
-uint32_t ext2_find_inode_abs(const char *path) {
-
-	const char * path_end = path + strlen(path);
-
-	while(*file == '/')
-		++file;
-
-
-}
-
 uint32_t ext2_find_kernel() {
 
 	uint32_t offset=0;
@@ -349,6 +341,43 @@ uint32_t ext2_find_kernel() {
 
 	halt("cannot find /shovelos.kernel");
 }
+
+#if(TODO)
+sint32_t lstat(const char *path, struct stat *stat) {
+
+	stat->st_ino  = EXT2_ROOT_INODE;
+	stat->st_size = ext2_filesize(stat->st_ino);
+
+	{
+		// copy the section of filename we are looking for into the DISK_BUFFER
+		++path; // skip '/'
+		int i;
+		for(i=0; *path && (*path != '/'); ++i) {
+			memset(DISK_BUFFER+i, path++, 1 );
+		}
+		memset(DISK_BUFFER+i, 0, 1 );
+	}
+
+	{
+		// search for name
+		uint32_t offset = 0;
+		while(offset < stat->st_size) {
+
+			read_inode(stat->st_ino,offsset,sizeof dirent, &dirent);
+
+			if(strcmp(dirent.name, DISK_BUFFER) == 0) {
+
+
+
+			}
+		}
+	}
+}
+#endif
+
+
+
+
 
 void shuffle_high();
 
