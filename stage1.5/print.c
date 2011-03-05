@@ -4,8 +4,6 @@
 #include "print.h"
 #include "inttypes.h"
 
-static const char num[] = "0123456789ABCDEF";
-
 static char screen_x=0;
 static char screen_y=0;
 
@@ -63,13 +61,6 @@ __asm__("scroll:\n"
             "movw $0xb800, %ax\n"
             "movw %ax, %es\n"                 /* set extra segment to start of video memory */
             "movw %ax, %ds\n"                 /* set data segment to start of video memory */
-
-// TODO: This smaller than rep movsw ?
-//            "push $0xF00     \n"
-//            "push $0x0a0     \n"
-//            "push $0         \n"
-//            "call memcpy     \n"
-//            "subl $12, %esp  \n"
             
             "movl $0x000000a0, %esi\n"        /* src = start of line 1 */
             "movl $0x00000000, %edi\n"        /* dst = start of line 0 */
@@ -166,11 +157,13 @@ int puts(const char *s) {
       write a number to the screen, in hex
 ***********************************************************************/
 int putnhex(uint64_t n, int longmode) {
-#if(DEBUG)
+
     short s;         // shift
-    for(s=longmode ? 60 : 28; s>=0; s-=4)
-        putc(num[(n>>s)&15]);
-#endif
+    for(s=longmode ? 60 : 28; s>=0; s-=4) {
+        char c = (n>>s)&15;
+        putc(c<10 ? c+'0' : c-10+'A');
+    }
+
     return 8;
 }
 
@@ -179,19 +172,17 @@ int putnhex(uint64_t n, int longmode) {
       write an unsigned number to the screen, in dec
 ***********************************************************************/
 int putndecu(uint64_t n) {
-#if(DEBUG)
-	uint64_t   s=1000000000;
-	s          *=1000000000; // s = 100000000000000000 generates compiler warning.
+  
+    uint64_t   s=1000000000;
+    s          *=1000000000; 
     short h;         	  // digit
     short l=0;            // wrote length
     for(; s>=1; s/=10)
         if((h = ((n/s)%10)) || l || (s<=1)) {
             ++l;
-            putc(num[h]);
+            putc('0'+h);
         }
     return l;
-#endif
-    return 0;
 }
 
 /***********************************************************************
