@@ -122,6 +122,54 @@
 
 
 ################################################################
+# int strlen(const void* s1)
+#
+#   1) s1 ( 20bit address ) ( absolute 0x00000 -> 0xfffff )
+################################################################
+.global strlen
+		strlen:
+
+            pushl    %ds
+            pushl    %esi
+				                             # setup source (ds:esi)
+            movl     12(%esp),    %esi       # esi = src
+            andl     $0x0ffff,    %esi       # esi &= 0xffff
+            andl     $0xf0000,    12(%esp)   # src &= 0xf0000
+            shrl     $4,          12(%esp)   # src >>= 4;
+            movl     12(%esp),    %ecx       # ds = src
+            movl     %ecx,        %ds
+
+           xorl     %eax,        %eax        # reset return var
+
+    .sl_loop:
+
+         ds movb     (%esi),      %dl        # read s1
+
+            cmpb     $0,         %dl         # null ?
+            je      .sl_end
+
+            incl     %eax                    # INCREMENT LENGTH
+
+                                             # INCREMENT SRC seg:offset
+            incl     %esi
+            cmpl     $0x10000,    %esi
+            jne      .sl_esi
+            movl     %ds,         %edx
+            addl     $0x1000,     %edx
+            movl     %edx,        %ds
+            xorl     %esi,        %esi
+    .sl_esi:
+
+            jmp      .sl_loop
+
+    .sl_end:
+
+            popl     %esi
+            popl     %ds
+
+            retl
+
+################################################################
 # int strcmp(void* s1, void* s2)
 #
 #   1) s1 ( 20bit address ) ( absolute 0x00000 -> 0xfffff )

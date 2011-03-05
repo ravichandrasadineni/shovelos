@@ -2,7 +2,8 @@
 #include "16bitreal.h"
 
 #include "print.h"
-#include "inttypes.h"
+#include <inttypes.h>
+#include <stdarg.h>
 
 static char screen_x=0;
 static char screen_y=0;
@@ -206,15 +207,16 @@ int putndec(sint64_t n) {
 ***********************************************************************/
 int printf(const char * format, ... ) {
 
+	va_list va;
     char c;                // current char
     int special=0;        // special flag ( '%' )
     int longflag=0;       // special flag ( 'l' )
-    int  **args = (int**)(&format+1);  // ptr to args array
-    uint64_t longargs;
     short l=0;
 
     if(!format)
          return 0;
+
+    va_start(va, format);
 
     while((c = *format++)) {
         ++l;
@@ -227,7 +229,7 @@ int printf(const char * format, ... ) {
                 break;
               case 's':
               case 'S':
-                puts((const char*)*args++);
+                puts(va_arg(va, const char *));
                 break;
               case 'l':
               case 'L':
@@ -236,28 +238,29 @@ int printf(const char * format, ... ) {
               case 'd':
               case 'D':
               {
-                _64_DWORD_LO(longargs) = (int)(*(args++));
-                _64_DWORD_HI(longargs) = longflag ? (int)(*(args++)) : 0;
-
-            	putndec((sint64_t)longargs);
+            	 if(longflag)
+            		 putndec(va_arg(va, sint64_t));
+            	 else
+            		 putndec(va_arg(va, sint32_t));
                 break;
               }
               case 'u':
               case 'U':
               {
-            	_64_DWORD_LO(longargs) = (int)(*(args++));
-            	_64_DWORD_HI(longargs) = longflag ? (int)(*(args++)) : 0;
-
-                putndecu((uint64_t)longargs);
-                break;
+            	 if(longflag)
+					 putndecu(va_arg(va, uint64_t));
+				 else
+					 putndecu(va_arg(va, uint32_t));
+				 break;
               }
               case 'x':
               case 'X':
               {
-            	_64_DWORD_LO(longargs) = (int)(*(args++));
-            	_64_DWORD_HI(longargs) = longflag ? (int)(*(args++)) : 0;
-                putnhex((sint64_t)longargs,longflag);
-                break;
+            	  if(longflag)
+					 putnhex(va_arg(va, uint64_t),longflag);
+				 else
+					 putnhex(va_arg(va, uint32_t),longflag);
+				 break;
               }
             }
         }
@@ -268,6 +271,9 @@ int printf(const char * format, ... ) {
         else
           putc(c);
     }
+
+    va_end(va);
+
     return l;
 }
 
