@@ -32,7 +32,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
  *
  *		This code would normally be linked in from libgcc.a. */
 
-#if defined(DEBUG)
+#if(1/*DEBUG*/)
 
 #include "16bitreal.h"
 #include "inttypes.h"

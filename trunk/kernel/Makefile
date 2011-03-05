@@ -8,7 +8,7 @@ LIBS    = mm/mm.a lib/lib.a arch/arch.a
 export KERNEL_ROOT := $(shell pwd)
 export CFLAGS := -I$(KERNEL_ROOT) -Wall -Werror -std=c99 -m64 -Os -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow -ffreestanding -nostdinc -nostdlib
 
-OBJ64=$(SRC64_S:.s=.s.64.o) $(SRC64_C:.c=.c.64.o)
+OBJ64 = $(SRC64_S:.s=.s.64.o) $(SRC64_C:.c=.c.64.o)
 
 # Convert an elf to a flat
 %.kernel : %.elf

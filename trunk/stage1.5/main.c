@@ -3,8 +3,8 @@
 #include "inttypes.h"
 #include "print.h"
 #include "alloc.h"
-#include "fs/ext2/ext2.h"
-#include "bios_disk.h"
+#include <fs/fs.h>
+#include <disk/disk.h>
 #include "mem.h"
 #include "pt.h"
 
@@ -21,9 +21,7 @@ void __attribute__((noreturn))
 
   fs_init();
 
-#if defined(DEBUG)
   printf("FreeMem 0x%x\n", 0xffff - (int)alloc(0));
-#endif
 
   /*** soooooo ugly! ***/
   {

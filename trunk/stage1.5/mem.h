@@ -12,6 +12,8 @@ void *memset(void* dst, int c, int s);
 
 int strcmp(const char *s1, const char *s2);
 
+int strlen(const void* s1);
+
 int mkaddr20(int seg, void* offset);
 
 int addds(void* offset);

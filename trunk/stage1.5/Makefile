@@ -2,6 +2,12 @@
 .PHONY: all clean
 all : stage1.5.ext2.bin
 
+export SRC_ROOT := $(shell pwd)
+export CFLAGS := -I$(SRC_ROOT) -c -Wall -Werror -std=c99 -m32 -Os -fno-unroll-loops -fomit-frame-pointer -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow -ffreestanding -nostdinc -nostdlib
+export LDFLAGS := -s -Map link.map -static -nodefaultlibs -nostdlib --nmagic --oformat elf32-i386 -melf_i386 -Tlink.script
+
+LIBS    = fs/fs.a disk/disk.a
+
 # 32bit assembler source
 SRC32_S = entry.s \
 		  himem.s \
@@ -12,44 +18,40 @@ SRC32_C = main.c \
 		  print.c \
           mmap.c \
 		  alloc.c \
-		  bios_disk.c \
 		  pt.c \
-		  math64.c \
-		  fs/ext2/ext2.c
+		  math64.c 
 
-OBJ64=$(SRC64_S:.s=.64.o) $(SRC64_C:.c=.64.o)
 OBJ32=$(SRC32_S:.s=.32.o) $(SRC32_C:.c=.32.o)
 
-# Convert an elf to a flat
+# flatten an elf
 %.bin : %.elf
 	@echo Generating $@
 	@objcopy -O binary $< $@
 
-# Link real and long mode objects into an elf.
-stage1.5.ext2.elf : $(OBJ64) $(OBJ32) link.script
+# Link objects into an elf.
+stage1.5.ext2.elf : $(OBJ32) $(LIBS) link.script
 	@echo Linking $@
-	@$(LD) -s -Map link.map -static -nodefaultlibs -nostdlib --nmagic --oformat elf32-i386 -melf_i386 -Tlink.script -o $@ $(OBJ64) $(OBJ32)
+	@$(LD) $(LDFLAGS) -o $@ $(OBJ64) $(OBJ32) $(LIBS)
 	
 %.32.o : %.c
 	@echo Compiling $< 
-	@gcc -c -DDEBUG=1 -std=c99 -m32 -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc -o $@ $<
-	
-%.64.o : %.c
-	@echo Compiling $<
-	@gcc -c -std=c99 -m64 -Os -fomit-frame-pointer -fno-unroll-loops -ffreestanding -nostdinc -o $@ $<
+	@gcc $(CFLAGS) -o $@ $<
 
 %.32.o : %.s
 	@echo Assembling $<
-	@gcc -c -m32 -ffreestanding -o $@ $<
+	@gcc $(CFLAGS) -o $@ $<
 	
-%.64.o : %.s
-	@echo Assembling $<
-	@gcc -c -m64 -ffreestanding -o $@ $<
+fs/fs.a:
+	@make -C fs fs.a
+	
+disk/disk.a:
+	@make -C disk disk.a
 	
 clean:
+	make -C fs clean
+	make -C disk clean
 	rm -f *~
 	rm -f *.o
-	rm -f */*/*.o
 	rm -f *.elf
 	rm -f *.bin
 
