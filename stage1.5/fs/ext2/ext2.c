@@ -409,6 +409,8 @@ sint32_t lstat(const char *_path, struct stat *stat) {
 					stat->st_ino = parent;
 					stat->st_size = ext2_filesize(stat->st_ino);
 
+					path = update_file_buffer(file_buffer,path);
+
 					continue;
 				}
 				else
