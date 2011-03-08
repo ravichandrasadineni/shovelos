@@ -121,10 +121,19 @@ int disk_read( struct disk* disk, unsigned long long abs_address, unsigned short
 		if(offset || (thisread != disk->sector_bytes)) {
 
 			// not reading a whole sector, read to the disk buffer!
-			if((ret = disk_read_sector( disk->bios_drive, sector, DISK_BUFFER )) != 0)
+
+			static void* disk_buffer = NULL;
+			static int   disk_buffer_size = 0;
+
+			if(disk->sector_bytes > disk_buffer_size) {
+				disk_buffer_size = disk->sector_bytes;
+				disk_buffer      = alloc_high(disk_buffer_size);
+			}
+
+			if((ret = disk_read_sector( disk->bios_drive, sector, disk_buffer )) != 0)
 				halt("disk read error!");
 
-			memcpy(dst, (void*)(DISK_BUFFER + offset), thisread);
+			memcpy(dst, (void*)(disk_buffer + offset), thisread);
 		}
 		else {
 			// reading exactly one sector, let the bios write directly to destination.

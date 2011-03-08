@@ -12,6 +12,7 @@
 #include "../../print.h"
 #include "../../pt.h"
 #include "ext2.h"
+#include <alloc.h>
 
 /*** the only two inode mode fields we are interested in ***/
 #define S_IFREG	0x8000	/* regular file */
@@ -342,20 +343,33 @@ uint32_t ext2_find_kernel() {
 	halt("cannot find /shovelos.kernel");
 }
 
-#if(TODO)
-sint32_t lstat(const char *path, struct stat *stat) {
+#if(1 || TODO)
+sint32_t lstat(const char *_path, struct stat *stat) {
 
+	// allocate some memory
+	static char *path_buffer = NULL;
+	static char *file_buffer = NULL;
+	if(!path_buffer) {
+		path_buffer = alloc_high(0x1000);
+		file_buffer = alloc_high(0x0100);
+	}
+
+	char *path = path_buffer;
+
+	// working copy of full path.
+	memcpy(path_buffer, _path, strlen(path)+1);
+
+	// starting at root.
 	stat->st_ino  = EXT2_ROOT_INODE;
 	stat->st_size = ext2_filesize(stat->st_ino);
 
 	{
-		// copy the section of filename we are looking for into the DISK_BUFFER
+		// copy the section of filename we are looking for into the path buffer
 		++path; // skip '/'
 		int i;
-		for(i=0; *path && (*path != '/'); ++i) {
-			memset(DISK_BUFFER+i, path++, 1 );
-		}
-		memset(DISK_BUFFER+i, 0, 1 );
+		for(i=0; *path && (*path != '/'); ++i)
+			memset(file_buffer+i, path++, 1 );
+		memset(file_buffer+i, 0, 1 );
 	}
 
 	{
@@ -364,11 +378,41 @@ sint32_t lstat(const char *path, struct stat *stat) {
 		while(offset < stat->st_size) {
 
 			read_inode(stat->st_ino,offsset,sizeof dirent, &dirent);
+			offset += dirent.size;
 
-			if(strcmp(dirent.name, DISK_BUFFER) == 0) {
+			if(strcmp(dirent.name, file_buffer) == 0) {
 
+				/* found it */
+				offset = 0;
+				uint32_t parent = stat->st_ino;
+				stat->st_ino = dirent.inode;
+				stat->st_size = ext2_filesize(stat->st_ino);
 
+				if(ext2_isreg(stat->st_ino)) {
 
+					// found a file
+				}
+				else if(ext2_isdir(stat->st_ino))
+				{
+					// found a directory
+				}
+				else if(ext2_issym(stat->st_ino))
+				{
+					// found a symbolic link
+
+					memmove(path_buffer+stat->st_size,path,strlen(path)+1);
+
+					read_inode(stat->st_ino, 0, stat->st_size, path_buffer);
+
+					path = path_buffer;
+
+					stat->st_ino = parent;
+					stat->st_size = ext2_filesize(stat->st_ino);
+
+					continue;
+				}
+				else
+					halt("ext2 fs error, unknown inode");
 			}
 		}
 	}
@@ -397,14 +441,22 @@ void ext2_shuffle_hi() {
 
 	while(ksize > 0) {
 
+		static void* block_buffer = NULL;
+		static int   block_buffer_size = 0;
+
+		if(superblock.block_size > block_buffer_size) {
+			block_buffer_size = superblock.block_size;
+			block_buffer      = alloc_high(block_buffer_size);
+		}
+
 		thisread = ksize > superblock.block_size ? superblock.block_size : (uint16_t)ksize;
 
-		read_inode(inode,off,thisread, DISK_BUFFER + disk.sector_bytes);
+		read_inode(inode,off,thisread, block_buffer);
 
 		/*** soooooo ugly! ***/
 		memset(shuffle_params,0,sizeof shuffle_params);
 		shuffle_params[0] = dst;
-		shuffle_params[1] = (uint32_t)(DISK_BUFFER + disk.sector_bytes);
+		shuffle_params[1] = (uint32_t)(block_buffer);
 		shuffle_params[2] = thisread;
 		shuffle_params[3] = 0;
 
