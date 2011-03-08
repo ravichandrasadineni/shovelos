@@ -5,6 +5,8 @@
 #include "mem.h"
 #include "print.h"
 
+#include<inttypes.h>
+
 extern int _heap_start;
 
 int read_sp();
@@ -44,3 +46,18 @@ void *zalloc_align(unsigned short boundary, unsigned short size) {
 
 	return zalloc(size);
 }
+
+static int high_begin = HIGH_HEAP_BEGIN;
+static int high_limit = HIGH_HEAP_LIMIT;
+
+void* alloc_high(uint16_t size) {
+
+	int t = high_begin;
+			high_begin += size;
+
+	if((high_begin) > high_limit)
+		halt("out of high memory!");
+
+	return (void*)t;
+}
+

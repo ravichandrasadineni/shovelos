@@ -12,12 +12,12 @@
 .global shuffle_high
 shuffle_high:
 
-  pushal										# store current state
+  pushal									# store current state
 
   mov $0xa0, %eax							# Set PAE and PGE
   mov %eax,  %cr4
 
-  movl $0x10000, %edx						# Load page tables
+  movl $0x10000, %edx						# Load page tables (mem.h PML4E)
   movl %edx,    %cr3
 
   mov $0xC0000080, %ecx						# Enable long mode
@@ -48,7 +48,7 @@ long_main:
   mov %rax,%gs
   mov %rax,%fs
 
-   movq $0x30000,  %rax
+   movq $0x30000,  %rax             # (mem.h ADHOC_COMM)
    movq  0(%rax),  %rdi
    movq  8(%rax),  %rsi
    movq 16(%rax),  %rcx
@@ -64,10 +64,10 @@ long_main:
    movq $0xFFFFFFFF80000000, %r11    # set kernel address
    movq %r11, (%r10)                 # pointer to kernel address
    movq $0x7ffff, %rsp               # new stack
-   movq $0x40000, %r12               # kernel parameter 2, size of memory map
+   movq $0x20000, %r12               # kernel parameter 2, size of memory map (mem.h MB_MMAP)
    xorq %rsi, %rsi
    movq (%r12), %rsi
-   movq $0x40004, %rdi               # kernel parameter 1, ptr to memory map struct.
+   movq $0x20004, %rdi               # kernel parameter 1, ptr to memory map struct. (mem.h MB_MMAP+4)
    jmpq  *(%r10)                     # jump to kernel
 
 ##############################################

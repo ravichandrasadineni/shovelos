@@ -35,8 +35,8 @@ uint32_t pt_get_addr(uint32_t addr20) {
 	return  (uint32_t)ALIGN_DOWN( pt );
 }
 
-static int page_table_heap  = 0x11000;
-static int page_table_limit = 0x20000;
+static int page_table_heap  = (int)(PML4E_BUFFER + 0x01000);
+static int page_table_limit = (int)(PML4E_BUFFER + 0x10000);
 
 static int new_table() {
 	int t = page_table_heap;
@@ -55,7 +55,7 @@ static int new_table() {
  */
 static void pt_map_page(uint64_t virt, uint64_t phy) {
 
-        uint32_t pml4e = 0x10000; //&_pml4e;
+        uint32_t pml4e = (uint32_t)PML4E_BUFFER;
         uint32_t pdpe;
         uint32_t pde;
 
@@ -172,7 +172,6 @@ void setup_pt(uint32_t needed_himem) {
 	}
 
 	if(kernel_reg.type == 1) {
-		//printf("putting kernel @ 0x%lx\n", kernel_reg.b.b64);
 		pt_map_page(0xFFFFFFFF80000000,kernel_reg.b.b64);
 	}
 	else
