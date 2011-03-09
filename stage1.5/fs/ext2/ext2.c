@@ -14,11 +14,6 @@
 #include "ext2.h"
 #include <alloc.h>
 
-/*** the only two inode mode fields we are interested in ***/
-#define S_IFREG	0x8000	/* regular file */
-#define S_IFDIR	0x4000	/* directory */
-#define S_IFSYM 0xA000  /* symbolic link */
-
 #define EXT2_ROOT_INODE					  2
 
 /****************************************************************************************/
@@ -230,19 +225,24 @@ uint32_t ext2_filesize(uint32_t inode) {
 	return ext2_read_phy_32(get_inode_phy_addr64(inode) + EXT2_IN_SIZE_OFFSET);
 }
 
+uint32_t ext2_get_mode(uint32_t inode) {
+
+	return ext2_read_phy_16(get_inode_phy_addr64(inode) + EXT2_IN_MODE_OFFSET);
+}
+
 uint32_t ext2_isdir(uint32_t inode) {
 
-	return ext2_read_phy_16(get_inode_phy_addr64(inode) + EXT2_IN_MODE_OFFSET) & S_IFDIR;
+	return ext2_get_mode(inode) & S_IFDIR;
 }
 
 uint32_t ext2_isreg(uint32_t inode) {
 
-	return ext2_read_phy_16(get_inode_phy_addr64(inode) + EXT2_IN_MODE_OFFSET) & S_IFREG;
+	return ext2_get_mode(inode) & S_IFREG;
 }
 
 uint32_t ext2_issym(uint32_t inode) {
 
-	return ext2_read_phy_16(get_inode_phy_addr64(inode) + EXT2_IN_MODE_OFFSET) & S_IFSYM;
+	return ext2_get_mode(inode) & S_IFSYM;
 }
 
 void read_inode_block(uint32_t inode, uint32_t block, uint32_t offset, uint16_t size, void* dst) {
@@ -320,31 +320,6 @@ void read_inode(uint32_t inode, uint32_t offset, uint16_t size, void* dst) {
 	}
 }
 
-uint32_t ext2_find_kernel() {
-
-	uint32_t offset=0;
-	uint32_t size = ext2_filesize(2);
-
-	while(offset < size) {
-
-		read_inode(2,offset,sizeof dirent, &dirent);
-
-		if(strcmp("shovelos.kernel", dirent.name) == 0) {
-
-			if(!ext2_isreg(dirent.inode))
-				halt("shovelos.kernel is not a regular file!");
-
-			return dirent.inode;
-		}
-
-		offset+=dirent.size;
-	}
-
-	halt("cannot find /shovelos.kernel");
-}
-
-#if(1 || TODO)
-
 // read the current inode name from path to name, and move path ptr to next inode.
 // return 0 on success.
 int next_inode_name(char **_path, char *name) {
@@ -368,7 +343,7 @@ int next_inode_name(char **_path, char *name) {
 }
 
 
-sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
+static sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 
 	// allocate some memory
 	static char *path_buffer = NULL;
@@ -386,6 +361,7 @@ sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 	// starting at root.
 	stat->st_ino  = EXT2_ROOT_INODE;
 	stat->st_size = ext2_filesize(stat->st_ino);
+	stat->st_mode = ext2_get_mode(stat->st_ino);
 
 	while( next_inode_name( &path, file_buffer ) == 0) {
 
@@ -393,36 +369,23 @@ sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 
 		while(offset < stat->st_size) {
 
-			read_inode(stat->st_ino,offsset,sizeof dirent, &dirent);
+			read_inode(stat->st_ino,offset,sizeof dirent, &dirent);
 			offset += dirent.size;
 
 			if(strcmp(dirent.name, file_buffer) == 0) {
 
 				/* found it */
-				offset = 0;
-				uint32_t parent = stat->st_ino;
+				struct stat parent = *stat;
 				stat->st_ino = dirent.inode;
 				stat->st_size = ext2_filesize(stat->st_ino);
+				stat->st_mode = ext2_get_mode(stat->st_ino);
 
-				if(ext2_isreg(stat->st_ino)) {
-
-					// found a file
-					if(!peek8(path))
-						return 0; // reached end of path! success
-
-					return -1; // cannot cd into a file.
-				}
-				else if(ext2_isdir(stat->st_ino)) {
-
-					// found a directory
-					if((peek8(path) == '/' && !peek8(path+1)) || (!peek8(path)))
-						return 0; // reached end of path! success!
-				}
-				else if(ext2_issym(stat->st_ino))
+				if(stat->st_mode & S_IFSYM)
 				{
 					/*** found a symbolic link ***/
 
 					if(!peek8(path) && lstat_mode)
+						return 0; // stat terminal links in lstat mode.
 
 					// make space for sym-link in path buffer.
 					memmove(path_buffer+stat->st_size,path,strlen(path)+1);
@@ -432,42 +395,104 @@ sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 
 					// keep searching.
 					path = path_buffer;
-					stat->st_ino = parent;
-					stat->st_size = ext2_filesize(stat->st_ino);
+					*stat = parent;
+					break;
+				}
+				else if(stat->st_mode & S_IFREG) {
+
+					// found a file
+					if(!peek8(path))
+						return 0; // reached end of path! success
+
+					return -1; // cannot cd into a file.
+				}
+				else if(stat->st_mode & S_IFDIR) {
+
+					// found a directory
+					if(!peek8(path))
+						return 0; // reached end of path! success!
+
 					break;
 				}
 				else
-					halt("ext2 fs error, unknown inode");
+					halt("ext2 fs error, unknown mode");
 			}
 		}
+		return -1;
 	}
 
 	return -1;
 }
-#endif
 
+sint32_t stat(const char *_path, struct stat *stat) {
 
+	return _stat(_path, stat, 0);
+}
 
+sint32_t lstat(const char *_path, struct stat *stat) {
 
+	return _stat(_path, stat, 1);
+}
+
+static FILE _FILE = {{0,0,0},0};
+
+FILE* fopen(const char *path) {
+
+	if(_FILE.stat.st_ino)
+		halt("FIXME: can only have one file open at a time");
+
+	if(stat(path, &_FILE.stat))
+		return NULL; // no i-node
+
+	if((_FILE.stat.st_mode & S_IFREG) == 0)
+		return NULL; // not a file
+
+	_FILE.pos = 0;
+
+	return &_FILE;
+}
+
+void fclose(FILE   *file) {
+
+	memset(&_FILE,0,sizeof _FILE);
+}
+
+uint32_t fread(void* dst, uint32_t size, uint32_t memb, FILE *file) {
+
+	uint32_t ret = memb;
+
+	if(file->pos >= file->stat.st_size)
+		return 0;
+
+	if((file->pos + size * memb) > file->stat.st_size)
+		ret = (file->stat.st_size - file->pos) / size;
+
+	read_inode( file->stat.st_ino,
+				file->pos,
+				size * ret,
+				dst );
+
+	file->pos += ret * size;
+
+	return ret;
+}
 
 void shuffle_high();
 
 void ext2_shuffle_hi() {
 
-	uint32_t inode = ext2_find_kernel();
-	uint32_t ksize = ext2_filesize(inode);
-	uint32_t off   = 0;
+	FILE *kernel = fopen("/boot/shovelos.kernel");
+
+	if(!kernel)
+		halt("file not found: \"/boot/shovelos.kernel\"");
+
 	uint64_t dst   = 0xFFFFFFFF80000000;
-	uint16_t thisread = 0;
-	uint64_t shuffle_params[4];
 
 	/*** setup page tables, identity map lower memory,
 	     and allocate enough hi-memory for kernel ***/
+	setup_pt( kernel->stat.st_size );
 
-	setup_pt( ksize );
-
-	while(ksize > 0) {
-
+	{
 		static void* block_buffer = NULL;
 		static int   block_buffer_size = 0;
 
@@ -476,24 +501,22 @@ void ext2_shuffle_hi() {
 			block_buffer      = alloc_high(block_buffer_size);
 		}
 
-		thisread = ksize > superblock.block_size ? superblock.block_size : (uint16_t)ksize;
+		for(;;) {
 
-		read_inode(inode,off,thisread, block_buffer);
+			int bytes_read = fread(block_buffer, 1, block_buffer_size, kernel);
 
-		/*** soooooo ugly! ***/
-		memset(shuffle_params,0,sizeof shuffle_params);
-		shuffle_params[0] = dst;
-		shuffle_params[1] = (uint32_t)(block_buffer);
-		shuffle_params[2] = thisread;
-		shuffle_params[3] = 0;
+			if(!bytes_read)
+				break;
 
-		memcpy(ADHOC_COMM, shuffle_params, sizeof shuffle_params);
+			poke64(ADHOC_COMM+0x00, dst);
+			poke64(ADHOC_COMM+0x08, (int)block_buffer);
+			poke64(ADHOC_COMM+0x10, bytes_read);
+			poke64(ADHOC_COMM+0x18, 0);
 
-		shuffle_high();
+			shuffle_high();
 
-		dst   += thisread;
-		ksize -= thisread;
-		off   += thisread;
+			dst   += bytes_read;
+		}
 	}
 }
 

@@ -40,7 +40,7 @@ void *memmove(void* _dst, const void* _src, sint32_t size) {
 
 #define DEFINE_POKE_FUNC(name, type)		\
 		void name(void *addr, type val) { 	\
-			memcpy(addr, val, sizeof val);	\
+			memcpy(addr, &val, sizeof val);	\
 		}
 
 DEFINE_PEEK_FUNC(peek8,  sint8_t)
