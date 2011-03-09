@@ -12,15 +12,22 @@
 
 int fs_init();
 
-typedef struct {
-
-	uint32_t inode;
-} FILE;
-
 struct stat {
 	uint32_t st_ino;
 	uint32_t st_size;
+	uint32_t st_mode;
 };
+
+typedef struct {
+
+	struct stat stat;
+	uint32_t pos;
+
+} FILE;
+
+#define S_IFREG	0x8000	/* regular file */
+#define S_IFDIR	0x4000	/* directory */
+#define S_IFSYM 0xA000  /* symbolic link */
 
 #endif /* __STAGE_1_5_FS_EXT2_EXT2_H */
 
