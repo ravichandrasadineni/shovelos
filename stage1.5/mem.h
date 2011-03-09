@@ -27,6 +27,15 @@ int addds(void* offset);
 int addes(void* offset);
 
 
+sint8_t  peek8(void* addr);
+sint16_t peek16(void* addr);
+sint32_t peek32(void* addr);
+sint64_t peek64(void* addr);
+
+void poke8 (void* addr, sint8_t val);
+void poke16(void* addr, sint16_t val);
+void poke32(void* addr, sint32_t val);
+void poke64(void* addr, sint64_t val);
 
 #endif /*** __MEM_H ***/
 
