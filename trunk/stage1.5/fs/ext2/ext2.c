@@ -344,7 +344,31 @@ uint32_t ext2_find_kernel() {
 }
 
 #if(1 || TODO)
-sint32_t lstat(const char *_path, struct stat *stat) {
+
+// read the current inode name from path to name, and move path ptr to next inode.
+// return 0 on success.
+int next_inode_name(char **_path, char *name) {
+
+	char *path = *_path;
+
+	while(peek8(path) == '/')
+		++path;
+
+	int i=0;
+
+	poke8(name,0);
+	for(; peek8(path+i) && (peek8(path+i) != '/'); ++i)
+		poke8(name+i, peek8(path+i));
+	poke8(name+1,0);
+
+	*_path = path+i;
+
+	if(i) return 0;
+	else  return 1;
+}
+
+
+sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 
 	// allocate some memory
 	static char *path_buffer = NULL;
@@ -363,18 +387,10 @@ sint32_t lstat(const char *_path, struct stat *stat) {
 	stat->st_ino  = EXT2_ROOT_INODE;
 	stat->st_size = ext2_filesize(stat->st_ino);
 
-	{
-		// copy the section of filename we are looking for into the path buffer
-		++path; // skip '/'
-		int i;
-		for(i=0; *path && (*path != '/'); ++i)
-			memset(file_buffer+i, path++, 1 );
-		memset(file_buffer+i, 0, 1 );
-	}
+	while( next_inode_name( &path, file_buffer ) == 0) {
 
-	{
-		// search for name
 		uint32_t offset = 0;
+
 		while(offset < stat->st_size) {
 
 			read_inode(stat->st_ino,offsset,sizeof dirent, &dirent);
@@ -391,33 +407,42 @@ sint32_t lstat(const char *_path, struct stat *stat) {
 				if(ext2_isreg(stat->st_ino)) {
 
 					// found a file
+					if(!peek8(path))
+						return 0; // reached end of path! success
+
+					return -1; // cannot cd into a file.
 				}
-				else if(ext2_isdir(stat->st_ino))
-				{
+				else if(ext2_isdir(stat->st_ino)) {
+
 					// found a directory
+					if((peek8(path) == '/' && !peek8(path+1)) || (!peek8(path)))
+						return 0; // reached end of path! success!
 				}
 				else if(ext2_issym(stat->st_ino))
 				{
-					// found a symbolic link
+					/*** found a symbolic link ***/
 
+					if(!peek8(path) && lstat_mode)
+
+					// make space for sym-link in path buffer.
 					memmove(path_buffer+stat->st_size,path,strlen(path)+1);
 
+					// insert sym-link into the path buffer
 					read_inode(stat->st_ino, 0, stat->st_size, path_buffer);
 
+					// keep searching.
 					path = path_buffer;
-
 					stat->st_ino = parent;
 					stat->st_size = ext2_filesize(stat->st_ino);
-
-					path = update_file_buffer(file_buffer,path);
-
-					continue;
+					break;
 				}
 				else
 					halt("ext2 fs error, unknown inode");
 			}
 		}
 	}
+
+	return -1;
 }
 #endif
 
