@@ -145,7 +145,7 @@ int puts(const char *s) {
 
     short i=0;
     char c;
-    while((c = *s)) {
+    while((c = peek8(s))) {
         ++i;
 	    putc(c);
 	    ++s;
@@ -218,7 +218,7 @@ int printf(const char * format, ... ) {
 
     va_start(va, format);
 
-    while((c = *format++)) {
+    while((c = peek8(format++))) {
         ++l;
         if(special) {
             special=0;

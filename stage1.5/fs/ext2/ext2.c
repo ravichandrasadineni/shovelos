@@ -329,17 +329,18 @@ int next_inode_name(char **_path, char *name) {
 	while(peek8(path) == '/')
 		++path;
 
-	int i=0;
-
-	poke8(name,0);
-	for(; peek8(path+i) && (peek8(path+i) != '/'); ++i)
+	int i;
+	for(i=0; peek8(path+i) && (peek8(path+i) != '/'); ++i)
 		poke8(name+i, peek8(path+i));
-	poke8(name+1,0);
+
+	poke8(name+i,0);
 
 	*_path = path+i;
 
-	if(i) return 0;
-	else  return 1;
+	if(i)
+		return 0;
+
+	return 1;
 }
 
 
@@ -505,15 +506,15 @@ void ext2_shuffle_hi() {
 
 			int bytes_read = fread(block_buffer, 1, block_buffer_size, kernel);
 
-			if(!bytes_read)
-				break;
-
 			poke64(ADHOC_COMM+0x00, dst);
 			poke64(ADHOC_COMM+0x08, (int)block_buffer);
 			poke64(ADHOC_COMM+0x10, bytes_read);
 			poke64(ADHOC_COMM+0x18, 0);
 
 			shuffle_high();
+
+			if(bytes_read < block_buffer_size)
+				break;
 
 			dst   += bytes_read;
 		}

@@ -25,10 +25,10 @@ void __attribute__((noreturn))
 
   /*** soooooo ugly! ***/
   {
-	  uint64_t shuffle_params[4];
-	  memset(shuffle_params,0,sizeof shuffle_params);
-	  shuffle_params[3] = 1;
-	  memcpy(ADHOC_COMM, shuffle_params, sizeof shuffle_params);
+	  poke64(ADHOC_COMM+0x00, 0);
+	  poke64(ADHOC_COMM+0x08, 0);
+	  poke64(ADHOC_COMM+0x10, 0);
+	  poke64(ADHOC_COMM+0x18, 1);
 	  shuffle_high();
   }
 
