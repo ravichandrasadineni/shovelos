@@ -31,7 +31,7 @@ void *memmove(void* _dst, const void* _src, sint32_t size) {
 
 /*** read / write to 20bit addresses ***/
 
-#define DEFINE_PEEK_FUNC(name, type) 				\
+#define DEFINE_PEEK_FUNC(name, type) 		\
 		type name(void *addr) { 			\
 			type ret;						\
 			memcpy(&ret, addr, sizeof ret);	\
