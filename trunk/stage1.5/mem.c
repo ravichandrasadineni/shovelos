@@ -5,6 +5,7 @@
  *      Author: cds
  */
 
+#include <16bitreal.h>
 #include <inttypes.h>
 #include <mem.h>
 
@@ -32,7 +33,7 @@ void *memmove(void* _dst, const void* _src, sint32_t size) {
 /*** read / write to 20bit addresses ***/
 
 #define DEFINE_PEEK_FUNC(name, type) 		\
-		type name(void *addr) { 			\
+		type name(const void *addr) { 		\
 			type ret;						\
 			memcpy(&ret, addr, sizeof ret);	\
 			return ret;						\

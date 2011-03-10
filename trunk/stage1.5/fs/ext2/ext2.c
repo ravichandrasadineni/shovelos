@@ -5,7 +5,7 @@
  *      Author: cds
  */
 
-#include "../../16bitreal.h"
+#include <16bitreal.h>
 #include "../../inttypes.h"
 #include <disk/disk.h>
 #include "../../mem.h"
@@ -357,25 +357,34 @@ static sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 	char *path = path_buffer;
 
 	// working copy of full path.
-	memcpy(path_buffer, _path, strlen(path)+1);
+	memcpy(path_buffer, _path, strlen(_path)+1);
 
 	// starting at root.
 	stat->st_ino  = EXT2_ROOT_INODE;
 	stat->st_size = ext2_filesize(stat->st_ino);
 	stat->st_mode = ext2_get_mode(stat->st_ino);
 
+	printf("stat %s\n", path_buffer); // DEBUG
+
 	while( next_inode_name( &path, file_buffer ) == 0) {
 
+		printf("find \"%s\" - \"%s\"\n", file_buffer, path); // DEBUG
+
 		uint32_t offset = 0;
+
+		int found_flag = 0;
 
 		while(offset < stat->st_size) {
 
 			read_inode(stat->st_ino,offset,sizeof dirent, &dirent);
 			offset += dirent.size;
 
+			printf("%s?\n",dirent.name);
+
 			if(strcmp(dirent.name, file_buffer) == 0) {
 
 				/* found it */
+				found_flag = 1;
 				struct stat parent = *stat;
 				stat->st_ino = dirent.inode;
 				stat->st_size = ext2_filesize(stat->st_ino);
@@ -384,6 +393,7 @@ static sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 				if(stat->st_mode & S_IFSYM)
 				{
 					/*** found a symbolic link ***/
+					printf("FOUND SYMLINK\n"); // DEBUG
 
 					if(!peek8(path) && lstat_mode)
 						return 0; // stat terminal links in lstat mode.
@@ -397,9 +407,14 @@ static sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 					// keep searching.
 					path = path_buffer;
 					*stat = parent;
+
+					printf("RE-DIRECT \"%s\"\n", path); // DEBUG
+
 					break;
 				}
 				else if(stat->st_mode & S_IFREG) {
+
+					printf("FOUND FILE\n"); // DEBUG
 
 					// found a file
 					if(!peek8(path))
@@ -408,6 +423,8 @@ static sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 					return -1; // cannot cd into a file.
 				}
 				else if(stat->st_mode & S_IFDIR) {
+
+					printf("FOUND DIR\n"); // DEBUG
 
 					// found a directory
 					if(!peek8(path))
@@ -419,9 +436,9 @@ static sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 					halt("ext2 fs error, unknown mode");
 			}
 		}
-		return -1;
+		if(!found_flag)
+			return -1;
 	}
-
 	return -1;
 }
 

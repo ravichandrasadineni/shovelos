@@ -4,6 +4,7 @@
 #include "print.h"
 #include <inttypes.h>
 #include <stdarg.h>
+#include <mem.h>
 
 static char screen_x=0;
 static char screen_y=0;
