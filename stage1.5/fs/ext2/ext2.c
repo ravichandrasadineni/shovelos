@@ -92,7 +92,8 @@ struct superblock {
 struct dirent {
 	uint32_t inode;
 	uint16_t size;
-	uint16_t  _padding;    /*** Ignoring these fields as they are just optimisations, and depend of feature flags. ***/
+	uint8_t  name_length;
+	uint8_t  _padding;    /*** Ignoring these fields as they depend of feature flags. ***/
 	char     name[256];
 } dirent;
 
@@ -380,6 +381,10 @@ static sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 			offset += dirent.size;
 
 			printf("%s?\n",dirent.name);
+
+
+                        dirent.name[dirent.name_length] = '\0'; // strcmp HACK
+
 
 			if(strcmp(dirent.name, file_buffer) == 0) {
 
