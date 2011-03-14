@@ -41,18 +41,17 @@ shuffle_high:
 .code64
 long_main:
 
-  mov $24, %rax									# setup 64bit segments
+  mov $24, %rax								# setup 64bit segments
   mov %rax,%ds
   mov %rax,%ss
   mov %rax,%es
   mov %rax,%gs
   mov %rax,%fs
 
-   movq $0x30000,  %rax             # (mem.h ADHOC_COMM)
+   movq $0x30000,  %rax             		# (mem.h ADHOC_COMM)
    movq  0(%rax),  %rdi
    movq  8(%rax),  %rsi
    movq 16(%rax),  %rcx
-
    rep movsb
 
    cmpq $0, 20(%rax)
@@ -84,7 +83,7 @@ long_main:
   pushq $16										# push compataility mode code selector
   xorq %rcx,%rcx
   movw $compat_mode, %cx
-  pushq %rcx										# push return address
+  pushq %rcx									# push return address
   retfq											# far-return to compatability mode
 compat_mode:
 
@@ -104,4 +103,57 @@ compat_mode:
 return_from_long_mode:
   popal
   retl
+
+
+
+
+##############################################
+# Call the kernel ( never retrning )         #
+#   first, switch to long mode               #
+##############################################
+.global call_kernel
+call_kernel:
+
+  mov $0xa0, %eax							# Set PAE and PGE
+  mov %eax,  %cr4
+
+  movl $0x10000, %edx						# Load page tables (mem.h PML4E)
+  movl %edx,    %cr3
+
+  mov $0xC0000080, %ecx						# Enable long mode
+  rdmsr
+  or $0x00000100, %eax
+  wrmsr
+
+  movl %cr0,%ebx							# Enable paging and protection.
+  orl  $0x80000001, %ebx					# to enter compatability mode.
+  movl %ebx, %cr0
+
+  movl $_gdt_reg, %eax						# Load GDT
+  lgdt (%eax)
+
+  jmp $8, $.kernel_long_main				# jump to long mode
+  											# cs selector index 1 (offset 8)
+
+.code64
+.kernel_long_main:
+
+  mov $24, %rax								# setup 64bit segments
+  mov %rax,%ds
+  mov %rax,%ss
+  mov %rax,%es
+  mov %rax,%gs
+  mov %rax,%fs
+
+  movq %rsp,     %r10
+  andq $0xffff,  %r10
+  subq $8,       %r10               # allocate uint64 on old stack
+  movq $0xFFFFFFFF80000000, %r11    # set kernel address
+  movq %r11, (%r10)                 # pointer to kernel address
+  movq $0x7ffff, %rsp               # new stack
+  movq $0x20000, %r12               # kernel parameter 2, size of memory map (mem.h MB_MMAP)
+  xorq %rsi, %rsi
+  movq (%r12), %rsi
+  movq $0x20004, %rdi               # kernel parameter 1, ptr to memory map struct. (mem.h MB_MMAP+4)
+  jmpq  *(%r10)                     # jump to kernel
 
