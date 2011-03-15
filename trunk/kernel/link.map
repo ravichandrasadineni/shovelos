@@ -1,0 +1,205 @@
+Archive member included because of file (symbol)
+
+mm/mm.a(phy_alloc.c.64.o)     main.c.64.o (mm_phy_init)
+lib/lib.a(kprintf.c.64.o)     main.c.64.o (kprintf)
+lib/lib.a(string.c.64.o)      lib/lib.a(kprintf.c.64.o) (strlen)
+lib/lib.a(stdlib.c.64.o)      lib/lib.a(kprintf.c.64.o) (atoi)
+arch/arch.a(gdt.c.64.o)       main.c.64.o (_x86_64_load_gdt)
+arch/arch.a(idt.c.64.o)       main.c.64.o (_x86_64_load_idt)
+arch/arch.a(console.c.64.o)   lib/lib.a(kprintf.c.64.o) (cons_putc)
+arch/arch.a(8259.c.64.o)      arch/arch.a(idt.c.64.o) (_8259_remap)
+arch/arch.a(pt.c.64.o)        mm/mm.a(phy_alloc.c.64.o) (virt_to_phy)
+arch/arch.a(mp.c.64.o)        main.c.64.o (mp_find_next_processor)
+arch/arch.a(gdt.s.64.o)       arch/arch.a(gdt.c.64.o) (_x86_64_asm_lgdt)
+arch/arch.a(idt.s.64.o)       arch/arch.a(idt.c.64.o) (_x86_64_asm_lidt)
+arch/arch.a(isr.s.64.o)       arch/arch.a(idt.c.64.o) (dummy_isr)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+                0xffffffff80000000                . = 0xffffffff80000000
+
+.text           0xffffffff80000000      0xef2
+ *(.text)
+ .text          0xffffffff80000000       0x4f main.c.64.o
+                0xffffffff80000000                _start
+ *fill*         0xffffffff8000004f        0x1 00
+ .text          0xffffffff80000050      0x153 mm/mm.a(phy_alloc.c.64.o)
+                0xffffffff80000050                mm_phy_free_page
+                0xffffffff80000073                mm_phy_alloc_page
+                0xffffffff800000c2                mm_phy_init
+ *fill*         0xffffffff800001a3        0x1 00
+ .text          0xffffffff800001a4      0x6f8 lib/lib.a(kprintf.c.64.o)
+                0xffffffff8000026f                kprintf
+ .text          0xffffffff8000089c       0x27 lib/lib.a(string.c.64.o)
+                0xffffffff8000089c                memcmp
+                0xffffffff800008b5                strlen
+ *fill*         0xffffffff800008c3        0x1 00
+ .text          0xffffffff800008c4       0x91 lib/lib.a(stdlib.c.64.o)
+                0xffffffff800008c4                atoq
+                0xffffffff8000093b                atoll
+                0xffffffff80000940                atoi
+ *fill*         0xffffffff80000955        0x3 00
+ .text          0xffffffff80000958       0x1b arch/arch.a(gdt.c.64.o)
+                0xffffffff80000958                _x86_64_load_gdt
+ *fill*         0xffffffff80000973        0x1 00
+ .text          0xffffffff80000974       0x7f arch/arch.a(idt.c.64.o)
+                0xffffffff80000974                _x86_64_load_idt
+ *fill*         0xffffffff800009f3        0x1 00
+ .text          0xffffffff800009f4       0xf3 arch/arch.a(console.c.64.o)
+                0xffffffff80000a4b                cons_putc
+ *fill*         0xffffffff80000ae7        0x1 00
+ .text          0xffffffff80000ae8       0x36 arch/arch.a(8259.c.64.o)
+                0xffffffff80000ae8                _8259_disable
+                0xffffffff80000af4                _8259_remap
+ *fill*         0xffffffff80000b1e        0x2 00
+ .text          0xffffffff80000b20      0x1ba arch/arch.a(pt.c.64.o)
+                0xffffffff80000b20                virt_to_phy
+                0xffffffff80000c01                mmap
+ *fill*         0xffffffff80000cda        0x2 00
+ .text          0xffffffff80000cdc      0x1e5 arch/arch.a(mp.c.64.o)
+                0xffffffff80000e14                mp_find_next_local_interrupt
+                0xffffffff80000e26                mp_find_first_local_interrupt
+                0xffffffff80000e37                mp_find_next_io_interrupt
+                0xffffffff80000e49                mp_find_first_io_interrupt
+                0xffffffff80000e5b                mp_find_next_io_apic
+                0xffffffff80000e6e                mp_find_first_io_apic
+                0xffffffff80000e80                mp_find_next_bus
+                0xffffffff80000e93                mp_find_first_bus
+                0xffffffff80000ea4                mp_find_next_processor
+                0xffffffff80000eb3                mp_find_first_processor
+ *fill*         0xffffffff80000ec1        0x3 00
+ .text          0xffffffff80000ec4       0x22 arch/arch.a(gdt.s.64.o)
+                0xffffffff80000ec4                _x86_64_asm_lgdt
+ *fill*         0xffffffff80000ee6        0x2 00
+ .text          0xffffffff80000ee8        0x6 arch/arch.a(idt.s.64.o)
+                0xffffffff80000ee8                _x86_64_asm_lidt
+ *fill*         0xffffffff80000eee        0x2 00
+ .text          0xffffffff80000ef0        0x2 arch/arch.a(isr.s.64.o)
+                0xffffffff80000ef0                dummy_isr
+
+.iplt           0xffffffff80000ef4        0x0 load address 0xffffffff80000ef2
+ .iplt          0x0000000000000000        0x0 main.c.64.o
+
+.rodata.str1.1  0xffffffff80000ef2       0x42
+ .rodata.str1.1
+                0xffffffff80000ef2       0x38 main.c.64.o
+ .rodata.str1.1
+                0xffffffff80000f2a        0xa arch/arch.a(mp.c.64.o)
+
+.eh_frame       0xffffffff80000f38      0x3d8
+ .eh_frame      0xffffffff80000f38       0x30 main.c.64.o
+ .eh_frame      0xffffffff80000f68       0x50 mm/mm.a(phy_alloc.c.64.o)
+                                         0x60 (size before relaxing)
+ .eh_frame      0xffffffff80000fb8       0xa0 lib/lib.a(kprintf.c.64.o)
+                                         0xb8 (size before relaxing)
+ .eh_frame      0xffffffff80001058       0x30 lib/lib.a(string.c.64.o)
+                                         0x40 (size before relaxing)
+ .eh_frame      0xffffffff80001088       0x48 lib/lib.a(stdlib.c.64.o)
+                                         0x58 (size before relaxing)
+ .eh_frame      0xffffffff800010d0       0x18 arch/arch.a(gdt.c.64.o)
+                                         0x30 (size before relaxing)
+ .eh_frame      0xffffffff800010e8       0x28 arch/arch.a(idt.c.64.o)
+                                         0x40 (size before relaxing)
+ .eh_frame      0xffffffff80001110       0x30 arch/arch.a(console.c.64.o)
+                                         0x40 (size before relaxing)
+ .eh_frame      0xffffffff80001140       0x30 arch/arch.a(8259.c.64.o)
+                                         0x40 (size before relaxing)
+ .eh_frame      0xffffffff80001170       0x60 arch/arch.a(pt.c.64.o)
+                                         0x70 (size before relaxing)
+ .eh_frame      0xffffffff800011d0      0x140 arch/arch.a(mp.c.64.o)
+                                        0x128 (size before relaxing)
+
+.rela.dyn       0xffffffff80001310        0x0
+ .rela.iplt     0x0000000000000000        0x0 main.c.64.o
+ .rela.text     0x0000000000000000        0x0 main.c.64.o
+
+.data           0xffffffff80001310     0x1270
+ *(.bss)
+ .bss           0xffffffff80001310        0x0 main.c.64.o
+ .bss           0xffffffff80001310      0x208 mm/mm.a(phy_alloc.c.64.o)
+ .bss           0xffffffff80001518        0x0 lib/lib.a(kprintf.c.64.o)
+ .bss           0xffffffff80001518        0x0 lib/lib.a(string.c.64.o)
+ .bss           0xffffffff80001518        0x0 lib/lib.a(stdlib.c.64.o)
+ .bss           0xffffffff80001518        0x0 arch/arch.a(gdt.c.64.o)
+ .bss           0xffffffff80001518        0x0 arch/arch.a(idt.c.64.o)
+ .bss           0xffffffff80001518        0x0 arch/arch.a(console.c.64.o)
+ .bss           0xffffffff80001518        0x0 arch/arch.a(8259.c.64.o)
+ .bss           0xffffffff80001518       0x10 arch/arch.a(pt.c.64.o)
+ .bss           0xffffffff80001528        0x0 arch/arch.a(mp.c.64.o)
+ .bss           0xffffffff80001528        0x0 arch/arch.a(gdt.s.64.o)
+ .bss           0xffffffff80001528        0x0 arch/arch.a(idt.s.64.o)
+ .bss           0xffffffff80001528        0x0 arch/arch.a(isr.s.64.o)
+ *(.bss*)
+ *(.data)
+ .data          0xffffffff80001528        0x0 main.c.64.o
+ .data          0xffffffff80001528        0x0 mm/mm.a(phy_alloc.c.64.o)
+ .data          0xffffffff80001528        0x0 lib/lib.a(kprintf.c.64.o)
+ .data          0xffffffff80001528        0x0 lib/lib.a(string.c.64.o)
+ .data          0xffffffff80001528        0x0 lib/lib.a(stdlib.c.64.o)
+ *fill*         0xffffffff80001528        0x8 00
+ .data          0xffffffff80001530       0x28 arch/arch.a(gdt.c.64.o)
+ *fill*         0xffffffff80001558        0x8 00
+ .data          0xffffffff80001560     0x1010 arch/arch.a(idt.c.64.o)
+                0xffffffff80001560                idtr
+ .data          0xffffffff80002570       0x10 arch/arch.a(console.c.64.o)
+                0xffffffff80002570                console
+ .data          0xffffffff80002580        0x0 arch/arch.a(8259.c.64.o)
+ .data          0xffffffff80002580        0x0 arch/arch.a(pt.c.64.o)
+ .data          0xffffffff80002580        0x0 arch/arch.a(mp.c.64.o)
+ .data          0xffffffff80002580        0x0 arch/arch.a(gdt.s.64.o)
+ .data          0xffffffff80002580        0x0 arch/arch.a(idt.s.64.o)
+ .data          0xffffffff80002580        0x0 arch/arch.a(isr.s.64.o)
+ *(.rodata)
+ *(.COMMON)
+LOAD main.c.64.o
+LOAD mm/mm.a
+LOAD lib/lib.a
+LOAD arch/arch.a
+OUTPUT(shovelos.elf elf64-x86-64)
+
+.igot.plt       0xffffffff80002580        0x0
+ .igot.plt      0x0000000000000000        0x0 main.c.64.o
+
+.comment        0x0000000000000000       0x2d
+ .comment       0x0000000000000000       0x2d main.c.64.o
+                                         0x2e (size before relaxing)
+ .comment       0x0000000000000000       0x2e mm/mm.a(phy_alloc.c.64.o)
+ .comment       0x0000000000000000       0x2e lib/lib.a(kprintf.c.64.o)
+ .comment       0x0000000000000000       0x2e lib/lib.a(string.c.64.o)
+ .comment       0x0000000000000000       0x2e lib/lib.a(stdlib.c.64.o)
+ .comment       0x0000000000000000       0x2e arch/arch.a(gdt.c.64.o)
+ .comment       0x0000000000000000       0x2e arch/arch.a(idt.c.64.o)
+ .comment       0x0000000000000000       0x2e arch/arch.a(console.c.64.o)
+ .comment       0x0000000000000000       0x2e arch/arch.a(8259.c.64.o)
+ .comment       0x0000000000000000       0x2e arch/arch.a(pt.c.64.o)
+ .comment       0x0000000000000000       0x2e arch/arch.a(mp.c.64.o)
+
+.note.GNU-stack
+                0x0000000000000000        0x0
+ .note.GNU-stack
+                0x0000000000000000        0x0 main.c.64.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 mm/mm.a(phy_alloc.c.64.o)
+ .note.GNU-stack
+                0x0000000000000000        0x0 lib/lib.a(kprintf.c.64.o)
+ .note.GNU-stack
+                0x0000000000000000        0x0 lib/lib.a(string.c.64.o)
+ .note.GNU-stack
+                0x0000000000000000        0x0 lib/lib.a(stdlib.c.64.o)
+ .note.GNU-stack
+                0x0000000000000000        0x0 arch/arch.a(gdt.c.64.o)
+ .note.GNU-stack
+                0x0000000000000000        0x0 arch/arch.a(idt.c.64.o)
+ .note.GNU-stack
+                0x0000000000000000        0x0 arch/arch.a(console.c.64.o)
+ .note.GNU-stack
+                0x0000000000000000        0x0 arch/arch.a(8259.c.64.o)
+ .note.GNU-stack
+                0x0000000000000000        0x0 arch/arch.a(pt.c.64.o)
+ .note.GNU-stack
+                0x0000000000000000        0x0 arch/arch.a(mp.c.64.o)

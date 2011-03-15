@@ -221,6 +221,11 @@ uint16_t ext2_read_phy_16(uint64_t addr64) {
 	return ret;
 }
 
+void ext2_read_fast_symlink(uint32_t inode, uint8_t len, void* dst) {
+
+	partition_read(&partition, get_inode_phy_addr64(inode) + EXT2_IN_DIRECT_PTR, len, dst);
+}
+
 uint32_t ext2_filesize(uint32_t inode) {
 
 	return ext2_read_phy_32(get_inode_phy_addr64(inode) + EXT2_IN_SIZE_OFFSET);
@@ -233,17 +238,17 @@ uint32_t ext2_get_mode(uint32_t inode) {
 
 uint32_t ext2_isdir(uint32_t inode) {
 
-	return ext2_get_mode(inode) & S_IFDIR;
+	return (ext2_get_mode(inode) & 0xF000) == S_IFDIR;
 }
 
 uint32_t ext2_isreg(uint32_t inode) {
 
-	return ext2_get_mode(inode) & S_IFREG;
+	return (ext2_get_mode(inode) & 0xF000) == S_IFREG;
 }
 
 uint32_t ext2_issym(uint32_t inode) {
 
-	return ext2_get_mode(inode) & S_IFSYM;
+	return (ext2_get_mode(inode) & 0xF000) == S_IFSYM;
 }
 
 void read_inode_block(uint32_t inode, uint32_t block, uint32_t offset, uint16_t size, void* dst) {
@@ -365,11 +370,7 @@ static sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 	stat->st_size = ext2_filesize(stat->st_ino);
 	stat->st_mode = ext2_get_mode(stat->st_ino);
 
-	printf("stat %s\n", path_buffer); // DEBUG
-
 	while( next_inode_name( &path, file_buffer ) == 0) {
-
-		printf("find \"%s\" - \"%s\"\n", file_buffer, path); // DEBUG
 
 		uint32_t offset = 0;
 
@@ -378,13 +379,8 @@ static sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 		while(offset < stat->st_size) {
 
 			read_inode(stat->st_ino,offset,sizeof dirent, &dirent);
+			dirent.name[dirent.name_length] = '\0';
 			offset += dirent.size;
-
-			printf("%s?\n",dirent.name);
-
-
-                        dirent.name[dirent.name_length] = '\0'; // strcmp HACK
-
 
 			if(strcmp(dirent.name, file_buffer) == 0) {
 
@@ -395,10 +391,9 @@ static sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 				stat->st_size = ext2_filesize(stat->st_ino);
 				stat->st_mode = ext2_get_mode(stat->st_ino);
 
-				if(stat->st_mode & S_IFSYM)
+				if((stat->st_mode & 0xF000) == S_IFSYM)
 				{
 					/*** found a symbolic link ***/
-					printf("FOUND SYMLINK\n"); // DEBUG
 
 					if(!peek8(path) && lstat_mode)
 						return 0; // stat terminal links in lstat mode.
@@ -406,20 +401,18 @@ static sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 					// make space for sym-link in path buffer.
 					memmove(path_buffer+stat->st_size,path,strlen(path)+1);
 
-					// insert sym-link into the path buffer
-					read_inode(stat->st_ino, 0, stat->st_size, path_buffer);
+					if(stat->st_size <= 60)
+						ext2_read_fast_symlink(stat->st_ino, stat->st_size, path_buffer);
+					else
+						read_inode(stat->st_ino, 0, stat->st_size, path_buffer);
 
 					// keep searching.
 					path = path_buffer;
 					*stat = parent;
 
-					printf("RE-DIRECT \"%s\"\n", path); // DEBUG
-
 					break;
 				}
-				else if(stat->st_mode & S_IFREG) {
-
-					printf("FOUND FILE\n"); // DEBUG
+				else if((stat->st_mode & 0xF000) == S_IFREG) {
 
 					// found a file
 					if(!peek8(path))
@@ -427,9 +420,7 @@ static sint32_t _stat(const char *_path, struct stat *stat, int lstat_mode) {
 
 					return -1; // cannot cd into a file.
 				}
-				else if(stat->st_mode & S_IFDIR) {
-
-					printf("FOUND DIR\n"); // DEBUG
+				else if((stat->st_mode & 0xF000) == S_IFDIR) {
 
 					// found a directory
 					if(!peek8(path))

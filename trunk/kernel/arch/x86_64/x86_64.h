@@ -11,6 +11,7 @@
 #include <inttypes.h>
 #include "pt.h"
 #include "lock.h"
+#include "semaphore.h"
 #include "acpi.h"
 #include "mp.h"
 #include "console.h"

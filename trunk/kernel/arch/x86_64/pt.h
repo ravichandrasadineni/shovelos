@@ -27,6 +27,6 @@ uint64_t virt_to_phy(uint64_t virt);
 /*** pointer arithmetic ***/
 #define PHY_TO_VIRT(phy, _type) ((_type)(((uint8_t*)phy) + VIRT_OFFSET))
 
-#define VIRT_KERNEL_BASE 0xffffffff80000000
+#define VIRT_KERNEL_BASE 0xFFFFFFFF80000000
 
 #endif /* PT_H_ */

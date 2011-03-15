@@ -10,25 +10,11 @@
 
 #include <inttypes.h>
 
-inline uint8_t lock_try(uint8_t *lock) {
+typedef uint8_t lock_t;
 
-   uint8_t ret;
-   __asm__ __volatile__( "movb  $1,  %%al;"
-		                 "xchg  %%al,(%1);"
-		                :"=a" (ret)
-		                :"r"  (lock)   );
-   return ret;
-}
+void spinlock_wait(volatile lock_t* lock);
 
-inline void lock_release(uint8_t *mem) {
-
-	*mem = 0;
-}
-
-inline void lock_spin(uint8_t* lock) {
-
-	while( lock_try(lock) != 0 );
-}
+void spinlock_signal(volatile lock_t *lock);
 
 #endif /* LOCK_H_ */
 
