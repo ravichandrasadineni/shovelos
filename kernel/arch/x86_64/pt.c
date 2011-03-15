@@ -5,11 +5,10 @@
  *      Author: cds
  */
 
-#include<inttypes.h>
-#include<mm/mm.h>
-#include<arch/arch.h>
+#include <inttypes.h>
+#include <mm/mm.h>
+#include <arch/arch.h>
 #include <lib/string.h>
-
 
 #define PAGE_TABLE_SIZE 512                         /* Entries per table */
 #define PAGE_TABLE_BYTES 0x1000
@@ -33,11 +32,8 @@ static uint64_t get_phy_page_table() {
 
 	static uint64_t stack_top = 0x0000000000000000;
 	static uint64_t stack_bot = 0x0000000000000000;
-	static uint8_t  lock      = 0x00;
 
 	uint64_t ret = 0;
-
-	lock_spin(&lock);
 
 	if((stack_bot + PAGE_TABLE_BYTES) > stack_top) {
 
@@ -54,7 +50,6 @@ static uint64_t get_phy_page_table() {
 
 done:
 
-	lock_release(&lock);
 
 	memset( PHY_TO_VIRT(ret,void*), 0x00, PAGE_TABLE_BYTES);
 

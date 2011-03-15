@@ -29,6 +29,9 @@ void __attribute__((noreturn))
 	  poke64(ADHOC_COMM+0x08, 0);
 	  poke64(ADHOC_COMM+0x10, 0);
 	  poke64(ADHOC_COMM+0x18, 1);
+
+//	  halt(" PAUSE ");
+
 	  shuffle_high();
   }
 
