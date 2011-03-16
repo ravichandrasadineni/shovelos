@@ -9,8 +9,9 @@
 #define ARCH_X86_64_H_
 
 #include <inttypes.h>
-#include "pt.h"
 #include "lock.h"
+#include "ticket_lock.h"
+#include "pt.h"
 #include "semaphore.h"
 #include "acpi.h"
 #include "mp.h"
