@@ -13,6 +13,8 @@
 #define ROWS 25
 #define COLS 80
 
+TICKET_LOCK( console_lock );
+
 struct console_mem {
     uint16_t chars[ROWS][COLS];
 };
@@ -47,11 +49,16 @@ int cons_putc(int c) {
 
     switch (c) {
     case '\n':
+
+    	ticket_lock_wait( &console_lock );
+
         console.xpos = 0;
         if (console.ypos>=ROWS-1)
             scroll();
         else
             ++console.ypos;
+
+        ticket_lock_signal( &console_lock );
 
         return 1;
 
@@ -59,6 +66,9 @@ int cons_putc(int c) {
         return 0;
 
     default:
+
+    	ticket_lock_wait( &console_lock );
+
         console.mem->chars[console.ypos][console.xpos] = (uint16_t)(console.colour | c);
         ++console.xpos;
         if (console.xpos>=COLS) {
@@ -68,6 +78,9 @@ int cons_putc(int c) {
             else
                 ++console.ypos;
         }
+
+        ticket_lock_signal( &console_lock );
+
         return 1;
     }
 }

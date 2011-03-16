@@ -9,15 +9,16 @@
 #define __X86_64_TICKET_LOCK_H
 
 #include <inttypes.h>
-#include "lock.h"
+#include "rflags.h"
 
 struct ticket_lock {
 
-	uint32_t queue;
-	uint32_t dequeue;
+	uint16_t queue;
+	uint16_t dequeue;
+	uint8_t  rflag_if;
 };
 
-#define TICKET_LOCK(name) struct ticket_lock name = { 0, 0 };
+#define TICKET_LOCK(name) struct ticket_lock name = { 0, 0 }
 
 void ticket_lock_wait( struct ticket_lock * ticket_lock);
 
