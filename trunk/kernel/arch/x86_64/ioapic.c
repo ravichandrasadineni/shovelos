@@ -167,7 +167,7 @@ static void config(uint8_t *ioapic) {
         red_ent = 	IOAPIC_RED_DST		( 1 					)|
                    IOAPIC_RED_MASK		( IOAPIC_CLEAR )		|
                    IOAPIC_RED_TRIGGER	( IOAPIC_CLEAR )		| /* read only */
-                   IOAPIC_RED_INPOL	( IOAPIC_INTPOL_HI )	|
+                   IOAPIC_RED_INPOL	    ( IOAPIC_INTPOL_HI )	|
                    IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )		| /* read only */
                    IOAPIC_RED_DESTMOD	( IOAPIC_DEST_LOGICAL )	|
                    IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) |

@@ -30,10 +30,14 @@
 
 static uint64_t get_phy_page_table() {
 
+	static TICKET_LOCK( lock );
+
 	static uint64_t stack_top = 0x0000000000000000;
 	static uint64_t stack_bot = 0x0000000000000000;
 
 	uint64_t ret = 0;
+
+	ticket_lock_wait( &lock );
 
 	if((stack_bot + PAGE_TABLE_BYTES) > stack_top) {
 
@@ -50,8 +54,10 @@ static uint64_t get_phy_page_table() {
 
 done:
 
+	ticket_lock_signal( &lock );
 
-	memset( PHY_TO_VIRT(ret,void*), 0x00, PAGE_TABLE_BYTES);
+	if(ret)
+		memset( PHY_TO_VIRT(ret,void*), 0x00, PAGE_TABLE_BYTES);
 
 	return ret;
 }
