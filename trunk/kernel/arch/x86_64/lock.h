@@ -14,7 +14,10 @@ typedef uint8_t lock_t;
 
 void spinlock_wait(volatile lock_t* lock);
 
-void spinlock_signal(volatile lock_t *lock);
+static inline void spinlock_signal(volatile lock_t *lock) {
+
+	__asm__ __volatile__ ( "lock decl 4(%%rdi);" );
+}
 
 #endif /* LOCK_H_ */
 
