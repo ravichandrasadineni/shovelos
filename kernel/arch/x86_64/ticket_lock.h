@@ -11,20 +11,17 @@
 #include <inttypes.h>
 #include "lock.h"
 
-typedef uint16_t ticket_t;
-typedef uint16_t lock_t;
-
 struct ticket_lock {
 
-	lock_t queue_lock;
-	lock_t dequeue_lock;
-	ticket_t queue_ticket;
-	ticket_t dequeue_ticket;
+	uint32_t queue;
+	uint32_t dequeue;
 };
 
-void ticket_lock_wait( volatile struct ticket_lock * ticket_lock);
-void ticket_lock_signal( volatile struct ticket_lock * ticket_lock);
+#define TICKET_LOCK(name) struct ticket_lock name = { 0, 0 };
 
+void ticket_lock_wait( struct ticket_lock * ticket_lock);
+
+void ticket_lock_signal( struct ticket_lock * ticket_lock);
 
 #endif /*** __X86_64_TICKET_LOCK_H ***/
 

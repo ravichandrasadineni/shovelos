@@ -22,8 +22,3 @@ spinlock_wait:
 .ret:
 	retq
 
-.global spinlock_signal
-spinlock_signal:
-	lock movb $0, (%rdi)
-	retq
-
