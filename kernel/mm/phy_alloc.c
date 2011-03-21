@@ -7,12 +7,18 @@
 
 #include <mm/mm.h>
 #include <mm/phy_alloc.h>
+#include <mm/virt_alloc.h>
 #include <arch/arch.h>
 #include <lib/string.h>
+#include <inttypes.h>
+
+static TICKET_LOCK( phy_bitmap_lock );
 
 static uint64_t phy_bitmap[(PAGE_MAX/64)+1];
 
 #define PAGES_PER_GROUP ((sizeof phy_bitmap[0]) * 8)
+
+
 
 static void set_page_free(uint64_t page) {
 
@@ -28,10 +34,12 @@ static void set_page_used(uint64_t page) {
 
 void mm_phy_init(struct mm_phy_reg *regs, uint64_t regnum) {
 
+	ticket_lock_wait( &phy_bitmap_lock );
+
 	/* set all pages to used / unavailable */
 	memset(phy_bitmap, 0xff, sizeof phy_bitmap);
 
-	/* set pages that physically exist for general purpose as free */
+	/* first pass - set pages that physically exist for general purpose as free */
 	for(struct mm_phy_reg* r=regs; r<regs+regnum; r++) {
 
 		if(r->type != MM_PHY_USABLE)
@@ -44,9 +52,11 @@ void mm_phy_init(struct mm_phy_reg *regs, uint64_t regnum) {
 			set_page_free( mm_phy_to_page(b) );
 	}
 
-
-	/* set pages that hold the kernel image as used. */
+	/*** the boot loader has mapped some memory for the kernel image in the top 2gig address space
+	 * find it, and mark it as used.
+	 */
 	for(uint64_t v = VIRT_KERNEL_BASE; ; v += PAGE_SIZE) {
+
 		uint64_t p = virt_to_phy(v);
 
 		if(!p)
@@ -54,6 +64,9 @@ void mm_phy_init(struct mm_phy_reg *regs, uint64_t regnum) {
 
 		set_page_used( mm_phy_to_page(p)  );
 	}
+
+	ticket_lock_signal( &phy_bitmap_lock );
+
 }
 
 /****************************************************
@@ -61,8 +74,14 @@ void mm_phy_init(struct mm_phy_reg *regs, uint64_t regnum) {
  */
 void mm_phy_free_page(uint64_t page) {
 
-	if(page)
-		set_page_free(page);
+	if(!page)
+		return;
+
+	ticket_lock_wait( &phy_bitmap_lock );
+
+	set_page_free(page);
+
+	ticket_lock_signal( &phy_bitmap_lock );
 }
 
 /****************************************************
@@ -70,6 +89,8 @@ void mm_phy_free_page(uint64_t page) {
  * returns page number, or zero on out of memory.
  */
 uint64_t mm_phy_alloc_page() {
+
+	ticket_lock_wait( &phy_bitmap_lock );
 
 	for(uint64_t g=0; g< sizeof phy_bitmap / sizeof phy_bitmap[0]; ++g)
 		if(phy_bitmap[g] != 0xffffffffffffffff) {
@@ -79,9 +100,14 @@ uint64_t mm_phy_alloc_page() {
 
 					phy_bitmap[g] |= 1 << p;
 
+					ticket_lock_signal( &phy_bitmap_lock );
+
 					return (g * PAGES_PER_GROUP) + p;
 				}
 		}
+
+	ticket_lock_signal( &phy_bitmap_lock );
+
 	return 0; /* no free pages  */
 }
 

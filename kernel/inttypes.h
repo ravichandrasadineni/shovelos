@@ -21,5 +21,6 @@ typedef unsigned int        uint32_t;
 typedef long long           sint64_t;
 typedef unsigned long long  uint64_t;
 
+#define NULL ((void*)0)
 
 #endif /* INTTYPES_H_ */

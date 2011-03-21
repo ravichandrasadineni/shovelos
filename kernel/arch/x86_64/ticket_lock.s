@@ -27,11 +27,13 @@ ticket_lock_wait:
 .ticket_lock_aquired:
 
           # store the lock holders interrupt state
-          movb       $0,      4(%rdi)
+          movb         $0,      4(%rdi)
           pushfq
-          testq  (%rsp),      $0x200
-          cmovnzb    $1,      4(%rdi)
-          addq       $8, %rsp
+          testq    $0x200,       (%rsp)
+          jz .ticket_lock_done
+          movb         $1,      4(%rdi)
+.ticket_lock_done:
+          addq         $8, %rsp
 
 		  cli
 		  retq
@@ -46,11 +48,10 @@ ticket_lock_wait:
 .global ticket_lock_signal
 ticket_lock_signal:
 
-         xorb       %al,   %al
-         cmpb        $0, 4(%rdi)
-         cmovnzb     $1,   %al
 
-.ticket_lock_signal_return:
+         movb   4(%rdi), %al     # read callers old interrupt state
+
+.ticket_lock_signal_rlease:
 
     lock incw 2(%rdi)
 

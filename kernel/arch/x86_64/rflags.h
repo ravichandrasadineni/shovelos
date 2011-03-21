@@ -28,7 +28,7 @@
 #define RFLAG_VIP 			(1<<20)
 #define RFLAG_ID 			(1<<21)
 
-static inline uint64_t cpu_read_rflag() {
+static inline uint64_t cpu_read_rflags() {
 
 	uint64_t rflag;
 
@@ -36,7 +36,7 @@ static inline uint64_t cpu_read_rflag() {
 			"pushfq;"
 			"movq (%%rsp), %0;"
 			"subq      $8, %%rsp;"
-			: =a (rflag) );
+			: "=a" (rflag) );
 
 	return rflag;
 }

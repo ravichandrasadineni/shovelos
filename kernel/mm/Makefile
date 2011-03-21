@@ -1,6 +1,6 @@
 .PHONY: clean
 
-SRC64_C = phy_alloc.c
+SRC64_C = phy_alloc.c virt_alloc.c
 SRC64_S = 
 
 OBJ64=$(SRC64_S:.s=.s.64.o) $(SRC64_C:.c=.c.64.o)
