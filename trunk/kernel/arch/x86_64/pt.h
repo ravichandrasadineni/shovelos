@@ -8,9 +8,28 @@
 #ifndef PT_H_
 #define PT_H_
 
-#include<inttypes.h>
+#include <inttypes.h>
+#include <mm/region.h>
+
+struct page_table_mem {
+
+	struct ticket_lock lock;
+
+	uint64_t *pml4e;
+	uint64_t table_stack_top;
+	uint64_t table_stack_bottom;
+};
 
 uint64_t virt_to_phy(uint64_t virt);
+
+/* initialise page tables */
+void pt_initialise(struct mm_phy_reg *regs, uint64_t regnum);
+
+/*** add virt -> physical mapping to given page table ( null for table used by current CPU ) ***/
+sint64_t mmap(uint64_t phy, uint64_t virt,  struct page_table_mem *tab);
+
+/*** the kenrel page tables ***/
+extern struct page_table_mem kernel_page_tables;
 
 /*** memory page size ***/
 #define PAGE_SIZE 0x200000
@@ -28,5 +47,12 @@ uint64_t virt_to_phy(uint64_t virt);
 #define PHY_TO_VIRT(phy, _type) ((_type)(((uint8_t*)phy) + VIRT_OFFSET))
 
 #define VIRT_KERNEL_BASE 0xFFFFFFFF80000000
+
+#define PT_PRESENT_FLAG  		(1<<0)
+#define PT_WRITABLE_FLAG 		(1<<1)
+#define PT_USER_FLAG     		(1<<2)
+#define PT_WRITE_THROUGH_FLAG	(1<<3)
+#define PT_TERMINAL_FLAG    	(1<<7)
+#define PT_GLOBAL_FLAG        	(1<<8)
 
 #endif /* PT_H_ */

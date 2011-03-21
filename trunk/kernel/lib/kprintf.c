@@ -10,6 +10,8 @@
 #include<arch/arch.h>
 #include<lib/lib.h>
 
+static TICKET_LOCK( console_lock );
+
 static int puts(const char *s) {
 
     short i=0;
@@ -143,6 +145,8 @@ int kprintf(const char * format, ... ) {
 
 	va_start(va, format);
 
+	ticket_lock_wait( &console_lock );
+
     while((c = *format++)) {
 
         if(special) {
@@ -256,6 +260,8 @@ int kprintf(const char * format, ... ) {
         else
         	l += cons_putc(c);
     }
+
+    ticket_lock_signal( &console_lock );
 
     va_end(va);
 

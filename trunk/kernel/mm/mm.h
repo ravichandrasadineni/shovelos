@@ -10,6 +10,9 @@
 
 #include <inttypes.h>
 
+#include "region.h"
 #include "phy_alloc.h"
+#include "virt_alloc.h"
+
 
 #endif /* MM_H_ */

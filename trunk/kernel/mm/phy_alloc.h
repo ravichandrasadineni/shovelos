@@ -12,24 +12,6 @@
 #include <arch/arch.h>
 #include <inttypes.h>
 
-enum mm_phy_types {
-	MM_PHY_UNKNOWN=0,
-	MM_PHY_USABLE,
-	MM_PHY_RESERVED,
-	MM_PHY_ACPI_RECLAIMABLE,
-	MM_PHY_ACPI_NVS,
-	MM_PHY_BAD,
-	MM_PHY_MAX
-};
-
-struct mm_phy_reg {
-
-	uint64_t base;
-	uint64_t len;
-	uint32_t type;
-} __attribute__((packed)) ;
-
-
 void mm_phy_init(struct mm_phy_reg *regs, uint64_t regnum);
 
 uint64_t mm_phy_alloc_page() ;
