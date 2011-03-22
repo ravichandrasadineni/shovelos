@@ -96,7 +96,6 @@ uint64_t virt_to_phy(uint64_t virt) {
 
 sint64_t mmap(uint64_t phy, uint64_t virt, struct page_table_mem *tab) {
 
-
 	uint64_t *_pdpe  = 0x0000;
 	uint64_t *_pde   = 0x0000;
 
@@ -108,40 +107,36 @@ sint64_t mmap(uint64_t phy, uint64_t virt, struct page_table_mem *tab) {
 		_pml4e = tab->pml4e = get_phy_page_table(tab);
 
 	_pml4e  += (0x1ff & (virt >> 39));
-	_pml4e  = PHY_TO_VIRT(_pml4e, uint64_t*);
-	_pdpe   = (uint64_t*)ALIGN_DOWN(*_pml4e);
+	_pdpe     = (uint64_t*)ALIGN_DOWN( *PHY_TO_VIRT(_pml4e, uint64_t*) );
 
-	if(!(*_pml4e & PT_PRESENT_FLAG)) {
+	if(!(*PHY_TO_VIRT(_pml4e, uint64_t*) & PT_PRESENT_FLAG)) {
 
 		_pdpe = get_phy_page_table(tab);
-		if(!(*_pml4e = (uint64_t)_pdpe)) {
+		if(!(*PHY_TO_VIRT(_pml4e, uint64_t*) = (uint64_t)_pdpe)) {
 			ticket_lock_signal( &tab->lock );
 			return -1; // out of memory!
 		}
-
-		*_pml4e |= PT_PRESENT_FLAG;
 	}
+	*PHY_TO_VIRT(_pml4e, uint64_t*) |= PT_WRITABLE_FLAG | PT_PRESENT_FLAG;
 
 	_pdpe += (0x1ff & (virt >> 30));
-	_pdpe  = PHY_TO_VIRT(_pdpe, uint64_t*);
-	_pde   = (uint64_t*)ALIGN_DOWN(*_pdpe);
+	_pde   = (uint64_t*)ALIGN_DOWN(*PHY_TO_VIRT(_pdpe, uint64_t*));
 
-	if(!(*_pdpe & PT_PRESENT_FLAG)) {
+	if(!(*PHY_TO_VIRT(_pdpe, uint64_t*) & PT_PRESENT_FLAG)) {
 
 		_pde = get_phy_page_table(tab);
-		if(!(*_pdpe = (uint64_t)_pde)) {
+		if(!(*PHY_TO_VIRT(_pdpe, uint64_t*) = (uint64_t)_pde)) {
 			ticket_lock_signal( &tab->lock );
 			return -1; // out of memory!
 		}
-
-		*_pdpe |= PT_PRESENT_FLAG;
 	}
+	*PHY_TO_VIRT(_pdpe, uint64_t*) |= PT_WRITABLE_FLAG | PT_PRESENT_FLAG;
 
 	_pde += (0x1ff & (virt >> 21));
-	_pde  = PHY_TO_VIRT(_pde, uint64_t*);
 
-	*_pde = phy |
+	*PHY_TO_VIRT(_pde, uint64_t*) = phy |
 			PT_PRESENT_FLAG  |
+			PT_WRITABLE_FLAG |
 			PT_TERMINAL_FLAG ;
 
 	ticket_lock_signal( &tab->lock );
@@ -154,6 +149,10 @@ sint64_t mmap(uint64_t phy, uint64_t virt, struct page_table_mem *tab) {
  * and retire the one generated for us by the boot loader.
  */
 void pt_initialise(struct mm_phy_reg *regs, uint64_t regnum) {
+
+	/*** force mapping of first megabyte ***/
+	for(uint64_t b = 0; b<0x100000; b+=PAGE_SIZE)
+		mmap( b, PHY_TO_VIRT(b,uint64_t), &kernel_page_tables);
 
 	/*** map all physical memory at virtual = physical + VIRT_OFFSET ***/
 	for(struct mm_phy_reg* r=regs; r<regs+regnum; r++) {
