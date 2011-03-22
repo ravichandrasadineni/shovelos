@@ -67,9 +67,9 @@ static void pt_map_page(uint64_t virt, uint64_t phy) {
 
                 uint64_t data  = (pdpe = new_table())        |
                                  PT_PRESENT_FLAG           |
-                                         PT_WRITABLE_FLAG          |
-                                         PT_USER_FLAG              |
-                                         PT_WRITE_THROUGH_FLAG     ;
+                                         PT_WRITABLE_FLAG          ;//|
+                                    //     PT_USER_FLAG              |
+                                    //     PT_WRITE_THROUGH_FLAG     ;
 
                 write64(pml4e, data);
         }
@@ -81,13 +81,13 @@ static void pt_map_page(uint64_t virt, uint64_t phy) {
                 uint64_t data  = 0;
 
                 if(PAGE_SIZE == _1GIG)
-                	data = phy | PT_TERMINAL_FLAG | PT_GLOBAL_FLAG         |
-								 PT_PRESENT_FLAG  | PT_WRITABLE_FLAG       |
-                				 PT_USER_FLAG     | PT_WRITE_THROUGH_FLAG  ;
+                	data = phy | PT_TERMINAL_FLAG | //PT_GLOBAL_FLAG         |
+								 PT_PRESENT_FLAG  | PT_WRITABLE_FLAG       ;//|
+                				 //PT_USER_FLAG     | PT_WRITE_THROUGH_FLAG  ;
 
                 else
-                	data = (pde = new_table()) | PT_PRESENT_FLAG | PT_WRITABLE_FLAG      |
-						                      PT_USER_FLAG    | PT_WRITE_THROUGH_FLAG ;
+                	data = (pde = new_table()) | PT_PRESENT_FLAG | PT_WRITABLE_FLAG      ;//|
+						                      //PT_USER_FLAG    | PT_WRITE_THROUGH_FLAG ;
 
                 write64(pdpe, data);
         }
@@ -100,10 +100,10 @@ static void pt_map_page(uint64_t virt, uint64_t phy) {
         	uint64_t data = phy             |
 							PT_PRESENT_FLAG         |
 							PT_WRITABLE_FLAG        |
-							PT_USER_FLAG            |
-							PT_WRITE_THROUGH_FLAG   |
-							PT_TERMINAL_FLAG        |
-							PT_GLOBAL_FLAG          ;
+//							PT_USER_FLAG            |
+//							PT_WRITE_THROUGH_FLAG   |
+							PT_TERMINAL_FLAG        ;
+//							PT_GLOBAL_FLAG          ;
 
         	write64(pde, data);
         }
