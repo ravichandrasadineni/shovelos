@@ -18,6 +18,11 @@
 #include "console.h"
 #include "ioapic.h"
 
+/*** todo: better home ***/
+typedef void (*main_func)(int argc, char **argv);
+void call_main(main_func, void* stack, int argc, char **argv);
+
+
 int  kprintf(const char * fmt, ...);
 
 void _x86_64_load_gdt();
