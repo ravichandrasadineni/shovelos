@@ -158,6 +158,7 @@ void pt_initialise(struct mm_phy_reg *regs, uint64_t regnum) {
 		mmap( b, b, &kernel_page_tables);						// identity map
 	}
 
+
 	/*** map all physical memory at virtual = physical + VIRT_OFFSET ***/
 	for(struct mm_phy_reg* r=regs; r<regs+regnum; r++) {
 
@@ -182,6 +183,15 @@ void pt_initialise(struct mm_phy_reg *regs, uint64_t regnum) {
 			break;
 	}
 
+	/*** identity map low memory ***
+	 * we still need access to structures created by the boot loader
+	 * ( the stack being the most important one! )
+	 */
+	for(uint64_t b = 0; b<0x100000; b+=PAGE_SIZE)
+		mmap( b, b, &kernel_page_tables);
+
+
+	/*** load new page tables ***/
 	__asm__ __volatile__ (
         "movq      %0,   %%rax;"
 		"movq   %%rax,   %%cr3;"
