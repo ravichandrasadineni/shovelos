@@ -16,8 +16,8 @@ int _start(struct mm_phy_reg *reg, uint64_t len) {
 	mm_phy_init(reg,len); 		/*** initialise physical memory manager ***/
 	pt_initialise(reg,len);		/*** retire boot-loaders page tables ***/
 
-	//_x86_64_load_gdt();
-	//_x86_64_load_idt();
+	_x86_64_load_gdt();
+	_x86_64_load_idt();
 
 //	acpi_init();
 

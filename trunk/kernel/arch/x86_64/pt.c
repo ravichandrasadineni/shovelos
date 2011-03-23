@@ -150,9 +150,13 @@ sint64_t mmap(uint64_t phy, uint64_t virt, struct page_table_mem *tab) {
  */
 void pt_initialise(struct mm_phy_reg *regs, uint64_t regnum) {
 
+	mmap(0,0,&kernel_page_tables);
+
 	/*** force mapping of first megabyte ***/
-	for(uint64_t b = 0; b<0x100000; b+=PAGE_SIZE)
-		mmap( b, PHY_TO_VIRT(b,uint64_t), &kernel_page_tables);
+	for(uint64_t b = 0; b<0x100000; b+=PAGE_SIZE) {
+		mmap( b, PHY_TO_VIRT(b,uint64_t), &kernel_page_tables); // at offset
+		mmap( b, b, &kernel_page_tables);						// identity map
+	}
 
 	/*** map all physical memory at virtual = physical + VIRT_OFFSET ***/
 	for(struct mm_phy_reg* r=regs; r<regs+regnum; r++) {
