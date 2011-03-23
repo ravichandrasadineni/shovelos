@@ -48,11 +48,11 @@ extern struct page_table_mem kernel_page_tables;
 
 #define VIRT_KERNEL_BASE 0xFFFFFFFF80000000
 
-#define PT_PRESENT_FLAG  		(1<<0)
-#define PT_WRITABLE_FLAG 		(1<<1)
-#define PT_USER_FLAG     		(1<<2)
-#define PT_WRITE_THROUGH_FLAG	(1<<3)
-#define PT_TERMINAL_FLAG    	(1<<7)
-#define PT_GLOBAL_FLAG        	(1<<8)
+#define PT_PRESENT_FLAG  		(1<<0) // 0x01
+#define PT_WRITABLE_FLAG 		(1<<1) // 0x02
+#define PT_USER_FLAG     		(1<<2) // 0x04
+#define PT_WRITE_THROUGH_FLAG	(1<<3) // 0x08
+#define PT_TERMINAL_FLAG    	(1<<7) // 0x80
+#define PT_GLOBAL_FLAG        	(1<<8) // 0x100
 
 #endif /* PT_H_ */

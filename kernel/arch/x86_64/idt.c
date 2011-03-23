@@ -339,6 +339,6 @@ void _x86_64_load_idt() {
 	for(int irq = 0; irq<256; ++irq)
 		idt[irq] = dummy_int_vector;
 
-	_x86_64_asm_lidt(&idtr);
+//	_x86_64_asm_lidt(&idtr);
 }
 
