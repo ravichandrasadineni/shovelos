@@ -18,7 +18,7 @@ struct ticket_lock {
 	uint8_t  rflag_if;
 };
 
-#define TICKET_LOCK(name) struct ticket_lock name = { 0, 0 }
+#define TICKET_LOCK(name) struct ticket_lock name = { 0,0,0 }
 
 void ticket_lock_wait( struct ticket_lock * ticket_lock);
 

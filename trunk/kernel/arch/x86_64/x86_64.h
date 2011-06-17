@@ -9,6 +9,8 @@
 #define ARCH_X86_64_H_
 
 #include <inttypes.h>
+#include "msr.h"
+#include "8259.h"
 #include "lock.h"
 #include "ticket_lock.h"
 #include "pt.h"
@@ -17,6 +19,7 @@
 #include "mp.h"
 #include "console.h"
 #include "ioapic.h"
+#include "lapic.h"
 
 /*** todo: better home ***/
 typedef void (*main_func)(int argc, char **argv);

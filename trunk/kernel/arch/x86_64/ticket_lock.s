@@ -48,7 +48,6 @@ ticket_lock_wait:
 .global ticket_lock_signal
 ticket_lock_signal:
 
-
          movb   4(%rdi), %al     # read callers old interrupt state
 
 .ticket_lock_signal_rlease:
