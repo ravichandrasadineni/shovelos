@@ -17,10 +17,10 @@
 #define PAGE_TABLE_ALIGNLENT 0x1000
 
 /* mask out bits under page size */
-#define ALIGN_DOWN(x)	(x & ~(PAGE_TABLE_ALIGNLENT-1))
+#define ALIGN_DOWN(x)	((x) & ~(PAGE_TABLE_ALIGNLENT-1))
 
 /* next page aligned address */
-#define ALIGN_UP(x)     ((x & (PAGE_TABLE_ALIGNLENT-1)) ? ALIGN_DOWN(x+PAGE_TABLE_ALIGNLENT) : x)
+#define ALIGN_UP(x)     (((x) & (PAGE_TABLE_ALIGNLENT-1)) ? ALIGN_DOWN(x+PAGE_TABLE_ALIGNLENT) : (x))
 
 
 struct page_table_mem kernel_page_tables = {
