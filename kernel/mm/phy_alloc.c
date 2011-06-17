@@ -48,8 +48,9 @@ void mm_phy_init(struct mm_phy_reg *regs, uint64_t regnum) {
 		uint64_t b = r->base & PAGE_SIZE ? ((r->base + PAGE_SIZE) & PAGE_SIZE)  : r->base;
 		uint64_t l = r->base & PAGE_SIZE ? ( r->len  - (r->base   & PAGE_SIZE)) : r->len;
 
-		for(; l>=PAGE_SIZE; l-=PAGE_SIZE, b+=PAGE_SIZE)
+		for(; l>=PAGE_SIZE; l-=PAGE_SIZE, b+=PAGE_SIZE) {
 			set_page_free( mm_phy_to_page(b) );
+		}
 	}
 
 	/*** the boot loader has mapped some memory for the kernel image in the top 2gig address space
@@ -64,6 +65,12 @@ void mm_phy_init(struct mm_phy_reg *regs, uint64_t regnum) {
 
 		set_page_used( mm_phy_to_page(p)  );
 	}
+
+	/*** never dynamically allocate low-memory ***/
+	for(uint64_t lowmem=0; lowmem < 0x100000; lowmem += PAGE_SIZE)
+		set_page_used( mm_phy_to_page(lowmem) );
+
+	phy_bitmap[0] |= 1; // HACK set_page_*() ignores NULL page. manually make it un-available here!
 
 	ticket_lock_signal( &phy_bitmap_lock );
 
@@ -92,19 +99,22 @@ uint64_t mm_phy_alloc_page() {
 
 	ticket_lock_wait( &phy_bitmap_lock );
 
-	for(uint64_t g=0; g< sizeof phy_bitmap / sizeof phy_bitmap[0]; ++g)
-		if(phy_bitmap[g] != 0xffffffffffffffff) {
-			uint64_t _g = phy_bitmap[g];
-			for(uint8_t p = 0; p< (sizeof phy_bitmap[0]) * 8; ++p)
+	for(uint64_t g=0; g< sizeof phy_bitmap / sizeof phy_bitmap[0]; ++g) {
+		uint64_t _g = phy_bitmap[g];
+		if(_g != 0xffffffffffffffff)
+			for(uint8_t p = 0; p< PAGES_PER_GROUP; ++p)
 				if((_g & (1 << p)) == 0) {
 
-					phy_bitmap[g] |= 1 << p;
+					phy_bitmap[g] |= (1 << p);
 
 					ticket_lock_signal( &phy_bitmap_lock );
 
+					if(((g * PAGES_PER_GROUP) + p) == 0)
+						kprintf("ERR: ALLOCATING PAGE ZERO!!!\n");
+
 					return (g * PAGES_PER_GROUP) + p;
 				}
-		}
+	}
 
 	ticket_lock_signal( &phy_bitmap_lock );
 

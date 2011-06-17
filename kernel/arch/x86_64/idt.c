@@ -334,11 +334,9 @@ void _x86_64_load_idt() {
 
 	struct idt_t dummy_int_vector = PRESENT_ISR(8, 0, INTERRUPT , 0, ((uint64_t)&dummy_isr));
 
-	_8259_remap(0x20,0x28); /* re-map IRQ 0..15 to INT 32..47 */
-
 	for(int irq = 0; irq<256; ++irq)
 		idt[irq] = dummy_int_vector;
 
-//	_x86_64_asm_lidt(&idtr);
+	_x86_64_asm_lidt(&idtr);
 }
 

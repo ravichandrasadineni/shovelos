@@ -101,6 +101,9 @@ relocated_main:
   movw $0x0000, %ax
   movw %ax,     %es        # zero es ( VRB sector )
 
+  movl $0x2401, %eax       # enable A-20
+  int $0x15
+
   movw $s1,     %si        # say hello!
   call puts
 

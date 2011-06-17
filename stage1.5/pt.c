@@ -24,10 +24,18 @@ void write64( uint32_t addr20, uint64_t value ) {
 	memcpy((void*)addr20, &value, 8);
 }
 
+/*** write a 64bit page table entry to a far address ***/
+uint64_t read64( uint32_t addr20 ) {
+
+	uint64_t value;
+	memcpy(&value, (void*)addr20, 8);
+
+	return value;
+}
+
 uint32_t pt_get_addr(uint32_t addr20) {
 
 	uint64_t pt = 0 ;
-
 
 	memcpy( &pt, (const void*)addr20, 8);
 
@@ -53,12 +61,17 @@ static int new_table() {
  * takes 1) virtual page base ( PAGE_SIZE aligned )
  *       2) physical page base ( PAGE_SIZE aligned )
  */
+static int debug_flag = 0;
+
 static void pt_map_page(uint64_t virt, uint64_t phy) {
 
         uint32_t pml4e = (uint32_t)PML4E_BUFFER;
         uint32_t pdpe;
         uint32_t pde;
 
+        if(debug_flag) printf("_mmap 0x%lx,0x%lx\n",phy,virt);
+
+        if(debug_flag) printf("pml4e += (%d)\n", (0x1ff & ( virt >> 39 )));
         pml4e += 8 * (0x1ff & (virt >> 39));
 
         pdpe = pt_get_addr(pml4e);
@@ -70,7 +83,16 @@ static void pt_map_page(uint64_t virt, uint64_t phy) {
                                  PT_WRITABLE_FLAG     ;
 
                 write64(pml4e, data);
+              if(debug_flag) printf("new pdpe at 0x%x\n",pdpe);
         }
+        else
+        {
+        	if(debug_flag) printf("existing pdpe at 0x%x\n",pdpe);
+        }
+
+
+        if(debug_flag) printf("pml4e[%d] = 0x%lx\n",0x1ff & ( virt >> 39 ), read64(pml4e) );
+
         pdpe += 8 * (0x1ff & (virt >> 30));
         pde = pt_get_addr(pdpe);
 
@@ -105,6 +127,8 @@ static void pt_map_page(uint64_t virt, uint64_t phy) {
 
         	write64(pde, data);
         }
+
+
 }
 
 /************************************************************************************************************
@@ -129,7 +153,13 @@ void setup_pt(uint32_t needed_himem) {
 	for(uint64_t i=0; i<PAGE_TABLE_SIZE; i++) {
 
 		pt_map_page(addr64,addr64); // identity map
+
+		//debug_flag = 1;
 		pt_map_page(addr64+0xffff800000000000,addr64); // at higher half offset
+	//	debug_flag = 0;
+
+//		for(;;);
+
 		addr64 += PAGE_SIZE;
 	}
 

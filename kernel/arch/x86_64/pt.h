@@ -11,6 +11,8 @@
 #include <inttypes.h>
 #include <mm/region.h>
 
+#include "ticket_lock.h"
+
 struct page_table_mem {
 
 	struct ticket_lock lock;

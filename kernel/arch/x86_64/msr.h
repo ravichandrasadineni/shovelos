@@ -10,6 +10,8 @@
 #ifndef MSR_H_
 #define MSR_H_
 
+#define MSR_LAPIC (0x0000001B)
+
 /*** read a 32bit model specific register from x86_64 cpu ***/
 static inline uint32_t cpu_rdmsr32( uint32_t ecx ) {
 

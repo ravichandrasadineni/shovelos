@@ -9,6 +9,7 @@
 #include "ioapic.h"
 #include "mp.h"
 #include "pt.h"
+#include "8259.h"
 
 enum ioapic_mm_reg {
     IOREGSEL 	= 0x00,
@@ -146,9 +147,9 @@ uint16_t ioapic_detect() {
     uint16_t count = 0;
 
     /*** todo: there are other ways to find the ioapic ***/
-    for (const struct mp_ioapic *ioapic  = mp_find_first_ioapic();
+    for (const struct mp_ioapic *ioapic  = mp_find_first_io_apic();
             ioapic != 0;
-            ioapic  = mp_find_next_ioapic( ioapic )) {
+            ioapic  = mp_find_next_io_apic( ioapic )) {
         ++count;
     }
 
@@ -164,7 +165,7 @@ static void config(uint8_t *ioapic) {
 
     for ( uint16_t red_tbl = IOREDTBL00; red_tbl <= IOREDTBL23; red_tbl += 2) {
 
-        red_ent = 	IOAPIC_RED_DST		( 1 					)|
+        red_ent = 	IOAPIC_RED_DST		( 1ll 					)|
                    IOAPIC_RED_MASK		( IOAPIC_CLEAR )		|
                    IOAPIC_RED_TRIGGER	( IOAPIC_CLEAR )		| /* read only */
                    IOAPIC_RED_INPOL	    ( IOAPIC_INTPOL_HI )	|
@@ -183,11 +184,15 @@ uint16_t ioapic_configure() {
 
     uint16_t count = 0;
 
-    for (const struct mp_ioapic *ioapic  = mm_find_first_ioapic();
-            ioapic != 0;
-            ioapic  = mm_find_next_ioapic( ioapic )) {
+    _8259_disable();
 
-        config( ioapic_phy_to_virt( ioapic->mm_ioapic ) );
+    return 0; /*** TODO ***/
+
+    for (const struct mp_ioapic *ioapic  = mp_find_first_io_apic();
+            ioapic != 0;
+            ioapic  = mp_find_next_io_apic( ioapic )) {
+
+        config( ioapic_phy_to_virt( (void*)(uint64_t)ioapic->mmap_ioapic ) );
 
         ++count;
     }

@@ -43,14 +43,14 @@ stage_2_partition:
 ###############################################################
 real_main:
 
-  movw $0x3000, %ax
-  movw %ax,     %ds        # 64k of data  at segment 0x3000
-  movw $0x2000, %ax
-  movw %ax,     %ss        # 64k of stack at segment 0x2000
-  movw $0xffff, %sp
-  movw $0x07e0, %ax
-  movw %ax,     %es        # set es ( stage 1.5 sector )
-  movw $s1,     %si        # say hello!
+  movl $0x3000, %eax
+  movl %eax,     %ds       # 64k of data  at segment 0x3000
+  movl $0x2000, %eax
+  movl %eax,     %ss       # 64k of stack at segment 0x2000
+  movl $0xffff, %esp
+  movl $0x07e0, %eax
+  movl %eax,     %es       # set es ( stage 1.5 sector )
+  movl $s1,     %esi       # say hello!
   call puts
 
 

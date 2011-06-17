@@ -5,6 +5,9 @@
  *      Author: cds
  */
 
+#ifndef __MM_VIRT_ALLOC_H
+#define __MM_VIRT_ALLOC_H
+
 #include<arch/arch.h>
 
 #define VMM_PHY_BASE 		(0xffff800000000000)
@@ -17,3 +20,9 @@
 #define VMM_STACK_TOP		(0xffffc00000000000)
 #define VMM_KERNEL_IMG		(0xFFFFFFFF80000000)
 
+void *morecore(uint64_t size);
+uint64_t vmm_heap_size();
+
+void* vmm_alloc_hw(uint64_t size);
+
+#endif /*** __MM_VIRT_ALLOC_H ***/
