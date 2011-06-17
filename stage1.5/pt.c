@@ -65,11 +65,9 @@ static void pt_map_page(uint64_t virt, uint64_t phy) {
 
         if(pdpe == 0) {
 
-                uint64_t data  = (pdpe = new_table())        |
-                                 PT_PRESENT_FLAG           |
-                                         PT_WRITABLE_FLAG          ;//|
-                                    //     PT_USER_FLAG              |
-                                    //     PT_WRITE_THROUGH_FLAG     ;
+                uint64_t data  = (pdpe = new_table()) |
+                                 PT_PRESENT_FLAG      |
+                                 PT_WRITABLE_FLAG     ;
 
                 write64(pml4e, data);
         }
