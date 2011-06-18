@@ -6,6 +6,7 @@
  */
 
 #include <inttypes.h>
+#include <lib/lib.h>
 #include "ioapic.h"
 #include "mp.h"
 #include "pt.h"
@@ -186,15 +187,19 @@ uint16_t ioapic_configure() {
 
     _8259_disable();
 
-    return 0; /*** TODO ***/
+    //return 0; /*** TODO ***/
 
     for (const struct mp_ioapic *ioapic  = mp_find_first_io_apic();
             ioapic != 0;
             ioapic  = mp_find_next_io_apic( ioapic )) {
 
-        config( ioapic_phy_to_virt( (void*)(uint64_t)ioapic->mmap_ioapic ) );
+    	kprintf("found an IOApic at 0x%x\n",ioapic->mmap_ioapic);
 
-        ++count;
+    	++count;
+
+    	continue; // TODO
+
+       config( ioapic_phy_to_virt( (void*)(uint64_t)ioapic->mmap_ioapic ) );
     }
 
     return count;
