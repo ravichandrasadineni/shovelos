@@ -29,8 +29,6 @@
 
 static inline uint64_t cpu_read_rflags() {
 
-	return 0;
-
 	uint64_t rflags;
 
 	__asm__ __volatile__(
@@ -46,8 +44,6 @@ static inline uint64_t cpu_read_rflags() {
 }
 
 static inline void cpu_write_rflags(uint64_t rflags) {
-
-	return;
 
 	__asm__ __volatile__(
 			"pushq %0;"

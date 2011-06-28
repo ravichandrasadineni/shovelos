@@ -17,7 +17,7 @@ OBJ64 = $(SRC64_S:.s=.s.64.o) $(SRC64_C:.c=.c.64.o)
 
 shovelos.elf : $(OBJ64) $(LIBS) link.script
 	@echo Linking   $@
-	@$(LD) -s -Map link.map -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o $@ $(OBJ64) $(LIBS)
+	@$(LD) --verbose -s -Map link.map -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o $@ $(OBJ64) $(LIBS)
 
 %.c.64.o : %.c
 	@echo Compiling $<

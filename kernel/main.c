@@ -10,8 +10,7 @@
 #include <mm/mm.h>
 #include <arch/arch.h>
 
-
-int _start(struct mm_phy_reg *reg, uint64_t len) {
+int main(struct mm_phy_reg *reg, uint64_t len)  {
 
 	mm_phy_init(reg,len); 		/*** initialise physical memory manager ***/
 	pt_initialise(reg,len);		/*** retire boot-loaders page tables ***/
@@ -41,10 +40,17 @@ int _start(struct mm_phy_reg *reg, uint64_t len) {
 		}
 
 
+
 	kprintf("\nshovelos.kernel - \"HELLO WORLD!\"\n");
 
 	for(;;) {
 	}
 	return 0;
 }
+
+/*** FORCE linker script to put this code at the very start of the kernel binary ***/
+__asm__ ( ".section .start_text\n"
+						".global _start\n"
+						"_start:\n"
+						"	jmp main\n"	);
 
