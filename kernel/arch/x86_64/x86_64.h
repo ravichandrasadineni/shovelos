@@ -9,6 +9,8 @@
 #define ARCH_X86_64_H_
 
 #include <inttypes.h>
+#include "rflags.h"
+#include "cpuid.h"
 #include "msr.h"
 #include "8259.h"
 #include "lock.h"

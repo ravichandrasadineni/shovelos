@@ -36,29 +36,17 @@ struct local_apic_struct {
 	const	_128bit_aligned_uint32		error_status;
 	const	_128bit_aligned_uint32		reserved_02[6];
 			_128bit_aligned_uint32		lvt_cmci;
-			_128bit_aligned_uint32		interrupt_command;
-
-};
-
-enum local_apic_register {
-
-
-
-
-	LAPICIRR0 = 0x00000200, /* Read Only  - Interrupt Request Register (IRR); bits 31:0 */
-	LAPICIRR1 = 0x00000210, /* Read Only  - Interrupt Request Register (IRR); bits 63:32 */
-	LAPICIRR2 = 0x00000220, /* Read Only  - Interrupt Request Register (IRR); bits 95:64 */
-	LAPICIRR3 = 0x00000230, /* Read Only  - Interrupt Request Register (IRR); bits 127:96 */
-	LAPICIRR4 = 0x00000240, /* Read Only  - Interrupt Request Register (IRR); bits 159:128 */
-	LAPICIRR5 = 0x00000250, /* Read Only  - Interrupt Request Register (IRR); bits 191:160 */
-	LAPICIRR6 = 0x00000260, /* Read Only  - Interrupt Request Register (IRR); bits 223:192 */
-	LAPICIRR7 = 0x00000270, /* Read Only  - Interrupt Request Register (IRR); bits 255:224 */
-
-	LAPICESR  = 0x00000280, /* Read Only  - Error Status Register */
-
-	LAPICLVT  = 0x000002F0, /* Read/Write - LVT CMCI Register */
-	LAPICICR  = 0x00000300, /* Read/Write - Interrupt Command Register (ICR); bits 0-31 */
-
-	/*** TODO - MORE ***/
+			_128bit_aligned_uint32		interrupt_command[2];
+			_128bit_aligned_uint32		lvt_timer;
+			_128bit_aligned_uint32		lvt_thermal_sensor;
+			_128bit_aligned_uint32		lvt_performance_monitoring_counters;
+			_128bit_aligned_uint32		lvt_lint0;
+			_128bit_aligned_uint32		lvt_lint1;
+			_128bit_aligned_uint32		lvt_error;
+			_128bit_aligned_uint32		initial_count;
+	const	_128bit_aligned_uint32		current_count;
+	const	_128bit_aligned_uint32		reserved_03[4];
+			_128bit_aligned_uint32		divide_configuration;
+	const	_128bit_aligned_uint32		reserved_04;
 };
 

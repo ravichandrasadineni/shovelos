@@ -29,6 +29,18 @@ int _start(struct mm_phy_reg *reg, uint64_t len) {
 		kprintf("FOUND A CPU (ID %d)\n", cpu->local_apic_id);
 	}
 
+
+	if(cpu_has_cpuid()) {
+
+			kprintf("cpuid is supported\n");
+		}
+		else {
+
+			kprintf("bootstrap processor does not support cpuid!?\n");
+			for(;;);
+		}
+
+
 	kprintf("\nshovelos.kernel - \"HELLO WORLD!\"\n");
 
 	for(;;) {
