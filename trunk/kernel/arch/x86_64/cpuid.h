@@ -39,7 +39,9 @@ static inline BOOL cpu_has_cpuid() {
 
 	r1 = cpu_read_rflags();
 
-	r2 = cpu_read_rflags( r1 ^ RFLAG_ID );
+	cpu_write_rflags( r1 ^ RFLAG_ID );
+
+	r2 = cpu_read_rflags();
 
 	if((r1 & RFLAG_ID) != (r2 & RFLAG_ID))
 		return TRUE;
