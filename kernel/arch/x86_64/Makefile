@@ -1,7 +1,7 @@
 .PHONY: clean
 
-SRC64_C = gdt.c idt.c console.c 8259.c pt.c acpi.c mp.c ioapic.c
-SRC64_S = gdt.s idt.s isr.s lock.s ticket_lock.s 
+SRC64_C = gdt.c idt.c console.c 8259.c pt.c acpi.c mp.c ioapic.c ticket_lock.c
+SRC64_S = gdt.s idt.s isr.s lock.s
 
 OBJ64=$(SRC64_S:.s=.s.64.o) $(SRC64_C:.c=.c.64.o)
 
