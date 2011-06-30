@@ -14,6 +14,6 @@ void ticket_lock_wait_noinline(struct ticket_lock * ticket_lock) {
 
 void ticket_lock_signal_noinline(struct ticket_lock * ticket_lock) {
 
-	ticket_signal_inline(ticket_lock);
+	ticket_lock_signal_inline(ticket_lock);
 }
 

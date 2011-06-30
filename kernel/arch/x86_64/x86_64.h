@@ -13,7 +13,6 @@
 #include "cpuid.h"
 #include "msr.h"
 #include "8259.h"
-#include "lock.h"
 #include "ticket_lock.h"
 #include "pt.h"
 #include "semaphore.h"

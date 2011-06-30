@@ -17,8 +17,7 @@
 #define RFLAG_IF 			(1<<9)
 #define RFLAG_DF 			(1<<10)
 #define RFLAG_OF 			(1<<11)
-#define RFLAG_IOPL_SHIFT 	12
-#define RFLAG_IOPL      	(1<<RFLAG_IOPL_SHIFT)|(1<<(RFLAG_IOPL_SHIFT+1))
+#define RFLAG_IOPL      	((1<<12)|(1<<13))
 #define RFLAG_NT 			(1<<14)
 #define RFLAG_RF 			(1<<16)
 #define RFLAG_VM 			(1<<17)
@@ -32,13 +31,12 @@ static inline uint64_t cpu_read_rflags() {
 	uint64_t rflags;
 
 	__asm__ __volatile__(
-			"movq  %%rsp, %%rbx;"
 			"pushfq;"
 			"movq (%%rsp), %0;"
-			"movq  %%rbx, %%rsp;"
+			"addq  $8, %%rsp;"
 			: "=a" (rflags)
 			: /* no input */
-			: "rbx" );
+			);
 
 	return rflags;
 }

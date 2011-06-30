@@ -26,3 +26,29 @@ uint64_t vmm_heap_size();
 void* vmm_alloc_hw(uint64_t size);
 
 #endif /*** __MM_VIRT_ALLOC_H ***/
+
+
+
+/*** thinking space ***
+
+ struct process {
+
+     uint64_t pid;
+     uint64_t uid;
+     uint64_t stack_top;
+     uint64_t stack_bot;
+     uint64_t heap_top;
+     uint64_t heap_bot;
+     uint64_t text_top;
+     uint64_t text_bot;
+
+ };
+
+struct
+
+struct memory_namespace {
+
+};
+
+
+ */
