@@ -13,16 +13,55 @@
 
 struct ticket_lock {
 
-	uint16_t queue;
-	uint16_t dequeue;
+	volatile uint16_t queue;
+	volatile uint16_t dequeue;
 	uint8_t  rflag_if;
 };
 
 #define TICKET_LOCK(name) struct ticket_lock name = { 0,0,0 }
 
-void ticket_lock_wait( struct ticket_lock * ticket_lock);
+#define ticket_lock_wait 	ticket_lock_wait_noinline
+#define ticket_lock_signal 	ticket_lock_signal_noinline
 
-void ticket_lock_signal( struct ticket_lock * ticket_lock);
+
+void ticket_lock_wait_noinline( struct ticket_lock * ticket_lock);
+
+void ticket_lock_signal_noinline( struct ticket_lock * ticket_lock);
+
+inline void ticket_lock_wait_inline(struct ticket_lock * ticket_lock) {
+
+	register ticket;
+
+	__asm__ __volatile__ (
+			"     movw   $1,  %1;"
+			"lock xaddw  %1,  %0;"
+		:	"=g" (ticket_lock->queue)
+		:	"r"  (ticket)
+	);
+
+	do {
+		__asm__ __volatile__ ( "pause;" );
+	}while(ticket != ticket_lock->dequeue);
+
+	ticket_lock->rflag_if = (cpu_read_rflags() & RFLAG_IF) ? 1 : 0;
+
+	__asm __volatile__ ("cli;");
+}
+
+
+inline void ticket_lock_signal_inline(struct ticket_lock * ticket_lock) {
+
+	register rflag_if = ticket_lock->rflag_if;
+
+	__asm__ __volatile__ (
+			"lock incw %0;"
+			: "g" (ticket_lock->dequeue)
+	);
+
+	if(rflag_if) {
+		__asm__ __volatile__("sti;");
+	}
+}
 
 #endif /*** __X86_64_TICKET_LOCK_H ***/
 
