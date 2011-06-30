@@ -28,15 +28,14 @@ void ticket_lock_wait_noinline( struct ticket_lock * ticket_lock);
 
 void ticket_lock_signal_noinline( struct ticket_lock * ticket_lock);
 
-inline void ticket_lock_wait_inline(struct ticket_lock * ticket_lock) {
+static inline void ticket_lock_wait_inline(struct ticket_lock * ticket_lock) {
 
-	register ticket;
+	register uint16_t ticket;
 
 	__asm__ __volatile__ (
 			"     movw   $1,  %1;"
 			"lock xaddw  %1,  %0;"
-		:	"=g" (ticket_lock->queue)
-		:	"r"  (ticket)
+		:	"=m" (ticket_lock->queue), "=r"  (ticket)
 	);
 
 	do {
@@ -49,13 +48,13 @@ inline void ticket_lock_wait_inline(struct ticket_lock * ticket_lock) {
 }
 
 
-inline void ticket_lock_signal_inline(struct ticket_lock * ticket_lock) {
+static inline void ticket_lock_signal_inline(struct ticket_lock * ticket_lock) {
 
-	register rflag_if = ticket_lock->rflag_if;
+	register uint8_t rflag_if = ticket_lock->rflag_if;
 
 	__asm__ __volatile__ (
 			"lock incw %0;"
-			: "g" (ticket_lock->dequeue)
+			: "=m" (ticket_lock->dequeue)
 	);
 
 	if(rflag_if) {
