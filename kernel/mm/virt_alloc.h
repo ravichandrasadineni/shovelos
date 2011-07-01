@@ -10,15 +10,37 @@
 
 #include<arch/arch.h>
 
-#define VMM_PHY_BASE 		(0xffff800000000000)
-#define VMM_PHY_TOP  		(0xffff900000000000 - PAGE_SIZE)
-#define VMM_HWMMAP_BASE 	(0xffff900000000000)
-#define VMM_HWMMAP_TOP		(0xffffa00000000000 - PAGE_SIZE)
-#define VMM_HEAP_BASE 		(0xffffa00000000000)
-#define VMM_HEAP_TOP		(0xffffb00000000000 - PAGE_SIZE)
-#define VMM_STACK_BASE 		(0xffffb00000000000)
-#define VMM_STACK_TOP		(0xffffc00000000000)
-#define VMM_KERNEL_IMG		(0xFFFFFFFF80000000)
+/***
+ * with 2 meg pages, one PML4 entry maps 512 gigabytes
+ *
+ * PHY
+ * HWMAP
+ * SHARED TEXT
+ * SHARED HEAP
+ * K TEXT
+ * K HEAP
+ * K STACK
+ *
+ *
+ * U TEXT
+ * U HEAP
+ * U SHARED
+ ****/
+
+#define VMM_PHY_BASE 			(0xffff800000000000)
+#define VMM_PHY_SIZE            (0x0000008000000000) /* 512 gig (one PLM2 entry with 2 meg pages) */
+
+#define VMM_HWMMAP_BASE 		(0xffffa00000000000)
+#define VMM_HWMMAP_SIZE         (0x0000008000000000) /* 512 gig (one PLM2 entry with 2 meg pages) */
+
+#define VMM_SHM_TEXT_BASE 		(0xffffc00000000000)
+#define VMM_SHM_TEXT_SIZE       (0x0000008000000000) /* 512 gig (one PLM2 entry with 2 meg pages) */
+
+#define VMM_SHM_HEAP_BASE 		(0xffffc80000000000)
+#define VMM_SHM_HEAP_SIZE       (0x0000008000000000) /* 512 gig (one PLM2 entry with 2 meg pages) */
+
+#define VMM_K_TEXT_BASE			(0xFFFFFFFF80000000)
+#define VMM_K_TEST_SIZE         (0x0000000080000000)
 
 void *morecore(uint64_t size);
 uint64_t vmm_heap_size();
