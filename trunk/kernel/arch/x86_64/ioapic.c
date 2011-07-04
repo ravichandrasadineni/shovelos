@@ -12,6 +12,9 @@
 #include "pt.h"
 #include "8259.h"
 
+uint32_t x=100;
+uint32_t y=0;
+
 enum ioapic_mm_reg {
     IOREGSEL 	= 0x00,
     IOWIN		= 0x10,
@@ -186,8 +189,6 @@ uint16_t ioapic_configure() {
     uint16_t count = 0;
 
     _8259_disable();
-
-    //return 0; /*** TODO ***/
 
     for (const struct mp_ioapic *ioapic  = mp_find_first_io_apic();
             ioapic != 0;

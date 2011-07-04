@@ -10,6 +10,8 @@
 #include <mm/mm.h>
 #include <arch/arch.h>
 
+extern uint32_t x,y;
+
 int main(struct mm_phy_reg *reg, uint64_t len)  {
 
 	mm_phy_init(reg,len); 		/*** initialise physical memory manager ***/
@@ -42,6 +44,8 @@ int main(struct mm_phy_reg *reg, uint64_t len)  {
 
 
 	kprintf("\nshovelos.kernel - \"HELLO WORLD!\"\n");
+
+	kprintf("test divide by %lx\n", x/y);
 
 	for(;;) {
 	}

@@ -328,15 +328,94 @@ struct idtr_t idtr = {
     (uint64_t)idt,
 };
 
+#define SET_ISR(vector) \
+		{ \
+			struct idt_t _idt = PRESENT_ISR(8, 0, INTERRUPT , 0, ((uint64_t)&x86_64_isr_vector ## vector)); \
+			idt[vector] = _idt; \
+		}
+
+#define DUMMY_INTERRUPT(vector) \
+	extern void x86_64_isr_vector ## vector(); \
+	void x86_64_handle_isr_vector ## vector() \
+	{ \
+		kprintf("DUMMY INTERRUPT VECTOR! " #vector "\n"); \
+	}
+
+DUMMY_INTERRUPT(0)
+DUMMY_INTERRUPT(1)
+DUMMY_INTERRUPT(2)
+DUMMY_INTERRUPT(3)
+DUMMY_INTERRUPT(4)
+DUMMY_INTERRUPT(5)
+DUMMY_INTERRUPT(6)
+DUMMY_INTERRUPT(7)
+DUMMY_INTERRUPT(8)
+DUMMY_INTERRUPT(9)
+DUMMY_INTERRUPT(10)
+DUMMY_INTERRUPT(11)
+DUMMY_INTERRUPT(12)
+DUMMY_INTERRUPT(13)
+DUMMY_INTERRUPT(14)
+DUMMY_INTERRUPT(15)
+DUMMY_INTERRUPT(16)
+DUMMY_INTERRUPT(17)
+DUMMY_INTERRUPT(18)
+DUMMY_INTERRUPT(19)
+DUMMY_INTERRUPT(20)
+DUMMY_INTERRUPT(21)
+DUMMY_INTERRUPT(22)
+DUMMY_INTERRUPT(23)
+DUMMY_INTERRUPT(24)
+DUMMY_INTERRUPT(25)
+DUMMY_INTERRUPT(26)
+DUMMY_INTERRUPT(27)
+DUMMY_INTERRUPT(28)
+DUMMY_INTERRUPT(29)
+DUMMY_INTERRUPT(30)
+DUMMY_INTERRUPT(31)
+
 void _x86_64_load_idt() {
 
-	extern void dummy_isr();
+//	for(int vector = 0; vector<256; ++vector)
+	//	SET_ISR(vector, PRESENT_ISR(8, 0, INTERRUPT , 0, ((uint64_t)&x86_64_isr_vector999)));
 
-	struct idt_t dummy_int_vector = PRESENT_ISR(8, 0, INTERRUPT , 0, ((uint64_t)&dummy_isr));
-
-	for(int irq = 0; irq<256; ++irq)
-		idt[irq] = dummy_int_vector;
+	SET_ISR(0);
+	SET_ISR(1);
+	SET_ISR(2);
+	SET_ISR(3);
+	SET_ISR(4);
+	SET_ISR(5);
+	SET_ISR(6);
+	SET_ISR(7);
+	SET_ISR(8);
+	SET_ISR(9);
+	SET_ISR(10);
+	SET_ISR(11);
+	SET_ISR(12);
+	SET_ISR(13);
+	SET_ISR(14);
+	SET_ISR(15);
+	SET_ISR(16);
+	SET_ISR(17);
+	SET_ISR(18);
+	SET_ISR(19);
+	SET_ISR(20);
+	SET_ISR(21);
+	SET_ISR(22);
+	SET_ISR(23);
+	SET_ISR(24);
+	SET_ISR(25);
+	SET_ISR(26);
+	SET_ISR(27);
+	SET_ISR(28);
+	SET_ISR(29);
+	SET_ISR(30);
+	SET_ISR(31);
 
 	_x86_64_asm_lidt(&idtr);
 }
+
+
+
+
 
