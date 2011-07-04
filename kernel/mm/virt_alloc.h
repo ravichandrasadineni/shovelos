@@ -33,14 +33,20 @@
 #define VMM_HWMMAP_BASE 		(0xffffa00000000000)
 #define VMM_HWMMAP_SIZE         (0x0000008000000000) /* 512 gig (one PLM2 entry with 2 meg pages) */
 
-#define VMM_SHM_TEXT_BASE 		(0xffffc00000000000)
+#define VMM_SHM_TEXT_BASE 		(0xffffb00000000000)
 #define VMM_SHM_TEXT_SIZE       (0x0000008000000000) /* 512 gig (one PLM2 entry with 2 meg pages) */
 
-#define VMM_SHM_HEAP_BASE 		(0xffffc80000000000)
+#define VMM_SHM_HEAP_BASE 		(0xffffc00000000000)
 #define VMM_SHM_HEAP_SIZE       (0x0000008000000000) /* 512 gig (one PLM2 entry with 2 meg pages) */
 
+#define VMM_K_STACK_BASE		(0xffffd00000000000)
+#define VMM_K_STACK_SIZE        (0x0000008000000000)
+
+#define VMM_K_HEAP_BASE			(0xffffe00000000000)
+#define VMM_K_HEAP_SIZE         (0x0000008000000000)
+
 #define VMM_K_TEXT_BASE			(0xFFFFFFFF80000000)
-#define VMM_K_TEST_SIZE         (0x0000000080000000)
+#define VMM_K_TEXT_SIZE         (0x0000000080000000) /* 2 gig */
 
 void *morecore(uint64_t size);
 uint64_t vmm_heap_size();

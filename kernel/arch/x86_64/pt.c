@@ -25,7 +25,7 @@
 
 struct page_table_mem kernel_page_tables = {
 
-	{0,0}, /* lock */
+	{0,0,0}, /* lock */
 	NULL,  /* pml4e */
 	0,     /* stake top */
 	0      /* stack bottom */

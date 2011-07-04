@@ -9,8 +9,11 @@
 #include<arch/arch.h>
 #include "mm.h"
 
+#if(0)
+
 static uint8_t *cur_heap_top = (uint8_t*)VMM_HEAP_BASE;
 static TICKET_LOCK( lock );
+
 
 void *morecore(uint64_t size) {
 
@@ -56,4 +59,7 @@ void *vmm_alloc_hw(uint64_t size) {
 
 	return ret;
 }
+
+#endif
+
 
