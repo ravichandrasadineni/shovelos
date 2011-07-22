@@ -308,21 +308,22 @@ void read_inode_block(uint32_t inode, uint32_t block, uint32_t offset, uint16_t 
 	halt("read_inode_block - overflow");
 }
 
-/*** FIXME - size limited to superblock.block_size ***/
 void read_inode(uint32_t inode, uint32_t offset, uint16_t size, void* dst) {
 
 	uint32_t block = offset / superblock.block_size;
 	uint32_t off   = offset % superblock.block_size;
+	uint8_t* dst8  = (uint8_t*)dst;
 
-	if(size > superblock.block_size)
-		halt("FIXME: read_inode");
+	while(size>0) {
 
-	if((off + size) > superblock.block_size) {
-		read_inode_block(inode,block,off,superblock.block_size - off,dst);
-		read_inode_block(inode,block+1,0,size-(superblock.block_size - off),dst);
-	}
-	else {
-		read_inode_block(inode,block,off,size,dst);
+		uint16_t thissize = (size <= (superblock.block_size - offset)) ? size : (superblock.block_size - offset) ;
+
+		read_inode_block(inode,block,off,thissize,dst);
+
+		off    = 0;
+		block += 1;
+		dst   += thissize;
+		size  -= thissize;
 	}
 }
 

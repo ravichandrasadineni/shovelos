@@ -13,11 +13,11 @@
  *           2) result buffer (struct ext_drive_param_buffer*) .
  *     returns 0 on success, non-zero on error.
  */
+/*
 int extended_read_drive_parameters(unsigned char bios_drive, struct ext_drive_param_buffer* out);
-
 __asm__("extended_read_drive_parameters:      \n"
 		"  pushl   %esi                       \n"
-	    "  movb    $0x48,      %ah            \n"
+	    "  movb    $0x48,     %ah             \n"
 		"  movb     8(%esp),  %dl             \n" // parameter 1, bios drive
 		"  movw    12(%esp),  %si             \n" // parameter 2, ptr to result buffer
 		"  int     $0x13                      \n" // call bios 13h
@@ -27,8 +27,24 @@ __asm__("extended_read_drive_parameters:      \n"
 		"erdp.ret:                            \n"
 		"  popl    %esi                       \n"
 		"  retl" );
+*/
 
+static int extended_read_drive_parameters(unsigned char bios_drive, struct ext_drive_param_buffer* out) {
 
+	int ret = 0;
+
+	__asm__ __volatile__ (
+			"movb   $0x48,  %%ah;   \n"
+			"movb   %1,      %dl;   \n"	  // bios_drive
+			"movb   %2,      %si;	\n"   // output ptr
+			"int    $0x13           \n"   // call bios
+			"cmovc  $1,       %0;   \n"   // set return 1 on error.
+		:	"g" (ret)
+		:	"g" (bios_drive), "g" (out)
+	);
+
+	return (ret);
+}
 
 /******************************************************************************************************
  *   extended_read_sectors_from_drive
@@ -37,6 +53,7 @@ __asm__("extended_read_drive_parameters:      \n"
  *           2) initialised disk address packet.
  *     returns 0 on success, non-zero on error.
  */
+/*
 int extended_read_sectors_from_drive(unsigned char bios_drive, struct disk_address_packet *dap);
 
 __asm__("extended_read_sectors_from_drive:       \n"
@@ -51,6 +68,25 @@ __asm__("extended_read_sectors_from_drive:       \n"
         "ersfd.ret:                                   \n"
 		"  popl   %esi                           \n"
 		"  ret");
+*/
+
+static int extended_read_sectors_from_drive(unsigned char bios_drive, struct disk_address_packet *dap)
+{
+	int ret = 0;
+
+	__asm__ __volatile__(
+			"movb     %1,  %%dl;   \n"
+			"movw     %2   %%si;   \n"
+			"movb  $0x42,  %%ah;   \n"
+			"int   $0x13;          \n"
+			"cmovc    $1,    %0;   \n"
+		:	"g" (ret)
+		:	"g" (bios_drive), "g" (out)
+	);
+
+	return ret;
+}
+
 
 
 /****************************************************************************************************
