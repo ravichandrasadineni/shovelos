@@ -316,13 +316,13 @@ void read_inode(uint32_t inode, uint32_t offset, uint16_t size, void* dst) {
 
 	while(size>0) {
 
-		uint16_t thissize = (size <= (superblock.block_size - offset)) ? size : (superblock.block_size - offset) ;
+		uint16_t thissize = (size <= (superblock.block_size - off)) ? size : (superblock.block_size - off) ;
 
-		read_inode_block(inode,block,off,thissize,dst);
+		read_inode_block(inode,block,off,thissize,dst8);
 
 		off    = 0;
 		block += 1;
-		dst   += thissize;
+		dst8  += thissize;
 		size  -= thissize;
 	}
 }
