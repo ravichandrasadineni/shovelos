@@ -341,7 +341,7 @@ struct idtr_t idtr = {
 		kprintf("DUMMY INTERRUPT VECTOR! " #vector "\n"); \
 	}
 
-DUMMY_INTERRUPT(0)
+extern void x86_64_isr_vector0(); //DUMMY_INTERRUPT(0)
 DUMMY_INTERRUPT(1)
 DUMMY_INTERRUPT(2)
 DUMMY_INTERRUPT(3)
@@ -354,8 +354,8 @@ DUMMY_INTERRUPT(9)
 DUMMY_INTERRUPT(10)
 DUMMY_INTERRUPT(11)
 DUMMY_INTERRUPT(12)
-DUMMY_INTERRUPT(13)
-DUMMY_INTERRUPT(14)
+extern void x86_64_isr_vector13(); //DUMMY_INTERRUPT(0)
+extern void x86_64_isr_vector14(); //DUMMY_INTERRUPT(14)
 DUMMY_INTERRUPT(15)
 DUMMY_INTERRUPT(16)
 DUMMY_INTERRUPT(17)
@@ -375,9 +375,6 @@ DUMMY_INTERRUPT(30)
 DUMMY_INTERRUPT(31)
 
 void _x86_64_load_idt() {
-
-//	for(int vector = 0; vector<256; ++vector)
-	//	SET_ISR(vector, PRESENT_ISR(8, 0, INTERRUPT , 0, ((uint64_t)&x86_64_isr_vector999)));
 
 	SET_ISR(0);
 	SET_ISR(1);

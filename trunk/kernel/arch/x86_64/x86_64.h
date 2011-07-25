@@ -22,6 +22,45 @@
 #include "ioapic.h"
 #include "lapic.h"
 
+struct isr_error_stack_frame
+{
+	uint64_t error;
+	uint64_t rip;
+	uint64_t cs;
+	uint64_t rflags;
+	uint64_t rsp;
+	uint64_t ss;
+};
+
+struct isr_stack_frame
+{
+	uint64_t rip;
+	uint64_t cs;
+	uint64_t rflags;
+	uint64_t rsp;
+	uint64_t ss;
+};
+
+struct isr_pf_stack_frame
+{
+	union {
+
+		uint64_t reserved;
+		struct {
+			unsigned p 		: 1;
+			unsigned wr 	: 1;
+			unsigned us 	: 1;
+			unsigned rsvd 	: 1;
+			unsigned id 	: 1;
+		}error;
+	}error;
+	uint64_t rip;
+	uint64_t cs;
+	uint64_t rflags;
+	uint64_t rsp;
+	uint64_t ss;
+};
+
 /*** todo: better home ***/
 typedef void (*main_func)(int argc, char **argv);
 void call_main(main_func, void* stack, int argc, char **argv);

@@ -5,7 +5,6 @@
 #include "alloc.h"
 #include "print.h"
 
-
 /******************************************************************************************************
  *   extended_read_drive_parameters
  *     call bios extended read sectors function.
@@ -13,34 +12,22 @@
  *           2) result buffer (struct ext_drive_param_buffer*) .
  *     returns 0 on success, non-zero on error.
  */
-/*
-int extended_read_drive_parameters(unsigned char bios_drive, struct ext_drive_param_buffer* out);
-__asm__("extended_read_drive_parameters:      \n"
-		"  pushl   %esi                       \n"
-	    "  movb    $0x48,     %ah             \n"
-		"  movb     8(%esp),  %dl             \n" // parameter 1, bios drive
-		"  movw    12(%esp),  %si             \n" // parameter 2, ptr to result buffer
-		"  int     $0x13                      \n" // call bios 13h
-	    "  xorl    %eax ,     %eax            \n" // clear return var
-		"  jnc     erdp.ret                   \n" // exit on no error
-		"  movb    $1 ,       %al             \n" // set error return flag
-		"erdp.ret:                            \n"
-		"  popl    %esi                       \n"
-		"  retl" );
-*/
-
-static int extended_read_drive_parameters(unsigned char bios_drive, struct ext_drive_param_buffer* out) {
+int extended_read_drive_parameters(unsigned char bios_drive, struct ext_drive_param_buffer* out) {
 
 	int ret = 0;
 
 	__asm__ __volatile__ (
 			"movb   $0x48,  %%ah;   \n"
-			"movb   %1,      %dl;   \n"	  // bios_drive
-			"movb   %2,      %si;	\n"   // output ptr
-			"int    $0x13           \n"   // call bios
-			"cmovc  $1,       %0;   \n"   // set return 1 on error.
-		:	"g" (ret)
-		:	"g" (bios_drive), "g" (out)
+			"movb   %1,     %%dl;   \n"   // bios_drive
+			"movw   %2,     %%si;	\n"   // output ptr
+			"int    $0x13;          \n"   // call bios
+			"xorl   %0,       %0;   \n"
+			"jnc extended_read_drive_parameters.ret;\n"
+			"movl   $1,       %0;   \n"
+			"extended_read_drive_parameters.ret:\n"
+		:	"=r" (ret)
+		:	"m" (bios_drive), "m" (out)
+		:	"eax", "edx", "esi"
 	);
 
 	return (ret);
@@ -53,41 +40,26 @@ static int extended_read_drive_parameters(unsigned char bios_drive, struct ext_d
  *           2) initialised disk address packet.
  *     returns 0 on success, non-zero on error.
  */
-/*
-int extended_read_sectors_from_drive(unsigned char bios_drive, struct disk_address_packet *dap);
-
-__asm__("extended_read_sectors_from_drive:       \n"
-		"  pushl      %esi                       \n"
-		"  movb     8(%esp),   %dl               \n" // bios disk to dl
-		"  movw    12(%esp),   %si               \n" // D.A.P address ( DS:SI )
-		"  movb      $0x42 ,   %ah               \n" // bios function 42h
-		"  int       $0x13                       \n" // call bios 13h
-		"  xorl       %eax ,   %eax              \n" // clear return var
-		"  jnc        ersfd.ret                  \n" // exit on no error
-		"  movb         $1 ,   %al               \n" // set error return flag
-        "ersfd.ret:                                   \n"
-		"  popl   %esi                           \n"
-		"  ret");
-*/
-
-static int extended_read_sectors_from_drive(unsigned char bios_drive, struct disk_address_packet *dap)
+int extended_read_sectors_from_drive(unsigned char bios_drive, struct disk_address_packet *dap)
 {
 	int ret = 0;
 
 	__asm__ __volatile__(
 			"movb     %1,  %%dl;   \n"
-			"movw     %2   %%si;   \n"
+			"movw     %2,  %%si;   \n"
 			"movb  $0x42,  %%ah;   \n"
 			"int   $0x13;          \n"
-			"cmovc    $1,    %0;   \n"
-		:	"g" (ret)
-		:	"g" (bios_drive), "g" (out)
+			"xorl     %0,    %0;   \n"
+			"jnc extended_read_sectors_from_drive.ret;\n"
+			"movl   $1,       %0;   \n"
+			"extended_read_sectors_from_drive.ret:\n"
+		:	"=r" (ret)
+		:	"m" (bios_drive), "m" (dap)
+		:	"edx", "esi", "eax"
 	);
 
 	return ret;
 }
-
-
 
 /****************************************************************************************************
  * bytes_per_sector

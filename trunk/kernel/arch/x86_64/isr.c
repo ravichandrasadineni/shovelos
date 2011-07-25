@@ -5,6 +5,7 @@
  *      Author: cds
  */
 
+#include<arch/arch.h>
 
 #define INTERRUPT(vector) \
 	__asm__(".global x86_64_isr_vector" #vector "\n"\
@@ -18,6 +19,8 @@
 			"    pushq %r9;" \
 			"    pushq %r10;" \
 			"    pushq %r11;" \
+			"    movq  %rsp,%rdi;" \
+			"    addq  $72, %rdi;"  \
 			"    call x86_64_handle_isr_vector" #vector ";" \
 			"    popq %r11;" \
 			"    popq %r10;" \
@@ -31,39 +34,66 @@
 	"iretq;")
 
 INTERRUPT(0);	// divide by zero
-INTERRUPT(1);	// divide by zero
-INTERRUPT(2);	// divide by zero
-INTERRUPT(3);	// divide by zero
-INTERRUPT(4);	// divide by zero
-INTERRUPT(5);	// divide by zero
-INTERRUPT(6);	// divide by zero
-INTERRUPT(7);	// divide by zero
-INTERRUPT(8);	// divide by zero
-INTERRUPT(9);	// divide by zero
-INTERRUPT(10);	// divide by zero
-INTERRUPT(11);	// divide by zero
-INTERRUPT(12);	// divide by zero
-INTERRUPT(13);	// divide by zero
-INTERRUPT(14);	// divide by zero
-INTERRUPT(15);	// divide by zero
-INTERRUPT(16);	// divide by zero
-INTERRUPT(17);	// divide by zero
-INTERRUPT(18);	// divide by zero
-INTERRUPT(19);	// divide by zero
-INTERRUPT(20);	// divide by zero
-INTERRUPT(21);	// divide by zero
-INTERRUPT(22);	// divide by zero
-INTERRUPT(23);	// divide by zero
-INTERRUPT(24);	// divide by zero
-INTERRUPT(25);	// divide by zero
-INTERRUPT(26);	// divide by zero
-INTERRUPT(27);	// divide by zero
-INTERRUPT(28);	// divide by zero
-INTERRUPT(29);	// divide by zero
-INTERRUPT(30);	// divide by zero
-INTERRUPT(31);	// divide by zero
+INTERRUPT(1);
+INTERRUPT(2);
+INTERRUPT(3);
+INTERRUPT(4);
+INTERRUPT(5);
+INTERRUPT(6);
+INTERRUPT(7);
+INTERRUPT(8);
+INTERRUPT(9);
+INTERRUPT(10);
+INTERRUPT(11);
+INTERRUPT(12);
+INTERRUPT(13);
+INTERRUPT(14);
+INTERRUPT(15);
+INTERRUPT(16);
+INTERRUPT(17);
+INTERRUPT(18);
+INTERRUPT(19);
+INTERRUPT(20);
+INTERRUPT(21);
+INTERRUPT(22);
+INTERRUPT(23);
+INTERRUPT(24);
+INTERRUPT(25);
+INTERRUPT(26);
+INTERRUPT(27);
+INTERRUPT(28);
+INTERRUPT(29);
+INTERRUPT(30);
+INTERRUPT(31);
 
 
+void x86_64_handle_isr_vector0(struct isr_stack_frame *stack) {
+
+	kprintf("DIVIDE ERROR EXCEPTION!\n");
+	kprintf("    CS:0x%x\n",stack->cs);
+	kprintf("   RIP:0x%x\n",stack->rip);
+
+	for(;;);
+}
+
+
+void x86_64_handle_isr_vector13(struct isr_error_stack_frame *stack) {
+
+	kprintf("GENERAL PROTECTION EXCEPTION!\n");
+	kprintf("    CS:0x%x\n",stack->cs);
+	kprintf("   RIP:0x%lx\n",stack->rip);
+
+	for(;;);
+}
+
+void x86_64_handle_isr_vector14(struct isr_pf_stack_frame *stack) {
+
+	kprintf("PAGE FAULT!\n");
+	kprintf("    CS:0x%x\n", stack->cs);
+	kprintf("   RIP:0x%lx\n",stack->rip);
+
+	for(;;);
+}
 
 
 

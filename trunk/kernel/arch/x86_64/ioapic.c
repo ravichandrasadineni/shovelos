@@ -198,7 +198,7 @@ uint16_t ioapic_configure() {
 
     	++count;
 
-    	continue; // TODO
+//    	continue; // TODO
 
        config( ioapic_phy_to_virt( (void*)(uint64_t)ioapic->mmap_ioapic ) );
     }
