@@ -88,11 +88,17 @@ void x86_64_handle_isr_vector13(struct isr_error_stack_frame *stack) {
 
 void x86_64_handle_isr_vector14(struct isr_pf_stack_frame *stack) {
 
-	kprintf("PAGE FAULT!\n");
-	kprintf("    CS:0x%x\n", stack->cs);
-	kprintf("   RIP:0x%lx\n",stack->rip);
+	uint64_t vaddr = cpu_read_cr2();
 
-	for(;;);
+	kprintf("PAGE FAULT!\n");
+	kprintf("     v-address : 0x%lx\n", vaddr);
+	kprintf("             p : %d\n", stack->error.error.p);
+	kprintf("            id : %d\n", stack->error.error.id);
+	kprintf("            wr : %d\n", stack->error.error.wr);
+	kprintf("            us : %d\n", stack->error.error.us);
+	kprintf("          rsvd : %d\n", stack->error.error.rsvd);
+	kprintf("            CS : 0x%x\n", stack->cs);
+	kprintf("           RIP : 0x%lx\n",stack->rip);
 }
 
 
