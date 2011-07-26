@@ -48,10 +48,10 @@
 #define VMM_K_TEXT_BASE			(0xFFFFFFFF80000000)
 #define VMM_K_TEXT_SIZE         (0x0000000080000000) /* 2 gig */
 
-void *morecore(uint64_t size);
-uint64_t vmm_heap_size();
 
-void* vmm_alloc_hw(uint64_t size);
+void *vmm_alloc_hw(uint64_t size);
+
+
 
 #endif /*** __MM_VIRT_ALLOC_H ***/
 

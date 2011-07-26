@@ -7,6 +7,7 @@
 
 #include <inttypes.h>
 #include <lib/lib.h>
+#include <mm/mm.h>
 #include "ioapic.h"
 #include "mp.h"
 #include "pt.h"
@@ -133,19 +134,6 @@ static inline uint32_t io_apic_read64(void* ioapic_base, enum ioapic_reg reg) {
     return reta | (retb << 32);
 }
 
-static uint8_t* ioapic_phy_to_virt(void* phy) {
-
-    /*** FIXME: ioapic is in the upper 4gig physical address.
-     * Thats not really suitable to use the usual 0xffff800000000000 offset!
-     * for now, we will use a virtual == phyical map ( setup in bootloader )
-     * but this will have to change before we can support user processes!
-     *
-     * perhaps set asside some fixed virual memory for hardware?
-     * or wait untill the virt memory manager is complete.
-     */
-    return (uint8_t*)phy;
-}
-
 uint16_t ioapic_detect() {
 
     uint16_t count = 0;
@@ -160,10 +148,18 @@ uint16_t ioapic_detect() {
     return count;
 }
 
-static void config(uint8_t *ioapic) {
+static void* ioapic = 0;
+
+static void config(uint32_t phy_addr) {
 
     uint64_t red_ent = 0;
     uint8_t  red_vec = 0;
+
+    if(!ioapic) {
+
+    	ioapic = vmm_alloc_hw(4096);
+    //	mmap((uint64_t)phy_addr,(uint64_t)ioapic,0); /*** FIXME ***/
+    }
 
     /* all interrupts to boot-strap processor */
 
@@ -178,7 +174,7 @@ static void config(uint8_t *ioapic) {
                    IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) |
                    IOAPIC_RED_INTVEC	( red_vec );
 
-        io_apic_write64( ioapic, red_tbl, red_ent);
+     //   io_apic_write64( ioapic, red_tbl, red_ent);
 
         ++red_vec;
     }
@@ -200,7 +196,7 @@ uint16_t ioapic_configure() {
 
 //    	continue; // TODO
 
-       config( ioapic_phy_to_virt( (void*)(uint64_t)ioapic->mmap_ioapic ) );
+       config( ioapic->mmap_ioapic );
     }
 
     return count;

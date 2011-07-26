@@ -3,7 +3,7 @@
 all : shovelos.kernel
 
 SRC64_C = main.c
-LIBS    = mm/mm.a lib/lib.a arch/arch.a
+LIBS    = lib/lib.a arch/arch.a mm/mm.a
 
 export KERNEL_ROOT := $(shell pwd)
 export CFLAGS := -I$(KERNEL_ROOT) -Wall -Werror -std=c99 -m64 -Os -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow -ffreestanding -nostdinc -nostdlib
@@ -16,7 +16,7 @@ OBJ64 = $(SRC64_S:.s=.s.64.o) $(SRC64_C:.c=.c.64.o)
 	@objcopy -O binary $< $@
 
 shovelos.elf : $(OBJ64) $(LIBS) link.script
-	@echo Linking   $@
+	@echo Linking   $@ $(OBJ64) $(LIBS)
 	@$(LD) --verbose -s -Map link.map -static -nodefaultlibs -nostdlib --nmagic -Tlink.script -o $@ $(OBJ64) $(LIBS)
 
 %.c.64.o : %.c
