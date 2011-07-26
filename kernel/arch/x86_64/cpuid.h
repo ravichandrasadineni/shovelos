@@ -63,6 +63,15 @@ CPU_READ_REG(cr2) /* static inline uint64_t cpu_read_cr2() */
 CPU_READ_REG(cr3) /* static inline uint64_t cpu_read_cr3() */
 
 
+static inline void cpu_invlpg(uint64_t *mem) {
+
+	__asm__ __volatile(
+			"invlpg %0;"
+		:	/* no output */
+		:	"m" (mem)
+		);
+}
+
 #endif /*** __ARCH_X86_64_CPUID_H ***/
 
 
