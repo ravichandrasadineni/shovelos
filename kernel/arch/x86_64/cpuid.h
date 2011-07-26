@@ -53,7 +53,7 @@ static inline BOOL cpu_has_cpuid() {
 #define CPU_READ_REG(_reg_) \
 		static inline uint64_t cpu_read_ ## _reg_() { \
 		uint64_t ret = 0; \
-		__asm__ __volatile__( "movq " #_reg_ ", %0" : "=r" (ret) ); \
+		__asm__ __volatile__( "movq %%" #_reg_ ", %0" : "=r" (ret) ); \
 		return (ret); \
 }
 

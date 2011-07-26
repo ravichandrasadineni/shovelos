@@ -1,12 +1,12 @@
 .PHONY: clean
 
-SRC64_C = phy_alloc.c virt_alloc.c
+SRC64_C = virt_alloc.c phy_alloc.c
 SRC64_S = 
 
 OBJ64=$(SRC64_S:.s=.s.64.o) $(SRC64_C:.c=.c.64.o)
 
 %.a : $(OBJ64)
-	@echo Archiving $@
+	@echo Archiving $@ $(OBJ64)
 	@ar rcs $@ $(OBJ64)
 	
 %.c.64.o : %.c
