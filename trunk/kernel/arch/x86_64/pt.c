@@ -207,6 +207,9 @@ sint64_t mmap(uint64_t phy, uint64_t virt, struct page_table_mem *tab) {
 
 	sint32_t success;
 
+	if(!tab)
+		tab = &kernel_page_tables;
+
 	ticket_lock_wait( &tab->lock );
 
 	success = _mmap(phy,virt,tab);

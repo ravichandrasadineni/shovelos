@@ -10,43 +10,25 @@
 #include <mm/mm.h>
 #include <arch/arch.h>
 
-extern uint32_t x,y;
-
 int main(struct mm_phy_reg *reg, uint64_t len)  {
 
+	_8259_disable();			/*** kill the legacy pic ***/
 	mm_phy_init(reg,len); 		/*** initialise physical memory manager ***/
 	pt_initialise(reg,len);		/*** retire boot-loaders page tables ***/
-    //ioapic_configure();
+	_x86_64_load_gdt();			/*** retire boot-loaders gdt ***/
+	_x86_64_load_idt();			/*** retire boot-loaders idt ***/
+	acpi_init();				/*** parse acpi tables ***/
+	ioapic_configure();			/*** configure the io-apic ***/
 
-	_x86_64_load_gdt();
-	_x86_64_load_idt();
-	acpi_init();
-
-	ioapic_configure();
-
+	/*** enumerate processors ***/
 	for(const struct mp_processor *cpu  = mp_find_first_processor();
 								   cpu != 0;
 								   cpu  = mp_find_next_processor( cpu )) {
 
-		kprintf("FOUND A CPU (ID %d)\n", cpu->local_apic_id);
+		kprintf("found a cpu (ID %d)\n", cpu->local_apic_id);
 	}
 
-
-	if(cpu_has_cpuid()) {
-
-			kprintf("cpuid is supported\n");
-		}
-		else {
-
-			kprintf("bootstrap processor does not support cpuid!?\n");
-			for(;;);
-		}
-
-
-
-	kprintf("\nshovelos.kernel - \"HELLO WORLD!\"\n");
-
-//	kprintf("test divide by %lx\n", x/y);
+	kprintf("shovelos.kernel - \"HELLO WORLD!\"\n");
 
 	for(;;) {
 	}

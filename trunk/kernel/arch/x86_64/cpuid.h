@@ -72,6 +72,24 @@ static inline void cpu_invlpg(uint64_t *mem) {
 		);
 }
 
-#endif /*** __ARCH_X86_64_CPUID_H ***/
+static inline void cpu_lidt(void* idt) {
 
+	__asm__ __volatile__(
+			"lidt (%0)"
+		: 	/* no output */
+		: 	"r" (idt)
+	);
+}
+
+static inline void cpu_sti() {
+
+	__asm__ __volatile__("sti");
+}
+
+static inline void cpu_cli() {
+
+	__asm__ __volatile__("cli");
+}
+
+#endif /*** __ARCH_X86_64_CPUID_H ***/
 

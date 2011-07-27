@@ -153,45 +153,59 @@ static void* ioapic = 0;
 static void config(uint64_t phy_addr) {
 
     uint64_t red_ent = 0;
-    uint8_t  red_vec = 0;
+  //  uint8_t  red_vec = 0;
 
     if(!ioapic) {
 
-    	UINT64_t pages = 1;
-    	if((PAGE_SIZE <= 0x1000) && (phy_addr % PAGE_SIZE))
-    		pages = 2;
+    	uint64_t pages = 1;
+   // 	if((PAGE_SIZE <= 0x1000) && (phy_addr % PAGE_SIZE))
+   // 		pages = 2;
 
     	uint64_t vpage = (uint64_t)vmm_alloc_hw( pages*PAGE_SIZE );
 
-    	for(int i=0;i<pages;i++)
+    	for(int i=0;i<pages;i++) {
     		mmap((phy_addr + (i*PAGE_SIZE)) & ~PAGE_SIZE, vpage+PAGE_SIZE*i, 0);
+    	}
 
     	ioapic = (void*)(vpage + (phy_addr % PAGE_SIZE));
     }
 
-    /* all interrupts to boot-strap processor */
+    /* all interrupts to boot-strap processor
     for ( uint16_t red_tbl = IOREDTBL00; red_tbl <= IOREDTBL23; red_tbl += 2) {
 
-        red_ent = 	IOAPIC_RED_DST		( 1ll 					)|
-                    IOAPIC_RED_MASK		( IOAPIC_CLEAR )		|
-                    IOAPIC_RED_TRIGGER	( IOAPIC_CLEAR )		| /* read only */
-                    IOAPIC_RED_INPOL	( IOAPIC_INTPOL_HI )	|
-                    IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )		| /* read only */
-                    IOAPIC_RED_DESTMOD	( IOAPIC_DEST_LOGICAL )	|
-                    IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) |
+       red_ent = 	IOAPIC_RED_DST		( 0ll 						)|
+                    IOAPIC_RED_MASK		( IOAPIC_SET )				|
+                    IOAPIC_RED_TRIGGER	( IOAPIC_CLEAR )			| // read only
+                    IOAPIC_RED_INPOL	( IOAPIC_INTPOL_LO )		|
+                    IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )			| // read only
+                    IOAPIC_RED_DESTMOD	( IOAPIC_DEST_PHYSICAL )	|
+                    IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) 	|
                     IOAPIC_RED_INTVEC	( red_vec );
 
+//      kprintf("ioapic_write64(0x%lx,%d,0x%lx)\n",ioapic,red_tbl, red_ent);
         io_apic_write64( ioapic, red_tbl, red_ent); // FIXME
 
         ++red_vec;
     }
+    */
+
+
+    red_ent = 	IOAPIC_RED_DST		( 0ll 						)|
+    			IOAPIC_RED_MASK		( IOAPIC_CLEAR )			|
+    			IOAPIC_RED_TRIGGER	( IOAPIC_CLEAR )			| // clear is edge, set is level
+    			IOAPIC_RED_INPOL	( IOAPIC_INTPOL_HI )		|
+    			IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )			| // read only
+    			IOAPIC_RED_DESTMOD	( IOAPIC_DEST_PHYSICAL )	|
+    			IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) 	|
+    			IOAPIC_RED_INTVEC	( 1 );
+
+    io_apic_write64( ioapic, IOREDTBL01 ,red_ent);
+
 }
 
 uint16_t ioapic_configure() {
 
     uint16_t count = 0;
-
-    _8259_disable();
 
     for (const struct mp_ioapic *ioapic  = mp_find_first_io_apic();
             ioapic != 0;
@@ -200,8 +214,6 @@ uint16_t ioapic_configure() {
     	kprintf("found an IOApic at 0x%x\n",ioapic->mmap_ioapic);
 
     	++count;
-
-//    	continue; // TODO
 
        config( ioapic->mmap_ioapic );
     }

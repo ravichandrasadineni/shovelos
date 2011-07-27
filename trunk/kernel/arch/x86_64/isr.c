@@ -76,10 +76,10 @@ void x86_64_handle_isr_vector0(struct isr_stack_frame *stack) {
 	for(;;);
 }
 
-void x86_64_handle_isr_vector8(struct isr_error_stack_frame *stack) {
+void x86_64_handle_isr_vector8(struct isr_stack_frame *stack) {
 
 	kprintf("DOUBLE FAULT!\n");
-	kprintf("   ERR:%d\n",stack->error);
+//	kprintf("   ERR:%d\n",stack->error);
 	kprintf("    CS:0x%x\n",stack->cs);
 	kprintf("   RIP:0x%lx\n",stack->rip);
 }
