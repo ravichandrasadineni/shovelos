@@ -409,7 +409,8 @@ void _x86_64_load_idt() {
 	SET_ISR(30);
 	SET_ISR(31);
 
-	_x86_64_asm_lidt(&idtr);
+	cpu_lidt(&idtr);
+	cpu_sti();
 }
 
 

@@ -50,16 +50,6 @@ static inline void cpu_write_rflags(uint64_t rflags) {
 		:	"D" (rflags) );
 }
 
-static inline void cpu_enable_interrupts() {
-
-	__asm__ __volatile__("sti");
-}
-
-static inline void cpu_disable_interrupts() {
-
-	__asm__ __volatile__("cli");
-}
-
 #endif /***  __ARCH_X86_64_RFLAGS_H ***/
 
 
