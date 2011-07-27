@@ -20,6 +20,7 @@ typedef int                 sint32_t;
 typedef unsigned int        uint32_t;
 typedef long long           sint64_t;
 typedef unsigned long long  uint64_t;
+typedef unsigned long long  size_t;
 
 #define NULL ((void*)0)
 

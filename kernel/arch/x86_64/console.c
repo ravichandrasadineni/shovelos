@@ -28,20 +28,10 @@ struct console {
 
 struct console console = {
   PHY_TO_VIRT(0xb8000,struct console_mem *const), //  PC video address
-//	(struct console_mem *const)0xb8000,				//  PC video address
     0,                              			    /* start at left      */
     ROWS-1,                          			    /* start at bottom    */
     0x0f00,                          	 		    /* white on black     */
 };
-
-void mymemcpy(void* _dst, const void* _src, int len) {
-
-	const char *s = (const char*)_src;
-	char *d = (char*)_dst;
-
-	while(len--)
-		*d++ = *s++;
-}
 
 static void scroll() {
 
@@ -54,10 +44,14 @@ static void scroll() {
         console.mem->chars[r][c] = console.colour;
 }
 
+static TICKET_LOCK( console_lock );
+
 int cons_putc(int c) {
 
     switch (c) {
     case '\n':
+
+    	ticket_lock_wait(&console_lock);
 
         console.xpos = 0;
         if (console.ypos>=ROWS-1)
@@ -65,12 +59,16 @@ int cons_putc(int c) {
         else
             ++console.ypos;
 
+        ticket_lock_signal(&console_lock);
+
         return 1;
 
     case '\r':
         return 0;
 
     default:
+
+    	ticket_lock_wait(&console_lock);
 
         console.mem->chars[console.ypos][console.xpos] = (uint16_t)(console.colour | c);
         ++console.xpos;
@@ -81,6 +79,8 @@ int cons_putc(int c) {
             else
                 ++console.ypos;
         }
+
+        ticket_lock_signal(&console_lock);
 
         return 1;
     }
