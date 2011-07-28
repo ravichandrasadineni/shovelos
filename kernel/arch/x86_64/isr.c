@@ -73,15 +73,18 @@ void x86_64_handle_isr_vector0(struct isr_stack_frame *stack) {
 	kprintf("    CS:0x%x\n",stack->cs);
 	kprintf("   RIP:0x%x\n",stack->rip);
 
+	kprintf("HALT\n");
 	for(;;);
 }
 
-void x86_64_handle_isr_vector8(struct isr_stack_frame *stack) {
+void x86_64_handle_isr_vector8(struct isr_error_stack_frame *stack) {
 
 	kprintf("DOUBLE FAULT!\n");
-//	kprintf("   ERR:%d\n",stack->error);
+	kprintf("   ERR:%d\n",stack->error);
 	kprintf("    CS:0x%x\n",stack->cs);
 	kprintf("   RIP:0x%lx\n",stack->rip);
+	kprintf("HALT\n");
+	for(;;);
 }
 
 
@@ -91,22 +94,43 @@ void x86_64_handle_isr_vector13(struct isr_error_stack_frame *stack) {
 	kprintf("    CS:0x%x\n",stack->cs);
 	kprintf("   RIP:0x%lx\n",stack->rip);
 
+	kprintf("HALT\n");
 	for(;;);
 }
 
 void x86_64_handle_isr_vector14(struct isr_pf_stack_frame *stack) {
 
 	uint64_t vaddr = cpu_read_cr2();
+	uint64_t   pde = virt_to_pde(vaddr);
+	uint64_t stale_tlb = 1;
 
-	kprintf("PAGE FAULT!\n");
-	kprintf("     v-address : 0x%lx\n", vaddr);
-	kprintf("             p : %d\n", stack->error.error.p);
-	kprintf("            id : %d\n", stack->error.error.id);
-	kprintf("            wr : %d\n", stack->error.error.wr);
-	kprintf("            us : %d\n", stack->error.error.us);
-	kprintf("          rsvd : %d\n", stack->error.error.rsvd);
-	kprintf("            CS : 0x%x\n", stack->cs);
-	kprintf("           RIP : 0x%lx\n",stack->rip);
+	if(stack->error.error.p && !(pde & PT_PRESENT_FLAG))
+		stale_tlb = 0; // real page fault on present status.
+
+	if(stack->error.error.wr && !(pde & PT_WRITABLE_FLAG))
+		stale_tlb = 0; // real page fault on writable status.
+
+	if(stack->error.error.us && !(pde & PT_USER_FLAG))
+		stale_tlb = 0; // real page fault on user permission.
+
+	if(stale_tlb) {
+
+		cpu_invlpg((uint64_t*)vaddr);
+	}
+	else {
+		kprintf("PAGE FAULT!\n");
+		kprintf("     v-address : 0x%lx\n", vaddr);
+		kprintf("             p : %d\n", stack->error.error.p);
+		kprintf("            id : %d\n", stack->error.error.id);
+		kprintf("            wr : %d\n", stack->error.error.wr);
+		kprintf("            us : %d\n", stack->error.error.us);
+		kprintf("          rsvd : %d\n", stack->error.error.rsvd);
+		kprintf("            CS : 0x%x\n", stack->cs);
+		kprintf("           RIP : 0x%lx\n",stack->rip);
+
+		kprintf("HALT\n");
+		for(;;);
+	}
 }
 
 

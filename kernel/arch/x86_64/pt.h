@@ -22,13 +22,21 @@ struct page_table_mem {
 	uint64_t table_stack_bottom;
 };
 
+struct page_table_mem* get_page_table_struct();
+
 uint64_t virt_to_phy(uint64_t virt);
+uint64_t virt_to_pde(uint64_t virt);
 
 /* initialise page tables */
 void pt_initialise(struct mm_phy_reg *regs, uint64_t regnum);
 
-/*** add virt -> physical mapping to given page table ( null for table used by current CPU ) ***/
+/*** add virt -> physical mapping to given page table ( null for table used kernel ) ***/
 sint64_t mmap(uint64_t phy, uint64_t virt,  struct page_table_mem *tab);
+
+/*** unmap virtual address for given tabe table ( null for table used by kernel )
+ * returns old physical address
+ */
+uint64_t *munmap(uint64_t virt, struct page_table_mem *tab);
 
 /*** the kenrel page tables ***/
 extern struct page_table_mem kernel_page_tables;
