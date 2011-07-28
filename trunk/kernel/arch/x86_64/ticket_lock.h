@@ -62,5 +62,7 @@ static inline void ticket_lock_signal_inline(struct ticket_lock * ticket_lock) {
 	}
 }
 
+
+
 #endif /*** __X86_64_TICKET_LOCK_H ***/
 

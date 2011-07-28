@@ -50,18 +50,27 @@ static inline BOOL cpu_has_cpuid() {
 	return FALSE;
 }
 
-#define CPU_READ_REG(_reg_) \
+#define CPU_READ_REG64(_reg_) \
 		static inline uint64_t cpu_read_ ## _reg_() { \
-		uint64_t ret = 0; \
-		__asm__ __volatile__( "movq %%" #_reg_ ", %0" : "=r" (ret) ); \
-		return (ret); \
-}
+			uint64_t ret = 0; \
+			__asm__ __volatile__( "movq %%" #_reg_ ", %0" : "=r" (ret) ); \
+			return (ret); \
+		}
 
-CPU_READ_REG(cr0) /* static inline uint64_t cpu_read_cr0() */
-CPU_READ_REG(cr1) /* static inline uint64_t cpu_read_cr1() */
-CPU_READ_REG(cr2) /* static inline uint64_t cpu_read_cr2() */
-CPU_READ_REG(cr3) /* static inline uint64_t cpu_read_cr3() */
+#define CPU_WRITE_REG64(_reg_) \
+		static inline void cpu_write_ ## _reg_(_type_ val) { \
+			__asm__ __volatile__( "movq %0, %%" #_reg_ : /* no output */ : "r" (val) ); \
+		}
 
+CPU_READ_REG64(cr0) /* static inline uint64_t cpu_read_cr0() */
+CPU_READ_REG64(cr1) /* static inline uint64_t cpu_read_cr1() */
+CPU_READ_REG64(cr2) /* static inline uint64_t cpu_read_cr2() */
+CPU_READ_REG64(cr3) /* static inline uint64_t cpu_read_cr3() */
+
+CPU_WRITE_REG64(cr0) /* static inline void cpu_write_cr0(uint64_t) */
+CPU_WRITE_REG64(cr1) /* static inline void cpu_write_cr1(uint64_t) */
+CPU_WRITE_REG64(cr2) /* static inline void cpu_write_cr2(uint64_t) */
+CPU_WRITE_REG64(cr3) /* static inline void cpu_write_cr3(uint64_t) */
 
 static inline void cpu_invlpg(uint64_t *mem) {
 

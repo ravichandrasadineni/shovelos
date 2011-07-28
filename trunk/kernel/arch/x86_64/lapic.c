@@ -8,6 +8,12 @@
 #include "lapic.h"
 #include "msr.h"
 
+enum apic_base_msr {
+
+	APIC_BSP_FLAG = (1<<8),
+	APIC_GLOBAL_ENABLE_FLAG = (1<<11),
+};
+
 typedef struct _128bit_aligned_uint32 {
 
 	union {
@@ -50,3 +56,26 @@ struct local_apic_struct {
 	const	_128bit_aligned_uint32		reserved_04;
 };
 
+
+static void lapic_global_enable() {
+
+	uint64_t msr = cpu_rdmsr64( IA32_APIC_BASE );
+
+	msr |= APIC_GLOBAL_ENABLE_FLAG;
+
+	cpu_wrmsr64(IA32_APIC_BASE, msr);
+}
+
+static void lapic_global_disable() {
+
+	uint64_t msr = cpu_rdmsr64( IA32_APIC_BASE );
+
+	msr &= ~APIC_GLOBAL_ENABLE_FLAG;
+
+	cpu_wrmsr64(IA32_APIC_BASE, msr);
+}
+
+void lapic_configure() {
+
+	lapic_global_enable();
+}
