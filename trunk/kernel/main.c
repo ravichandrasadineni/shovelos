@@ -19,6 +19,7 @@ int main(struct mm_phy_reg *reg, uint64_t len)  {
 	_x86_64_load_idt();			/*** retire boot-loaders idt ***/
 	acpi_init();				/*** parse acpi tables ***/
 	ioapic_configure();			/*** configure the io-apic ***/
+	lapic_configure();			/*** configure the local-apic ***/
 
 	/*** enumerate processors ***/
 	for(const struct mp_processor *cpu  = mp_find_first_processor();
@@ -29,6 +30,8 @@ int main(struct mm_phy_reg *reg, uint64_t len)  {
 	}
 
 	kprintf("shovelos.kernel - \"HELLO WORLD!\"\n");
+
+	*(uint64_t*)(0xffffffffffffffff) = 1;
 
 	for(;;) {
 	}
