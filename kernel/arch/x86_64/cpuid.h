@@ -58,7 +58,7 @@ static inline BOOL cpu_has_cpuid() {
 		}
 
 #define CPU_WRITE_REG64(_reg_) \
-		static inline void cpu_write_ ## _reg_(_type_ val) { \
+		static inline void cpu_write_ ## _reg_(uint64_t val) { \
 			__asm__ __volatile__( "movq %0, %%" #_reg_ : /* no output */ : "r" (val) ); \
 		}
 

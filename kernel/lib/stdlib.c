@@ -6,6 +6,7 @@
  */
 
 #include<inttypes.h>
+#include"kprintf.h"
 
 static uint8_t isnum(char c) {
 
@@ -29,6 +30,14 @@ static uint64_t declen(const char *str) {
 		ret++;
 
 	return ret;
+}
+
+void halt(const char *reason, const char * const file, const char * const function, uint32_t line) {
+
+	kprintf("%s %s:%d\n",file,function,line);
+	kprintf("$s\n",reason);
+	kprintf("HALT");
+	for(;;);
 }
 
 sint64_t atoq(const char * str) {

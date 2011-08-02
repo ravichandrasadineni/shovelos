@@ -8,7 +8,7 @@
 #include <inttypes.h>
 #include <mm/mm.h>
 #include <arch/arch.h>
-#include <lib/string.h>
+#include <lib/lib.h>
 
 #include "pt.h"
 
@@ -31,15 +31,26 @@ struct page_table_mem kernel_page_tables = {
 	0      /* stack bottom */
 };
 
+struct page_table_mem bootloader_page_tables = {
+
+	{0,0,0}, /* lock */
+	NULL,    /* pml4e */
+	0,       /* stake top */
+	0        /* stack bottom */
+};
+
 struct page_table_mem* get_page_table_struct() {
 
-	if( kernel_page_tables.pml4e != (uint64_t*)cpu_read_cr3() ) {
-		krpintf("TODO: struct page_table_mem* get_page_table_struct()\n");
-		krpintf("HALT\n");
-		for(;;);
-	}
+	uint64_t *cr3 = (uint64_t*)cpu_read_cr3();
 
-	return &kernel_page_table;
+	if(kernel_page_tables.pml4e == cr3)
+		return &kernel_page_tables;
+
+	if(bootloader_page_tables.pml4e == cr3)
+		return &bootloader_page_tables;
+
+	HALT("no page table struct");
+	return 0;
 }
 
 
@@ -72,7 +83,21 @@ done:
 
 uint64_t virt_to_pde(uint64_t virt) {
 
-	struct page_table_mem *ptm = get_page_table_struct();
+	struct page_table_mem *ptm;
+	static struct page_table_mem bootloader_pages;
+
+	if(kernel_page_tables.pml4e == 0)
+	{
+		// kernel structures are not yet setup!
+		// try the boot-loader tables.
+		memset(&bootloader_pages, 0, sizeof bootloader_pages);
+		bootloader_pages.pml4e = (uint64_t*)cpu_read_cr3();
+		ptm = &bootloader_pages;
+	}
+	else
+	{
+		ptm = get_page_table_struct();
+	}
 
 	uint64_t *_pml4e = 0x0000;
 	uint64_t *_pdpe  = 0x0000;
@@ -104,7 +129,7 @@ uint64_t virt_to_pde(uint64_t virt) {
 
 	ticket_lock_signal( &ptm->lock );
 
-	return *pde;
+	return *_pde;
 }
 
 uint64_t virt_to_phy(uint64_t virt) {
@@ -256,7 +281,7 @@ uint64_t *munmap(uint64_t virt, struct page_table_mem *tab) {
 
 	phy = _munmap(virt,tab);
 
-	ticket_lock_signam( &tab->lock );
+	ticket_lock_signal( &tab->lock );
 
 //	lapic_broadcast_invlpg(tab->pml4e, virt); /*** TODO ***/
 
@@ -268,6 +293,8 @@ uint64_t *munmap(uint64_t virt, struct page_table_mem *tab) {
  * and retire the one generated for us by the boot loader.
  */
 void pt_initialise(struct mm_phy_reg *regs, uint64_t regnum) {
+
+	bootloader_page_tables.pml4e = (uint64_t*)cpu_read_cr3();
 
 	/*** force mapping of first megabyte ***/
 	for(uint64_t b = 0; b<PAGE_SIZE * 512; b+=PAGE_SIZE) {

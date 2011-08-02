@@ -119,6 +119,7 @@ void x86_64_handle_isr_vector14(struct isr_pf_stack_frame *stack) {
 	}
 	else {
 		kprintf("PAGE FAULT!\n");
+		kprintf("          pde  : 0x%lx\n", pde);
 		kprintf("     v-address : 0x%lx\n", vaddr);
 		kprintf("             p : %d\n", stack->error.error.p);
 		kprintf("            id : %d\n", stack->error.error.id);

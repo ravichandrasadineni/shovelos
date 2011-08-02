@@ -8,7 +8,7 @@
 #ifndef __ARCH_X86_64_LAPIC_H
 #define __ARCH_X86_64_LAPIC_H
 
-
+void lapic_configure();
 
 #endif /*** __ARCH_X86_64_LAPIC_H ***/
 

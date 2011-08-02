@@ -8,6 +8,8 @@
 #include "lapic.h"
 #include "msr.h"
 #include "pt.h"
+#include<lib/lib.h>
+#include<mm/mm.h>
 
 enum apic_base_msr {
 
@@ -15,13 +17,12 @@ enum apic_base_msr {
 	APIC_GLOBAL_ENABLE_FLAG = (1<<11),
 };
 
-typedef struct _128bit_aligned_uint32 {
+typedef union {
 
-	union {
-		uint32_t _register;
-		uint64_t _128bits[2];
-	};
-};
+	uint32_t _register;
+	uint64_t _128bits[2];
+
+} _128bit_aligned_uint32;
 
 struct local_apic_struct {
 
@@ -65,9 +66,11 @@ static void lapic_global_enable() {
 
 	msr |= APIC_GLOBAL_ENABLE_FLAG;
 
+//	kprintf("cpu_wrmsr64(IA32_APIC_BASE, 0x%lx);\n",msr);
+
 	cpu_wrmsr64(IA32_APIC_BASE, msr);
 }
-
+/*
 static void lapic_global_disable() {
 
 	uint64_t msr = cpu_rdmsr64( IA32_APIC_BASE );
@@ -76,14 +79,14 @@ static void lapic_global_disable() {
 
 	cpu_wrmsr64(IA32_APIC_BASE, msr);
 }
-
+*/
 static uint64_t lapic_get_phy_address() {
 
 	uint64_t msr = cpu_rdmsr64( IA32_APIC_BASE );
 
 	return msr & 0xFFFFFF000;
 }
-
+/*
 static uint64_t lapic_set_phy_address(uint64_t phy) {
 
 	if(phy & ~0xFFFFFF000)
@@ -98,21 +101,23 @@ static uint64_t lapic_set_phy_address(uint64_t phy) {
 
 	return lapic_get_phy_address();
 }
-
-static uint64_t* lapic_mmap() {
+*/
+static struct local_apic_struct * lapic_mmap() {
 
 	uint64_t phy = lapic_get_phy_address();
 	uint64_t off = phy & (PAGE_SIZE-1);
 
-	uint64_t pages  = sizeof(struct local_apic_struct) / PAGE_SIZE;
-					+(sizeof(struct local_apic_struct) % PAGE_SIZE) ? 1 : 0;
+	uint64_t pages  = (sizeof(struct local_apic_struct) / PAGE_SIZE)
+					+((sizeof(struct local_apic_struct) % PAGE_SIZE) ? 1 : 0);
 
-	uint64_t virt = vmm_alloc_hw(pages);
+	uint64_t virt = (uint64_t)vmm_alloc_hw(pages);
+
+	kprintf("lapic at phy 0x%lx vpage 0x%lx (offset 0x%lx)\n",phy,virt,off);
 
 	for(uint64_t i=0; i<pages; i++)
 		mmap((phy + i*PAGE_SIZE ) & ~(PAGE_SIZE-1), virt + PAGE_SIZE*i, 0);
 
-	return (uint64_t*)(virt + (phy & (PAGE_SIZE-1)));
+	return (struct local_apic_struct *)(virt + (phy & (PAGE_SIZE-1)));
 }
 
 void lapic_configure() {
@@ -122,7 +127,7 @@ void lapic_configure() {
 
 	lapic_global_enable();
 
-	krpintf("found lapic id:%d. version:%d\n", lapic->id._register, lapic->version._register);
+	kprintf("found lapic id:%d. version:%d\n", lapic->id._register, lapic->version._register);
 }
 
 
