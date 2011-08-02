@@ -7,6 +7,7 @@
 
 #include "lapic.h"
 #include "msr.h"
+#include "pt.h"
 
 enum apic_base_msr {
 
@@ -56,6 +57,7 @@ struct local_apic_struct {
 	const	_128bit_aligned_uint32		reserved_04;
 };
 
+struct local_apic_struct *lapic = 0;
 
 static void lapic_global_enable() {
 
@@ -75,7 +77,52 @@ static void lapic_global_disable() {
 	cpu_wrmsr64(IA32_APIC_BASE, msr);
 }
 
+static uint64_t lapic_get_phy_address() {
+
+	uint64_t msr = cpu_rdmsr64( IA32_APIC_BASE );
+
+	return msr & 0xFFFFFF000;
+}
+
+static uint64_t lapic_set_phy_address(uint64_t phy) {
+
+	if(phy & ~0xFFFFFF000)
+		return 0; // cant relocate lapic to given address
+
+	uint64_t msr = cpu_rdmsr64( IA32_APIC_BASE );
+
+	msr &= ~0xFFFFFF000;
+	msr |= phy;
+
+	cpu_wrmsr64( IA32_APIC_BASE, msr );
+
+	return lapic_get_phy_address();
+}
+
+static uint64_t* lapic_mmap() {
+
+	uint64_t phy = lapic_get_phy_address();
+	uint64_t off = phy & (PAGE_SIZE-1);
+
+	uint64_t pages  = sizeof(struct local_apic_struct) / PAGE_SIZE;
+					+(sizeof(struct local_apic_struct) % PAGE_SIZE) ? 1 : 0;
+
+	uint64_t virt = vmm_alloc_hw(pages);
+
+	for(uint64_t i=0; i<pages; i++)
+		mmap((phy + i*PAGE_SIZE ) & ~(PAGE_SIZE-1), virt + PAGE_SIZE*i, 0);
+
+	return (uint64_t*)(virt + (phy & (PAGE_SIZE-1)));
+}
+
 void lapic_configure() {
 
+	if(!lapic)
+		lapic = lapic_mmap();
+
 	lapic_global_enable();
+
+	krpintf("found lapic id:%d. version:%d\n", lapic->id._register, lapic->version._register);
 }
+
+

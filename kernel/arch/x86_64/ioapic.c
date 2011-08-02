@@ -157,17 +157,11 @@ static void config(uint64_t phy_addr) {
 
     if(!ioapic) {
 
-    	uint64_t pages = 1;
-   // 	if((PAGE_SIZE <= 0x1000) && (phy_addr % PAGE_SIZE))
-   // 		pages = 2;
+    	uint64_t vpage = (uint64_t)vmm_alloc_hw( PAGE_SIZE );
 
-    	uint64_t vpage = (uint64_t)vmm_alloc_hw( pages*PAGE_SIZE );
+   		mmap(phy_addr & ~(PAGE_SIZE-1), vpage, 0);
 
-    	for(int i=0;i<pages;i++) {
-    		mmap((phy_addr + (i*PAGE_SIZE)) & ~PAGE_SIZE, vpage+PAGE_SIZE*i, 0);
-    	}
-
-    	ioapic = (void*)(vpage + (phy_addr % PAGE_SIZE));
+    	ioapic = (void*)(vpage + (phy_addr & (PAGE_SIZE-1)));
     }
 
     /* all interrupts to boot-strap processor
