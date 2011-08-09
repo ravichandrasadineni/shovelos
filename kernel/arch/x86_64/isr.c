@@ -67,6 +67,14 @@ INTERRUPT(30);
 INTERRUPT(31);
 
 
+/*** IRQ-1 (keyboard) ***/
+INTERRUPT(64);
+void x84_64_handle_isr_vector64( struct isr_stack_frame *stack) {
+
+	kbd_irq();
+	lapic_eoi(64);
+}
+
 void x86_64_handle_isr_vector0(struct isr_stack_frame *stack) {
 
 	kprintf("DIVIDE ERROR EXCEPTION!\n");
