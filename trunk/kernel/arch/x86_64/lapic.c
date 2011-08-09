@@ -120,6 +120,11 @@ static struct local_apic_struct * lapic_mmap() {
 	return (struct local_apic_struct *)(virt + (phy & (PAGE_SIZE-1)));
 }
 
+void lapic_eoi(uint32_t vector) {
+
+	lapic->end_of_interrupt = vector;
+}
+
 void lapic_configure() {
 
 	if(!lapic)

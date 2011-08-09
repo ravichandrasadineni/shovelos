@@ -186,12 +186,12 @@ static void config(uint64_t phy_addr) {
 
     red_ent = 	IOAPIC_RED_DST		( 0ll 						)|
     			IOAPIC_RED_MASK		( IOAPIC_CLEAR )			|
-    			IOAPIC_RED_TRIGGER	( IOAPIC_CLEAR )			| // clear is edge, set is level
+    			IOAPIC_RED_TRIGGER	( IOAPIC_SET )				| // clear is edge, set is level
     			IOAPIC_RED_INPOL	( IOAPIC_INTPOL_HI )		|
     			IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )			| // read only
     			IOAPIC_RED_DESTMOD	( IOAPIC_DEST_PHYSICAL )	|
-    			IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) 	|
-    			IOAPIC_RED_INTVEC	( 1 );
+    			IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_EXTINIT ) 	|
+    			IOAPIC_RED_INTVEC	( 64 );
 
     io_apic_write64( ioapic, IOREDTBL01 ,red_ent);
 
