@@ -13,9 +13,6 @@
 #include "pt.h"
 #include "8259.h"
 
-uint32_t x=100;
-uint32_t y=0;
-
 enum ioapic_mm_reg {
     IOREGSEL 	= 0x00,
     IOWIN		= 0x10,
@@ -101,37 +98,89 @@ enum ioapic_param {
     IOAPIC_SET	= 0x1,
 };
 
-static inline void io_apic_write32(void* ioapic_base, enum ioapic_reg reg, uint32_t data) {
+static struct ticket_lock lock = { 0,0,0 };
 
-    *(uint32_t*)((uint8_t*)ioapic_base + IOREGSEL) = reg;
-    *(uint32_t*)((uint8_t*)ioapic_base + IOWIN   ) = data;
+static inline void io_apic_write32__nolock__(void* ioapic_base, enum ioapic_reg reg, uint32_t data) {
+
+	__asm__ __volatile__ (
+			"movl %2, %0;    \n" // select  register
+			"movl %3, %1;    \n" // write register
+
+		:	"=m" (*(volatile uint32_t*)((uint8_t*)ioapic_base + IOREGSEL)), /* output 0 register select */
+		 	"=m" (*(volatile uint32_t*)((uint8_t*)ioapic_base + IOWIN   ))  /* output 1 io-window*/
+
+		:	"r"	 (reg),		/* input 2 register */
+		  	"r"  (data)		/* input 3 data */
+		);
 }
 
-static inline void io_apic_write64(void* ioapic_base, enum ioapic_reg reg, uint64_t data) {
+static inline void io_apic_write32(void* ioapic_base, enum ioapic_reg reg, uint32_t data) {
 
-    *(uint32_t*)((uint8_t*)ioapic_base + IOREGSEL) = reg;
-    *(uint32_t*)((uint8_t*)ioapic_base + IOWIN   ) = ((uint32_t*)data)[0];
-    *(uint32_t*)((uint8_t*)ioapic_base + IOREGSEL) = reg+1;
-    *(uint32_t*)((uint8_t*)ioapic_base + IOWIN   ) = ((uint32_t*)data)[1];
+	ticket_lock_wait( &lock );
+
+	io_apic_write32__nolock__( ioapic_base, reg, data );
+
+	ticket_lock_signal( &lock );
+}
+
+static inline uint32_t io_apic_read32__nolock__(void* ioapic_base, enum ioapic_reg reg) {
+
+	uint32_t ret = 0;
+
+	__asm__ __volatile__ (
+			"movl %2, %0;    \n" // select  register
+			"movl %3, %1;    \n" // write register
+
+		:	"=m" (*(volatile uint32_t*)((uint8_t*)ioapic_base + IOREGSEL)), /* output 0 register select */
+		 	"=a" (ret)  													/* output 1 return value*/
+		:	"r"	 (reg),														/* input 2 register */
+		 	"m" (*(volatile uint32_t*)((uint8_t*)ioapic_base + IOWIN   ))	/* input 3 io-window*/
+		);
+
+	return (ret);
 }
 
 static inline uint32_t io_apic_read32(void* ioapic_base, enum ioapic_reg reg) {
 
-    *(uint32_t*)((uint8_t*)ioapic_base + IOREGSEL) = reg;
-    return *(uint32_t*)((uint8_t*)ioapic_base + IOWIN   );
+	uint32_t ret = 0;
+
+	ticket_lock_wait( &lock );
+
+	ret = io_apic_read32__nolock__(ioapic_base,reg);
+
+	ticket_lock_signal( &lock );
+
+	return ret;
 }
 
-static inline uint32_t io_apic_read64(void* ioapic_base, enum ioapic_reg reg) {
+static inline void io_apic_write64(void* ioapic_base, enum ioapic_reg reg, uint64_t data) {
 
-    uint64_t reta,retb;
+	uint32_t hidata = data >> 32;
+	uint32_t lodata = data  & 0xffffffff;
+	uint32_t maskdata = IOAPIC_RED_MASK(IOAPIC_SET);
 
-    *(uint32_t*)((uint8_t*)ioapic_base + IOREGSEL) = reg;
-    reta  =  *(uint32_t*)((uint8_t*)ioapic_base + IOWIN   );
+	ticket_lock_wait( &lock );
 
-    *(uint32_t*)((uint8_t*)ioapic_base + IOREGSEL) = reg+1;
-    retb |=  *(uint32_t*)((uint8_t*)ioapic_base + IOWIN   );
+	io_apic_write32__nolock__( ioapic_base, reg+0, maskdata );
+	io_apic_write32__nolock__( ioapic_base, reg+1, hidata );
+	io_apic_write32__nolock__( ioapic_base, reg+0, lodata );
 
-    return reta | (retb << 32);
+	ticket_lock_signal( &lock );
+}
+
+static inline uint64_t io_apic_read64(void* ioapic_base, enum ioapic_reg reg) {
+
+	uint64_t retlo = 0;
+	uint64_t rethi = 0;
+
+	ticket_lock_wait( &lock );
+
+	retlo = io_apic_read32__nolock__( ioapic_base, reg+0 );
+	rethi = io_apic_read32__nolock__( ioapic_base, reg+1 );
+
+	ticket_lock_signal( &lock );
+
+	return retlo | (rethi<<32);
 }
 
 uint16_t ioapic_detect() {
