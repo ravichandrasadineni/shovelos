@@ -352,7 +352,7 @@ DUMMY_INTERRUPT(7)
 extern void x86_64_isr_vector8(); //DUMMY_INTERRUPT(8)
 DUMMY_INTERRUPT(9)
 DUMMY_INTERRUPT(10)
-DUMMY_INTERRUPT(11)
+extern void x86_64_isr_vector11(); //DUMMY_INTERRUPT(11)
 DUMMY_INTERRUPT(12)
 extern void x86_64_isr_vector13(); //DUMMY_INTERRUPT(14)
 extern void x86_64_isr_vector14(); //DUMMY_INTERRUPT(14)
@@ -373,6 +373,8 @@ DUMMY_INTERRUPT(28)
 DUMMY_INTERRUPT(29)
 DUMMY_INTERRUPT(30)
 DUMMY_INTERRUPT(31)
+
+extern void x86_64_isr_vector64(); // KBC IRQ
 
 void _x86_64_load_idt() {
 
@@ -408,6 +410,8 @@ void _x86_64_load_idt() {
 	SET_ISR(29);
 	SET_ISR(30);
 	SET_ISR(31);
+
+	SET_ISR(64); // KBC IRQ
 
 	cpu_lidt(&idtr);
 	cpu_sti();

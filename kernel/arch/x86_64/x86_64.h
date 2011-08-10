@@ -21,6 +21,8 @@
 #include "console.h"
 #include "ioapic.h"
 #include "lapic.h"
+#include "kbc.h"
+#include "ports.h"
 
 struct isr_error_stack_frame
 {

@@ -12,14 +12,17 @@
 
 int main(struct mm_phy_reg *reg, uint64_t len)  {
 
+	kbc_initialise();
+
 	_8259_disable();			/*** kill the legacy pic ***/
 	mm_phy_init(reg,len); 		/*** initialise physical memory manager ***/
 	pt_initialise(reg,len);		/*** retire boot-loaders page tables ***/
 	_x86_64_load_gdt();			/*** retire boot-loaders gdt ***/
 	_x86_64_load_idt();			/*** retire boot-loaders idt ***/
 	acpi_init();				/*** parse acpi tables ***/
-	ioapic_configure();			/*** configure the io-apic ***/
 	lapic_configure();			/*** configure the local-apic ***/
+	ioapic_configure();			/*** configure the io-apic ***/
+
 
 	/*** enumerate processors ***/
 	for(const struct mp_processor *cpu  = mp_find_first_processor();
@@ -31,7 +34,9 @@ int main(struct mm_phy_reg *reg, uint64_t len)  {
 
 	kprintf("shovelos.kernel - \"HELLO WORLD!\"\n");
 
-	*(uint64_t*)(0xffffffffffffffff) = 1;
+//	*(uint64_t*)(0xffffffffffffffff) = 1;
+
+	cpu_sti();
 
 	for(;;) {
 	}

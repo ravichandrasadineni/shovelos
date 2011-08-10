@@ -100,7 +100,9 @@ enum ioapic_param {
 
 static struct ticket_lock lock = { 0,0,0 };
 
-static inline void io_apic_write32__nolock__(void* ioapic_base, enum ioapic_reg reg, uint32_t data) {
+/*static inline*/ void io_apic_write32__nolock__(void* ioapic_base, enum ioapic_reg reg, uint32_t data) {
+
+//	kprintf("io_apic_write32__nolock__(0x%lx, %d, 0x%lx);\n",ioapic_base,reg,data);
 
 	__asm__ __volatile__ (
 			"movl %2, %0;    \n" // select  register
@@ -153,7 +155,7 @@ static inline uint32_t io_apic_read32(void* ioapic_base, enum ioapic_reg reg) {
 	return ret;
 }
 
-static inline void io_apic_write64(void* ioapic_base, enum ioapic_reg reg, uint64_t data) {
+/*static inline */void io_apic_write64(void* ioapic_base, enum ioapic_reg reg, uint64_t data) {
 
 	uint32_t hidata = data >> 32;
 	uint32_t lodata = data  & 0xffffffff;
@@ -202,7 +204,6 @@ static void* ioapic = 0;
 static void config(uint64_t phy_addr) {
 
     uint64_t red_ent = 0;
-  //  uint8_t  red_vec = 0;
 
     if(!ioapic) {
 
@@ -213,37 +214,16 @@ static void config(uint64_t phy_addr) {
     	ioapic = (void*)(vpage + (phy_addr & (PAGE_SIZE-1)));
     }
 
-    /* all interrupts to boot-strap processor
-    for ( uint16_t red_tbl = IOREDTBL00; red_tbl <= IOREDTBL23; red_tbl += 2) {
-
-       red_ent = 	IOAPIC_RED_DST		( 0ll 						)|
-                    IOAPIC_RED_MASK		( IOAPIC_SET )				|
-                    IOAPIC_RED_TRIGGER	( IOAPIC_CLEAR )			| // read only
-                    IOAPIC_RED_INPOL	( IOAPIC_INTPOL_LO )		|
-                    IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )			| // read only
-                    IOAPIC_RED_DESTMOD	( IOAPIC_DEST_PHYSICAL )	|
-                    IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) 	|
-                    IOAPIC_RED_INTVEC	( red_vec );
-
-//      kprintf("ioapic_write64(0x%lx,%d,0x%lx)\n",ioapic,red_tbl, red_ent);
-        io_apic_write64( ioapic, red_tbl, red_ent); // FIXME
-
-        ++red_vec;
-    }
-    */
-
-
     red_ent = 	IOAPIC_RED_DST		( 0ll 						)|
     			IOAPIC_RED_MASK		( IOAPIC_CLEAR )			|
-    			IOAPIC_RED_TRIGGER	( IOAPIC_SET )				| // clear is edge, set is level
+    			IOAPIC_RED_TRIGGER	( IOAPIC_EDGE_TRIGGER )		| // clear is edge, set is level
     			IOAPIC_RED_INPOL	( IOAPIC_INTPOL_HI )		|
     			IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )			| // read only
     			IOAPIC_RED_DESTMOD	( IOAPIC_DEST_PHYSICAL )	|
-    			IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_EXTINIT ) 	|
+    			IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) 	|
     			IOAPIC_RED_INTVEC	( 64 );
 
     io_apic_write64( ioapic, IOREDTBL01 ,red_ent);
-
 }
 
 uint16_t ioapic_configure() {

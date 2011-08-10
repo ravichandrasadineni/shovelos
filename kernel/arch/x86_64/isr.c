@@ -69,9 +69,9 @@ INTERRUPT(31);
 
 /*** IRQ-1 (keyboard) ***/
 INTERRUPT(64);
-void x84_64_handle_isr_vector64( struct isr_stack_frame *stack) {
+void x86_64_handle_isr_vector64( struct isr_stack_frame *stack) {
 
-	kbd_irq();
+	kbc_irq();
 	lapic_eoi(64);
 }
 
@@ -95,6 +95,16 @@ void x86_64_handle_isr_vector8(struct isr_error_stack_frame *stack) {
 	for(;;);
 }
 
+// TODO - what does thispush onto the stack ?
+void x86_64_handle_isr_vector11(struct isr_error_stack_frame *stack) {
+
+	kprintf("SEGMENT NOT PRESENT!\n");
+	kprintf("    CS:0x%x\n",stack->cs);
+	kprintf("   RIP:0x%lx\n",stack->rip);
+
+	kprintf("HALT\n");
+	for(;;);
+}
 
 void x86_64_handle_isr_vector13(struct isr_error_stack_frame *stack) {
 

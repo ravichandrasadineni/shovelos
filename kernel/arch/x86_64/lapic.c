@@ -58,7 +58,7 @@ struct local_apic_struct {
 	const	_128bit_aligned_uint32		reserved_04;
 };
 
-struct local_apic_struct *lapic = 0;
+volatile struct local_apic_struct *lapic = 0;
 
 static void lapic_global_enable() {
 
@@ -66,10 +66,22 @@ static void lapic_global_enable() {
 
 	msr |= APIC_GLOBAL_ENABLE_FLAG;
 
-//	kprintf("cpu_wrmsr64(IA32_APIC_BASE, 0x%lx);\n",msr);
-
 	cpu_wrmsr64(IA32_APIC_BASE, msr);
 }
+
+void lapic_enable_stolen() {
+
+	lapic->task_priority._register = 0x20;
+	lapic->lvt_timer._register = 0x10000;
+	lapic->lvt_performance_monitoring_counters._register = 0x10000;
+	lapic->lvt_lint0._register = 0x8700;
+	lapic->lvt_lint1._register = 0x400;
+	lapic->lvt_error._register = 0x10000;
+	lapic->spurious_interrupt_vector._register = 0x0010f;
+	lapic->lvt_lint0._register = 0x8700;
+	lapic->lvt_lint1._register = 0x400;
+}
+
 /*
 static void lapic_global_disable() {
 
@@ -112,17 +124,21 @@ static struct local_apic_struct * lapic_mmap() {
 
 	uint64_t virt = (uint64_t)vmm_alloc_hw(pages);
 
-	kprintf("lapic at phy 0x%lx vpage 0x%lx (offset 0x%lx)\n",phy,virt,off);
 
 	for(uint64_t i=0; i<pages; i++)
 		mmap((phy + i*PAGE_SIZE ) & ~(PAGE_SIZE-1), virt + PAGE_SIZE*i, 0);
 
-	return (struct local_apic_struct *)(virt + (phy & (PAGE_SIZE-1)));
+	struct local_apic_struct *s = (struct local_apic_struct *)(virt + (phy & (PAGE_SIZE-1)));
+
+	kprintf("lapic at phy 0x%lx vpage 0x%lx (offset 0x%lx)\n",phy,virt,off);
+	kprintf("    siv 0x%lx\n", s->spurious_interrupt_vector._register);
+
+	return s;
 }
 
 void lapic_eoi(uint32_t vector) {
 
-	lapic->end_of_interrupt = vector;
+	lapic->end_of_interrupt._register = vector;
 }
 
 void lapic_configure() {
@@ -131,8 +147,7 @@ void lapic_configure() {
 		lapic = lapic_mmap();
 
 	lapic_global_enable();
-
-	kprintf("found lapic id:%d. version:%d\n", lapic->id._register, lapic->version._register);
+	lapic_enable_stolen(); // TODO: understand this ?
 }
 
 
