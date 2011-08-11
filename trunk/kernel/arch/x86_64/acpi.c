@@ -110,13 +110,8 @@ sint8_t acpi_init() {
 	const struct rsdp_header * rsdp;
 
 	if(!(rsdp = find_rsdp())) {
-		kprintf("ACPI: no hardware support\n");
 		return -1;
 	}
-
-	kprintf("ACPI: RSDP @ 0x%016lx\n", rsdp);
-	kprintf("      version %d.0\n", rsdp->ver1.revision+1);
-	kprintf("      OEM ID %s\n", rsdp->ver1.oemid);
 
 	return 0;
 }

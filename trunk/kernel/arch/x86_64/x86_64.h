@@ -23,6 +23,7 @@
 #include "lapic.h"
 #include "kbc.h"
 #include "ports.h"
+#include "kbc_scancodes.h"
 
 struct isr_error_stack_frame
 {

@@ -5,107 +5,40 @@
  *      Author: Chris Stones
  */
 
-enum kbsc {
+#include <inttypes.h>
+#include "kbc_scancodes.h"
 
-	KBCSC_ESC 	= 0x01,
+static uint8_t char_shift_adjust(uint8_t c, uint8_t shift) {
 
-	KBCSC_1 	= 0x02,
-	KBCSC_2 	= 0x03,
-	KBCSC_3 	= 0x04,
-	KBCSC_4 	= 0x05,
-	KBCSC_5 	= 0x06,
-	KBCSC_6 	= 0x07,
-	KBCSC_7 	= 0x08,
-	KBCSC_8 	= 0x09,
-	KBCSC_9 	= 0x0a,
-	KBCSC_0 	= 0x0b,
+	return c + (shift ? ('A'-'a') : 0);
+}
 
-	KBCSC_UNDERSCORE_MINUS 		= 0x0c,
-	KBCSC_EQUALS_PLUS 			= 0x0d,
-	KBCSC_BACKSPACE 			= 0x0e,
-	KBCSC_TAB		 			= 0x0f,
+uint8_t kbcsc_tochar(uint8_t b, uint8_t shift) {
 
-	KBCSC_Q		= 0x10,
-	KBCSC_W		= 0x11,
-	KBCSC_E		= 0x12,
-	KBCSC_R		= 0x13,
-	KBCSC_T		= 0x14,
-	KBCSC_Y		= 0x15,
-	KBCSC_U		= 0x16,
-	KBCSC_I		= 0x17,
-	KBCSC_O		= 0x18,
-	KBCSC_P		= 0x19,
+	if(b==KBCSC_SPACE)
+		return ' ';
 
-	KBCSC_OPEN_CURL  = 0x1a,
-	KBCSC_CLOSE_CURL = 0x1b,
+	if(b==KBCSC_RETURN)
+		return '\n';
 
-	KBCSC_CLOSE_ENTER = 0x1c,
-	KBCSC_CLOSE_CTRL = 0x1d,
+	if((b >= KBCSC_Q) && (b <= KBCSC_P))
+		return char_shift_adjust("qwertyuiop"[b-KBCSC_Q], shift);
 
-	KBCSC_A = 0x1e,
-	KBCSC_S = 0x1f,
-	KBCSC_D = 0x20,
-	KBCSC_F = 0x21,
-	KBCSC_G = 0x22,
-	KBCSC_H = 0x23,
-	KBCSC_J = 0x24,
-	KBCSC_K = 0x25,
-	KBCSC_L = 0x26,
+	if((b >= KBCSC_A) && (b <= KBCSC_L))
+		return char_shift_adjust("asdfghjkl"[b-KBCSC_A], shift);
 
-	KBCSC_COLON = 0x27,
-	KBCSC_AT 	= 0x28,
+	if((b >= KBCSC_Z) && (b <= KBCSC_M))
+		return char_shift_adjust("zxcvbnm"[b-KBCSC_Z], shift);
 
-	KBCSC_TILDA	= 0x29,
+	if((b >= KBCSC_1) && (b <= KBCSC_9)) {
+		if(shift)
+			return "!\"£$%^&*("[b-KBCSC_1];
+		return '1' + b-KBCSC_1;
+	}
 
-	KBCSC_LEFTSHIFT	= 0x2a,
-	KBCSC_BACKSLASH	= 0x2b,
+	if(b == KBCSC_0)
+		return shift ? ')' : '0';
 
-	KBCSC_Z = 0x2c,
-	KBCSC_X = 0x2d,
-	KBCSC_C = 0x2e,
-	KBCSC_V = 0x2f,
-	KBCSC_B = 0x30,
-	KBCSC_N = 0x31,
-	KBCSC_M = 0x32,
-
-	KBCSC_LT = 0x33,
-	KBCSC_GT = 0x34,
-	KBCSC_FORWARDSLASH = 0x35,
-	KBCSC_RIGHTSHIFT = 0x36,
-	KBCSC_PRINTSCREEN = 0x37,
-	KBCSC_ALT = 0x38,
-	KBCSC_SPACE = 0x39,
-	KBCSC_CAPSLOCK = 0x3a,
-	KBCSC_F1 = 0x3b,
-	KBCSC_F2 = 0x3c,
-	KBCSC_F3 = 0x3d,
-	KBCSC_F4 = 0x3e,
-	KBCSC_F5 = 0x3f,
-	KBCSC_F6 = 0x40,
-	KBCSC_F7 = 0x41,
-	KBCSC_F8 = 0x42,
-	KBCSC_F9 = 0x43,
-	KBCSC_F10= 0x44,
-
-	KBCSC_NUMLOCK= 0x45,
-	KBCSC_SCROLLLOCK= 0x45,
-	KBCSC_HOME= 0x45,
-	KBCSC_UP= 0x45,
-	KBCSC_PGUP= 0x45,
-	KBCSC_NUMPAD_MINUS = 0x45,
-	KBCSC_NUMPAD_4 = 0x45,
-	KBCSC_NUMPAD_5 = 0x45,
-	KBCSC_NUMPAD_6 = 0x45,
-	KBCSC_NUMPAD_PLUS = 0x45,
-	KBCSC_NUMPAD_6 = 0x45,
-	KBCSC_NUMPAD_1 = 0x45,
-	KBCSC_NUMPAD_2 = 0x45,
-	KBCSC_NUMPAD_3 = 0x45,
-	KBCSC_NUMPAD_0 = 0x45,
-	KBCSC_NUMPAD_PERIOD = 0x45,
-
-
-
-
-};
+	return 0;
+}
 
