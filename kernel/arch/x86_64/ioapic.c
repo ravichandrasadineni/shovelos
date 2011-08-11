@@ -100,7 +100,7 @@ enum ioapic_param {
 
 static struct ticket_lock lock = { 0,0,0 };
 
-/*static inline*/ void io_apic_write32__nolock__(void* ioapic_base, enum ioapic_reg reg, uint32_t data) {
+static inline void io_apic_write32__nolock__(void* ioapic_base, enum ioapic_reg reg, uint32_t data) {
 
 //	kprintf("io_apic_write32__nolock__(0x%lx, %d, 0x%lx);\n",ioapic_base,reg,data);
 
@@ -155,7 +155,7 @@ static inline uint32_t io_apic_read32(void* ioapic_base, enum ioapic_reg reg) {
 	return ret;
 }
 
-/*static inline */void io_apic_write64(void* ioapic_base, enum ioapic_reg reg, uint64_t data) {
+static inline void io_apic_write64(void* ioapic_base, enum ioapic_reg reg, uint64_t data) {
 
 	uint32_t hidata = data >> 32;
 	uint32_t lodata = data  & 0xffffffff;
@@ -216,9 +216,9 @@ static void config(uint64_t phy_addr) {
 
     red_ent = 	IOAPIC_RED_DST		( 0ll 						)|
     			IOAPIC_RED_MASK		( IOAPIC_CLEAR )			|
-    			IOAPIC_RED_TRIGGER	( IOAPIC_EDGE_TRIGGER )		| // clear is edge, set is level
+    			IOAPIC_RED_TRIGGER	( IOAPIC_EDGE_TRIGGER )		|
     			IOAPIC_RED_INPOL	( IOAPIC_INTPOL_HI )		|
-    			IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )			| // read only
+    			IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )			|
     			IOAPIC_RED_DESTMOD	( IOAPIC_DEST_PHYSICAL )	|
     			IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) 	|
     			IOAPIC_RED_INTVEC	( 64 );
