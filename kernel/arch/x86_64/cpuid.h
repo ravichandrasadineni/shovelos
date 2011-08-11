@@ -90,6 +90,14 @@ static inline void cpu_lidt(void* idt) {
 	);
 }
 
+static inline void cpu_reset(void) {
+
+	__asm__ __volatile__(
+		"movl 0xfe, %al 	\n"
+		"outb %al, $0x64 	\n"
+	);
+}
+
 static inline void cpu_sti() {
 
 	__asm__ __volatile__("sti");

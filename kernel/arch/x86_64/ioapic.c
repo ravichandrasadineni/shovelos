@@ -234,8 +234,6 @@ uint16_t ioapic_configure() {
             ioapic != 0;
             ioapic  = mp_find_next_io_apic( ioapic )) {
 
-    	kprintf("found an IOApic at 0x%x\n",ioapic->mmap_ioapic);
-
     	++count;
 
        config( ioapic->mmap_ioapic );

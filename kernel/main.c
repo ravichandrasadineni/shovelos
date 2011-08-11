@@ -24,21 +24,19 @@ int main(struct mm_phy_reg *reg, uint64_t len)  {
 	ioapic_configure();			/*** configure the io-apic ***/
 
 
-	/*** enumerate processors ***/
-	for(const struct mp_processor *cpu  = mp_find_first_processor();
-								   cpu != 0;
-								   cpu  = mp_find_next_processor( cpu )) {
-
-		kprintf("found a cpu (ID %d)\n", cpu->local_apic_id);
-	}
-
 	kprintf("shovelos.kernel - \"HELLO WORLD!\"\n");
 
-//	*(uint64_t*)(0xffffffffffffffff) = 1;
-
-	cpu_sti();
+	kprintf("#> ");
 
 	for(;;) {
+
+		sint32_t c = kbc_readchar(); // DEADLOCK ?
+
+		if(c>=0) {
+			kprintf("%c",c);
+			if(c=='\n')
+				kprintf("#> ");
+		}
 	}
 	return 0;
 }

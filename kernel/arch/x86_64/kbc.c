@@ -95,11 +95,7 @@ sint32_t kbc_read(void* dst, size_t size) {
 	return (result);
 }
 
-void kbc_irq() {
-
-	uint8_t b = port_inb(0x60);
-
-	kprintf("kbc got scancode 0x%x\n",b);
+static void queue_byte(uint8_t b) {
 
 	ticket_lock_wait(&kbc_buffer->lock);
 
@@ -117,6 +113,39 @@ void kbc_irq() {
 	kbc_buffer->writepos %= kbc_buffer->buffersize;
 
 	ticket_lock_signal(&kbc_buffer->lock);
+}
+
+BOOL isshift(uint8_t b) {
+
+	b &= ~0x80;
+	if((b == KBCSC_RIGHTSHIFT) || (b == KBCSC_LEFTSHIFT))
+		return TRUE;
+
+	return FALSE;
+}
+
+void kbc_irq() {
+
+	static uint8_t shift = 0;
+
+	uint8_t b = port_inb(0x60);
+
+	if(isshift(b)) {
+		if(b&0x80)
+			--shift;
+		else
+			++shift;
+		return;
+	}
+
+	uint8_t c = kbcsc_tochar(b, shift);
+
+	if(c) {
+		//return;
+		//kprintf("%c",c);
+		queue_byte(c);
+	}
+
 }
 
 
