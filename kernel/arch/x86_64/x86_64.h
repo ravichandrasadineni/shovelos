@@ -65,6 +65,9 @@ struct isr_pf_stack_frame
 };
 
 /*** todo: better home ***/
+
+#define KBC_IRQ 1
+
 typedef void (*main_func)(int argc, char **argv);
 void call_main(main_func, void* stack, int argc, char **argv);
 

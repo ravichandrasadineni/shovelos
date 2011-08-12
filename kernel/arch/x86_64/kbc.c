@@ -7,10 +7,11 @@
 
 #include <arch/arch.h>
 #include <lib/lib.h>
+#include "ioapic.h"
 
 struct kbc_buffer_struct
 {
-	struct ticket_lock lock;
+//	struct ticket_lock lock;
 	uint8_t buffer[32];
 	size_t   buffersize;
 	uint16_t writepos;
@@ -29,7 +30,7 @@ void kbc_initialise() {
 }
 
 
-static size_t _kbc_bytes_in_buffer() {
+static size_t kbc_bytes_in_buffer__nolock___() {
 
 	if(kbc_buffer->writepos >= kbc_buffer->readpos)
 		return kbc_buffer->writepos - kbc_buffer->readpos;
@@ -39,16 +40,20 @@ static size_t _kbc_bytes_in_buffer() {
 
 size_t kbc_bytes_in_buffer() {
 
-	ticket_lock_wait(&kbc_buffer->lock);
+//	sint8_t oldmask = ioapic_mask_irq( KBC_IRQ);
 
-	size_t result = _kbc_bytes_in_buffer();
+//	ticket_lock_wait(&kbc_buffer->lock);
 
-	ticket_lock_signal(&kbc_buffer->lock);
+	size_t result = kbc_bytes_in_buffer__nolock__();
+
+//	ticket_lock_signal(&kbc_buffer->lock);
+
+//	ioapic_setmask_irq(KBC_IRQ, oldmask);
 
 	return (result);
 }
 
-static sint32_t _kbc_readchar() {
+static sint32_t kbc_readchar__nolock__() {
 
 	if(!_kbc_bytes_in_buffer())
 		return -1;
@@ -63,16 +68,20 @@ static sint32_t _kbc_readchar() {
 
 sint32_t kbc_readchar() {
 
-	ticket_lock_wait(&kbc_buffer->lock);
+//	sint8_t oldmask = ioapic_mask_irq( KBC_IRQ);
 
-	sint32_t result = _kbc_readchar();
+//	ticket_lock_wait(&kbc_buffer->lock);
 
-	ticket_lock_signal(&kbc_buffer->lock);
+	sint32_t result = kbc_readchar__nolock__();
+
+//	ticket_lock_signal(&kbc_buffer->lock);
+
+//	ioapic_setmask_irq(KBC_IRQ, oldmask);
 
 	return (result);
 }
 
-sint32_t _kbc_read(void* _dst, size_t size) {
+static sint32_t kbc_read__nolock__(void* _dst, size_t size) {
 
 	sint32_t c = 0;
 	uint8_t *dst = (uint8_t*)_dst;
@@ -86,33 +95,29 @@ sint32_t _kbc_read(void* _dst, size_t size) {
 
 sint32_t kbc_read(void* dst, size_t size) {
 
-	ticket_lock_wait(&kbc_buffer->lock);
+//	sint8_t oldmask = ioapic_mask_irq( KBC_IRQ);
+//	ticket_lock_wait(&kbc_buffer->lock);
 
-	sint32_t result = _kbc_read(dst,size);
+	sint32_t result = kbc_read__nolock__(dst,size);
 
-	ticket_lock_signal(&kbc_buffer->lock);
+//	ticket_lock_signal(&kbc_buffer->lock);
+//	ioapic_setmask_irq(KBC_IRQ, oldmask);
 
 	return (result);
 }
 
+
 static void queue_byte(uint8_t b) {
 
-	ticket_lock_wait(&kbc_buffer->lock);
+//	sint8_t underflow = 0;
+
+//	ticket_lock_wait(&kbc_buffer->lock);
 
 	kbc_buffer->buffer[kbc_buffer->writepos] = b;
-
-	if(kbc_buffer->readpos == kbc_buffer->writepos) {
-
-		/*** BUFFER UNDERFLOW! - LOST A CHARACTER! ***/
-
-		kbc_buffer->readpos ++;
-		kbc_buffer->readpos %= kbc_buffer->buffersize;
-	}
-
 	kbc_buffer->writepos ++;
 	kbc_buffer->writepos %= kbc_buffer->buffersize;
 
-	ticket_lock_signal(&kbc_buffer->lock);
+//	ticket_lock_signal(&kbc_buffer->lock);
 }
 
 BOOL isshift(uint8_t b) {
