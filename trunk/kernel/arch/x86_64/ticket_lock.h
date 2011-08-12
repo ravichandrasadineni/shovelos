@@ -10,6 +10,7 @@
 
 #include <inttypes.h>
 #include "rflags.h"
+#include "cpuid.h"
 
 struct ticket_lock {
 
@@ -44,7 +45,7 @@ static inline void ticket_lock_wait_inline(struct ticket_lock * ticket_lock) {
 
 	ticket_lock->rflag_if = (cpu_read_rflags() & RFLAG_IF) ? 1 : 0;
 
-	__asm __volatile__ ("cli;");
+	cpu_cli();
 }
 
 
@@ -58,7 +59,7 @@ static inline void ticket_lock_signal_inline(struct ticket_lock * ticket_lock) {
 	);
 
 	if(rflag_if) {
-		__asm__ __volatile__("sti;");
+		cpu_sti();
 	}
 }
 
