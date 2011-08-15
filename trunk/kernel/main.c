@@ -10,10 +10,19 @@
 #include <mm/mm.h>
 #include <arch/arch.h>
 
-int main(struct mm_phy_reg *reg, uint64_t len)  {
+static int running_processors = 0;
+
+int main(struct mm_phy_reg *reg, uint64_t len, void (*boot_aux_cpu)())  {
+
+	running_processors++;
+
+	// TODO: catch aux cpu threads and spin them for now!
+	static BOOL bsp = TRUE;
+	if(!bsp)
+		for(;;);
+	bsp = FALSE;
 
 	kbc_initialise();
-
 	_8259_disable();			/*** kill the legacy pic ***/
 	mm_phy_init(reg,len); 		/*** initialise physical memory manager ***/
 	pt_initialise(reg,len);		/*** retire boot-loaders page tables ***/
@@ -26,11 +35,15 @@ int main(struct mm_phy_reg *reg, uint64_t len)  {
 
 	kprintf("shovelos.kernel - \"HELLO WORLD!\"\n");
 
+	lapic_ipi_start(1,boot_aux_cpu);
+
+	kprintf("aux_cpu bootstrap code @ phy 0x%x\n", boot_aux_cpu);
+
 	kprintf("#> ");
 
 	for(;;) {
 
-		sint32_t c = kbc_readchar(); // DEADLOCK ?
+		sint32_t c = kbc_readchar();
 
 		if(c>=0) {
 			kprintf("%c",c);

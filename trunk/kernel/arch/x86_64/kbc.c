@@ -11,7 +11,7 @@
 
 struct kbc_buffer_struct
 {
-//	struct ticket_lock lock;
+	struct ticket_lock lock;
 	uint8_t buffer[32];
 	size_t   buffersize;
 	uint16_t writepos;
@@ -30,7 +30,7 @@ void kbc_initialise() {
 }
 
 
-static size_t kbc_bytes_in_buffer__nolock___() {
+static size_t kbc_bytes_in_buffer__nolock__() {
 
 	if(kbc_buffer->writepos >= kbc_buffer->readpos)
 		return kbc_buffer->writepos - kbc_buffer->readpos;
@@ -42,11 +42,11 @@ size_t kbc_bytes_in_buffer() {
 
 //	sint8_t oldmask = ioapic_mask_irq( KBC_IRQ);
 
-//	ticket_lock_wait(&kbc_buffer->lock);
+	ticket_lock_wait(&kbc_buffer->lock);
 
 	size_t result = kbc_bytes_in_buffer__nolock__();
 
-//	ticket_lock_signal(&kbc_buffer->lock);
+	ticket_lock_signal(&kbc_buffer->lock);
 
 //	ioapic_setmask_irq(KBC_IRQ, oldmask);
 
@@ -55,7 +55,7 @@ size_t kbc_bytes_in_buffer() {
 
 static sint32_t kbc_readchar__nolock__() {
 
-	if(!_kbc_bytes_in_buffer())
+	if(!kbc_bytes_in_buffer__nolock__())
 		return -1;
 
 	sint32_t ret = (sint32_t)(kbc_buffer->buffer[kbc_buffer->readpos]);
@@ -70,11 +70,11 @@ sint32_t kbc_readchar() {
 
 //	sint8_t oldmask = ioapic_mask_irq( KBC_IRQ);
 
-//	ticket_lock_wait(&kbc_buffer->lock);
+	ticket_lock_wait(&kbc_buffer->lock);
 
 	sint32_t result = kbc_readchar__nolock__();
 
-//	ticket_lock_signal(&kbc_buffer->lock);
+	ticket_lock_signal(&kbc_buffer->lock);
 
 //	ioapic_setmask_irq(KBC_IRQ, oldmask);
 
@@ -87,7 +87,7 @@ static sint32_t kbc_read__nolock__(void* _dst, size_t size) {
 	uint8_t *dst = (uint8_t*)_dst;
 	sint32_t i = 0;
 
-	while(size-- && ((c = _kbc_readchar()) >= 0))
+	while(size-- && ((c = kbc_readchar__nolock__()) >= 0))
 		dst[i++] = (uint8_t)c;
 
 	return (i);
@@ -96,11 +96,11 @@ static sint32_t kbc_read__nolock__(void* _dst, size_t size) {
 sint32_t kbc_read(void* dst, size_t size) {
 
 //	sint8_t oldmask = ioapic_mask_irq( KBC_IRQ);
-//	ticket_lock_wait(&kbc_buffer->lock);
+	ticket_lock_wait(&kbc_buffer->lock);
 
 	sint32_t result = kbc_read__nolock__(dst,size);
 
-//	ticket_lock_signal(&kbc_buffer->lock);
+	ticket_lock_signal(&kbc_buffer->lock);
 //	ioapic_setmask_irq(KBC_IRQ, oldmask);
 
 	return (result);
@@ -108,8 +108,6 @@ sint32_t kbc_read(void* dst, size_t size) {
 
 
 static void queue_byte(uint8_t b) {
-
-//	sint8_t underflow = 0;
 
 //	ticket_lock_wait(&kbc_buffer->lock);
 
@@ -120,37 +118,33 @@ static void queue_byte(uint8_t b) {
 //	ticket_lock_signal(&kbc_buffer->lock);
 }
 
-BOOL isshift(uint8_t b) {
-
-	b &= ~0x80;
-	if((b == KBCSC_RIGHTSHIFT) || (b == KBCSC_LEFTSHIFT))
-		return TRUE;
-
-	return FALSE;
-}
-
 void kbc_irq() {
 
 	static uint8_t shift = 0;
 
 	uint8_t b = port_inb(0x60);
 
-	if(isshift(b)) {
-		if(b&0x80)
-			--shift;
-		else
-			++shift;
-		return;
+	switch(b)
+	{
+	case KBCSC_LEFTSHIFT:
+		shift |= 1;
+		break;
+	case KBCSC_RIGHTSHIFT:
+		shift |= 2;
+		break;
+	case (KBCSC_LEFTSHIFT | 0x80):
+		shift &= ~1;
+		break;
+	case (KBCSC_RIGHTSHIFT | 0x80):
+		shift &= ~2;
+	default:
+		break;
 	}
 
 	uint8_t c = kbcsc_tochar(b, shift);
 
-	if(c) {
-		//return;
-		//kprintf("%c",c);
+	if(c)
 		queue_byte(c);
-	}
-
 }
 
 

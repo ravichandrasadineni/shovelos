@@ -12,6 +12,7 @@
 
 void lapic_configure();
 void lapic_eoi(uint32_t vector);
+void lapic_ipi_start(uint8_t lapic_id, void* address);
 
 #endif /*** __ARCH_X86_64_LAPIC_H ***/
 
