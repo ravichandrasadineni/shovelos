@@ -9,6 +9,17 @@
 
 .code16
 
+
+.global boot_aux_cpu
+boot_aux_cpu:
+
+    cli
+    movw $0x0000, %ax
+    movw     %ax, %ds
+    movw     %ax, %ss
+    movw     %ax, %es
+    movl $0xffff, %esp
+
 .global shuffle_high
 shuffle_high:
 
@@ -54,17 +65,16 @@ long_main:
    movq 16(%rax),  %rcx
    rep movsb
 
-   cmpq $0, 20(%rax)
+   cmpq $0, 24(%rax)
    je   exit_long_mode
 
    movq %rsp,     %r10
    andq $0xffff,  %r10
    subq $8,       %r10               # allocate uint64 on old stack
-   movq $0xFFFFFFFF80000000, %r11    # set kernel address
-   movq %r11, (%r10)                 # pointer to kernel address
+   movq $0xFFFFFFFF80000000, (%r10)  # set kernel address
    movq $0x7ffff, %rsp               # new stack
+   movq $0x31000, %rdx
    movq $0x20000, %r12               # kernel parameter 2, size of memory map (mem.h MB_MMAP)
-   xorq %rsi, %rsi
    movq (%r12), %rsi
    movq $0x20004, %rdi               # kernel parameter 1, ptr to memory map struct. (mem.h MB_MMAP+4)
    jmpq  *(%r10)                     # jump to kernel
@@ -145,15 +155,12 @@ call_kernel:
   mov %rax,%gs
   mov %rax,%fs
 
-  movq %rsp,     %r10
-  andq $0xffff,  %r10
-  subq $8,       %r10               # allocate uint64 on old stack
   movq $0xFFFFFFFF80000000, %r11    # set kernel address
-  movq %r11, (%r10)                 # pointer to kernel address
   movq $0x7ffff, %rsp               # new stack
   movq $0x20000, %r12               # kernel parameter 2, size of memory map (mem.h MB_MMAP)
   xorq %rsi, %rsi
   movq (%r12), %rsi
   movq $0x20004, %rdi               # kernel parameter 1, ptr to memory map struct. (mem.h MB_MMAP+4)
-  jmpq  *(%r10)                     # jump to kernel
+  jmpq *%r11
+
 

@@ -13,7 +13,7 @@ Linker script and memory map
  .text          0x0000000000007c00      0x12a vbr.o
                 0x0000000000007c00                main
 
-.data           0x0000000000007d2c        0x0 load address 0x0000000000007d2a
+.data           0x0000000000007d2c        0x0
  .data          0x0000000000007d2c        0x0 vbr.o
 
 .sig            0x0000000000007d2a        0x2 load address 0x0000000000007dfe

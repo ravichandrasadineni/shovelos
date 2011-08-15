@@ -58,7 +58,58 @@ struct local_apic_struct {
 	const	_128bit_aligned_uint32		reserved_04;
 };
 
+struct _bits {
+
+	unsigned 		vector : 8;					/* rw */
+	unsigned 		message_type : 3;			/* rw */
+	unsigned 		destination_mode : 1;		/* rw */
+	unsigned		delivery_status : 1;		/* ro */
+	unsigned  		reserved0 : 1;
+	unsigned  		level : 1 ;					/* rw */
+	unsigned  		trigger_mode : 1 ;			/* rw */
+	unsigned 		remote_read_status : 2; 	/* ro */
+	unsigned		destination_shorthand : 2;  /* rw */
+	unsigned		reserved1 : 32;
+	unsigned		reserved2 : 4;
+	unsigned		destination : 8;				/* rw */
+} __attribute__((__packed__)) ;
+
+typedef union  {
+
+	uint64_t			_register;
+	struct _bits bits;
+
+
+} lapic_ipi_register;
+
+enum lapic_ipi_enum {
+
+	LAPIC_IPI_TRIGGERMODE_EDGE  = 0,
+	LAPIC_IPI_TRIGGERMODE_LEVEL = 1,
+
+	LAPIC_IPI_MESSAGETYPE_STARTUP = 6,
+
+	LAPIC_DESTINATION_MODE_LOGICAL = 1,
+	LAPIC_DESTINATION_MODE_PHYSICAL = 0,
+};
+
 volatile struct local_apic_struct *lapic = 0;
+
+
+void lapic_ipi_start(uint8_t lapic_id, void* address) {
+
+	lapic_ipi_register reg;
+	memset(&reg,0, sizeof reg);
+
+	reg.bits.vector = (uint8_t)((((uint64_t)address) >> 12) & 0xff );
+	reg.bits.trigger_mode = LAPIC_IPI_TRIGGERMODE_EDGE;
+	reg.bits.message_type = LAPIC_IPI_MESSAGETYPE_STARTUP;
+	reg.bits.destination_mode = LAPIC_DESTINATION_MODE_PHYSICAL;
+	reg.bits.destination = lapic_id;
+
+	lapic->interrupt_command[1]._register = (uint32_t)((reg._register) >> 32);
+	lapic->interrupt_command[0]._register = (uint32_t)((reg._register) >>  0);
+}
 
 static void lapic_global_enable() {
 
@@ -101,12 +152,12 @@ static uint64_t lapic_get_phy_address() {
 /*
 static uint64_t lapic_set_phy_address(uint64_t phy) {
 
-	if(phy & ~0xFFFFFF000)
-		return 0; // cant relocate lapic to given address
+	if(phy & 0xFFF)
+		return 0; // can't relocate lapic to given address
 
 	uint64_t msr = cpu_rdmsr64( IA32_APIC_BASE );
 
-	msr &= ~0xFFFFFF000;
+	msr &= 0xFFF;
 	msr |= phy;
 
 	cpu_wrmsr64( IA32_APIC_BASE, msr );
@@ -117,7 +168,7 @@ static uint64_t lapic_set_phy_address(uint64_t phy) {
 static struct local_apic_struct * lapic_mmap() {
 
 	uint64_t phy = lapic_get_phy_address();
-	uint64_t off = phy & (PAGE_SIZE-1);
+	//uint64_t off = phy & (PAGE_SIZE-1);
 
 	uint64_t pages  = (sizeof(struct local_apic_struct) / PAGE_SIZE)
 					+((sizeof(struct local_apic_struct) % PAGE_SIZE) ? 1 : 0);
@@ -129,9 +180,6 @@ static struct local_apic_struct * lapic_mmap() {
 		mmap((phy + i*PAGE_SIZE ) & ~(PAGE_SIZE-1), virt + PAGE_SIZE*i, 0);
 
 	struct local_apic_struct *s = (struct local_apic_struct *)(virt + (phy & (PAGE_SIZE-1)));
-
-	kprintf("lapic at phy 0x%lx vpage 0x%lx (offset 0x%lx)\n",phy,virt,off);
-	kprintf("    siv 0x%lx\n", s->spurious_interrupt_vector._register);
 
 	return s;
 }

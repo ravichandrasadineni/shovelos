@@ -226,23 +226,6 @@ static void config(uint64_t phy_addr) {
     io_apic_write64( ioapic, IOREDTBL01 ,red_ent);
 }
 
-void ioapic_mask_irq(uint8_t irq)
-{
-	enum ioapic_reg reg = (enum ioapic_reg)(((int)IOREDTBL00) + (irq * 2));
-
-	ticket_lock_wait( &lock );
-
-	uint32_t lodword = io_apic_read32__nolock__(ioapic, reg);
-
-	if(!(lodword & IOAPIC_RED_MASK(IOAPIC_SET))) {
-
-		lodword |=IOAPIC_RED_MASK(IOAPIC_SET);
-		io_apic_write32__nolock__(ioapic, reg, lodword);
-	}
-
-	ticket_lock_signal( &lock );
-}
-
 sint8_t ioapic_setmask_irq(uint8_t irq, sint8_t mask) {
 
 	if(mask)
