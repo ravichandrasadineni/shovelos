@@ -54,7 +54,7 @@ extern struct page_table_mem kernel_page_tables;
 #define VIRT_OFFSET 0xFFFF800000000000
 
 /*** pointer arithmetic ***/
-#define PHY_TO_VIRT(phy, _type) ((_type)(((uint8_t*)phy) + VIRT_OFFSET))
+#define PHY_TO_VIRT(phy, _type) ((_type)(((uint8_t*)(uint64_t)phy) + VIRT_OFFSET))
 
 #define VIRT_KERNEL_BASE 0xFFFFFFFF80000000
 
