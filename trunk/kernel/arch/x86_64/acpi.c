@@ -7,7 +7,7 @@
 
 #include<mm/mm.h>
 #include<arch/arch.h>
-#include<lib/string.h>
+#include<lib/lib.h>
 
 struct rsdp_header {
 
@@ -30,6 +30,40 @@ struct rsdp_header {
 
 } __attribute__((packed));
 
+
+struct _header {
+
+	sint8_t signature[4];
+	uint32_t length;
+	uint8_t revision;
+	uint8_t checksum;
+	sint8_t oemid[6];
+	sint8_t oem_table_id[8];
+	uint32_t oem_revision;
+	sint8_t creator_id[4];
+	uint32_t creator_revision;
+
+} __attribute__((packed)) ;
+
+struct rsdt_struct {
+
+	struct _header header;
+	uint32_t entry0;
+}__attribute__((packed)) ;
+
+struct xstd_struct {
+
+	struct _header header;
+	uint64_t entry0;
+}__attribute__((packed)) ;
+
+struct madt_struct {
+
+	struct _header header;
+	uint32_t local_apic_address;
+	uint32_t flags;
+
+}__attribute__((packed)) ;
 
 static uint8_t sum(const void * _data, uint64_t len) {
 
@@ -105,13 +139,60 @@ static const struct rsdp_header* find_rsdp() {
 	return (const struct rsdp_header*)0;
 }
 
+static const struct rsdt_struct* find_rsdt( const struct rsdp_header * rsdp ) {
+
+	const struct rsdt_struct * rsdt =
+			PHY_TO_VIRT( (uint64_t)rsdp->ver1.rsdt_address, const struct rsdt_struct *);
+
+	if(memcmp(rsdt->header.signature ,"RSDT",4)!=0)
+			return 0; // no magic!
+
+	if(sum(rsdt, rsdt->header.length) != 0)
+			return 0; // corrupt or invalid.
+
+	return (const struct rsdt_struct *)rsdt;
+}
+
+static void dump_info(const struct rsdt_struct * rsdt) {
+
+	uint64_t ents = (rsdt->header.length - sizeof rsdt->header) / 4;
+
+	for(uint64_t i = 0; i<ents; i++) {
+
+//		const uint32_t * p0 	= &(rsdt->entry0);
+//		uint32_t padd 	= p0[i];
+//		uint32_t *paddp = (uint32_t *)(uint64_t)padd;
+//		sint8_t *sig = PHY_TO_VIRT(paddp,sint8_t *);
+
+		sint8_t *sig = PHY_TO_VIRT((&rsdt->entry0)[i],sint8_t *);
+
+		kprintf("DESC HEADER %c%c%c%c\n",sig[0],sig[1],sig[2],sig[3]);
+	}
+}
+
 sint8_t acpi_init() {
 
 	const struct rsdp_header * rsdp;
+	const struct rsdt_struct * rsdt;
 
 	if(!(rsdp = find_rsdp())) {
 		return -1;
 	}
+
+	kprintf("RSDP %c%c%c%c%c%c\n",
+			rsdp->ver1.oemid[0],rsdp->ver1.oemid[1],rsdp->ver1.oemid[2],rsdp->ver1.oemid[3],rsdp->ver1.oemid[4],rsdp->ver1.oemid[5]);
+	kprintf("    revision %d\n", rsdp->ver1.revision);
+
+	if(rsdp->ver1.revision > 0)
+	{
+		HALT("TODO: parse xsdt instead of srdt");
+	}
+
+	if(!(rsdt = find_rsdt(rsdp))) {
+		return -1;
+	}
+
+	dump_info(rsdt);
 
 	return 0;
 }
