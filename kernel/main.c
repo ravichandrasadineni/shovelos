@@ -28,16 +28,11 @@ int main(struct mm_phy_reg *reg, uint64_t len, void (*boot_aux_cpu)())  {
 	pt_initialise(reg,len);		/*** retire boot-loaders page tables ***/
 	_x86_64_load_gdt();			/*** retire boot-loaders gdt ***/
 	_x86_64_load_idt();			/*** retire boot-loaders idt ***/
-	acpi_init();				/*** parse acpi tables ***/
 	lapic_configure();			/*** configure the local-apic ***/
 	ioapic_configure();			/*** configure the io-apic ***/
-
+	hpet_init();				/*** configure HPET ***/
 
 	kprintf("shovelos.kernel - \"HELLO WORLD!\"\n");
-
-	lapic_ipi_start(1,boot_aux_cpu);
-
-	kprintf("aux_cpu bootstrap code @ phy 0x%x\n", boot_aux_cpu);
 
 	kprintf("#> ");
 

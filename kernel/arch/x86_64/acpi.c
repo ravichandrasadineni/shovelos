@@ -142,7 +142,7 @@ static const struct rsdp_header* find_rsdp() {
 	return (const struct rsdp_header*)0;
 }
 
-static const struct xsdr_struct* find_xsdt( void ) {
+static const struct xsdt_struct* find_xsdt( void ) {
 
 	const struct rsdp_header * rsdp = find_rsdp();
 
@@ -182,54 +182,53 @@ static const struct rsdt_struct* find_rsdt( void ) {
 	return rsdt;
 }
 
-static void* acpi_find_next_table_revX(void *last, const char *target_sig, struct _header *header,uint8_t addrsize) {
+static void* acpi_find_next_table_revX(const void *last, const char *target_sig, const struct _header *header,uint8_t addrsize) {
 
-	if(!header)
+	if(!header || !target_sig)
 		return 0;
 
-	uint64_t ents = (header->length - sizeof *header) / addrsize;
-	uint8_t  returnflag = (!last) ? 1 : 0;
+	uint64_t 	ents 		= (header->length - sizeof *header) / addrsize;
+	uint8_t  	returnflag 	= (!last) ? 1 : 0;
+	uint32_t*	entry0 		= (uint32_t*)(header+1);
 
-	uint8_t * entry0 = PHY_TO_VIRT(((uint8_t*)header) + (sizeof *header),uint8_t *);
+	for(uint32_t* entry = entry0; ((uint64_t)entry) < ((uint64_t)(entry0 + ents * (addrsize/sizeof *entry))); entry += (addrsize/sizeof *entry)) {
 
-	for(uint64_t i = 0; i<ents; i++) {
+		uint64_t phy_addr = 0;
 
-		uint8_t *sig = 0;
-		if(addrsize == 8)
-			sig = (uint8_t*)(uint64_t)(*((uint64_t*)entry0));
-		else
-			sig = (uint8_t*)(uint64_t)(*((uint32_t*)entry0));
+		memcpy(&phy_addr, entry, addrsize);
 
-		if(memcmp(sig, target_sig, 4)==0) {
+		uint8_t *virt_addr = PHY_TO_VIRT(phy_addr, uint8_t *);
+
+//		kprintf("acpi found %c%c%c%c\n",virt_addr[0],virt_addr[1],virt_addr[2],virt_addr[3]);
+
+		if(memcmp(virt_addr, target_sig, 4)==0) {
 
 			if(returnflag)
-				return sig;
-			else if(sig==last)
+				return virt_addr;
+			else if(virt_addr==last)
 				returnflag = 1;
 		}
-
-		entry0 += addrsize;
 	}
 	return 0;
 }
 
-static void* acpi_find_next_table_rev0(void *last, const char *header) {
+static const void* acpi_find_next_table_rev0(const void *last, const char *header) {
 
 	const struct rsdt_struct * rsdt = find_rsdt( );
 
 	return acpi_find_next_table_revX(last, header, &rsdt->header, sizeof rsdt->entry0);
 }
 
-static void* acpi_find_next_table_rev1(void *last, const char *header) {
+static const void* acpi_find_next_table_rev1(const void *last, const char *header) {
 
 	const struct xsdt_struct * xsdt = find_xsdt( );
 
 	return acpi_find_next_table_revX(last, header, &xsdt->header, sizeof xsdt->entry0);
 }
 
-void* acpi_find_next_table(void *last, const char *header) {
+const void* acpi_find_next_table(const void *last, const char *header) {
 
-	struct rsdp_header* rsdp = find_rsdp();
+	const struct rsdp_header* rsdp = find_rsdp();
 
 	if(!rsdp)
 		return 0;
@@ -240,8 +239,8 @@ void* acpi_find_next_table(void *last, const char *header) {
 	return acpi_find_next_table_rev1(last,header);
 }
 
-void *acpi_find_first_table(const char * header) {
+const void *acpi_find_first_table(const char * header) {
 
-	return find_next_hpet_table(0, header);
+	return acpi_find_next_table(0, header);
 }
 

@@ -6,6 +6,7 @@
  */
 
 #include<arch/arch.h>
+#include<lib/lib.h>
 
 #define INTERRUPT(vector) \
 	__asm__(".global x86_64_isr_vector" #vector "\n"\
@@ -81,8 +82,7 @@ void x86_64_handle_isr_vector0(struct isr_stack_frame *stack) {
 	kprintf("    CS:0x%x\n",stack->cs);
 	kprintf("   RIP:0x%x\n",stack->rip);
 
-	kprintf("HALT\n");
-	for(;;);
+	HALT("");
 }
 
 void x86_64_handle_isr_vector8(struct isr_error_stack_frame *stack) {
@@ -91,8 +91,8 @@ void x86_64_handle_isr_vector8(struct isr_error_stack_frame *stack) {
 	kprintf("   ERR:%d\n",stack->error);
 	kprintf("    CS:0x%x\n",stack->cs);
 	kprintf("   RIP:0x%lx\n",stack->rip);
-	kprintf("HALT\n");
-	for(;;);
+
+	HALT("");
 }
 
 // TODO - what does thispush onto the stack ?
@@ -102,8 +102,7 @@ void x86_64_handle_isr_vector11(struct isr_error_stack_frame *stack) {
 	kprintf("    CS:0x%x\n",stack->cs);
 	kprintf("   RIP:0x%lx\n",stack->rip);
 
-	kprintf("HALT\n");
-	for(;;);
+	HALT("");
 }
 
 void x86_64_handle_isr_vector13(struct isr_error_stack_frame *stack) {
@@ -112,8 +111,7 @@ void x86_64_handle_isr_vector13(struct isr_error_stack_frame *stack) {
 	kprintf("    CS:0x%x\n",stack->cs);
 	kprintf("   RIP:0x%lx\n",stack->rip);
 
-	kprintf("HALT\n");
-	for(;;);
+	HALT("");
 }
 
 void x86_64_handle_isr_vector14(struct isr_pf_stack_frame *stack) {
@@ -147,8 +145,7 @@ void x86_64_handle_isr_vector14(struct isr_pf_stack_frame *stack) {
 		kprintf("            CS : 0x%x\n", stack->cs);
 		kprintf("           RIP : 0x%lx\n",stack->rip);
 
-		kprintf("HALT\n");
-		for(;;);
+		HALT("");
 	}
 }
 
