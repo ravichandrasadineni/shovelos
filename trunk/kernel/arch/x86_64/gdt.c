@@ -25,8 +25,8 @@
 static uint64_t gdt[] = {
 
     0,                      /*** NULL descriptor ***/
-    GDT_CS | P | DPL0 | L,  /*** code segment descriptor ***/
-    GDT_DS | P | W,         /*** data segment descriptor ***/
+    GDT_CS | P | DPL0 | L,  /*** kernel code segment descriptor ***/
+    GDT_DS | P | W,         /*** kernel data segment descriptor ***/
 };
 
 struct gdtr_t {
