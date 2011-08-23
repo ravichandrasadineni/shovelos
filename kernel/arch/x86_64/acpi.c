@@ -1,6 +1,9 @@
 /*
  * acpi.c
  *
+ *  MINIMAL acpi implementation.
+ *  we just need to be able to find hardware vital for booting ( HPET )
+ *
  *  Created on: Jan 23, 2011
  *      Author: cds
  */
@@ -51,7 +54,7 @@ struct rsdt_struct {
 	uint32_t entry0;
 }__attribute__((packed)) ;
 
-struct xstd_struct {
+struct xsdt_struct {
 
 	struct _header header;
 	uint64_t entry0;
@@ -139,10 +142,36 @@ static const struct rsdp_header* find_rsdp() {
 	return (const struct rsdp_header*)0;
 }
 
-static const struct rsdt_struct* find_rsdt( const struct rsdp_header * rsdp ) {
+static const struct xsdr_struct* find_xsdt( void ) {
+
+	const struct rsdp_header * rsdp = find_rsdp();
+
+	if(rsdp->ver1.revision == 0) {
+		HALT("trying to use xsdt, when rsdp revision is 0");
+	}
+
+	const struct xsdt_struct * xsdt =
+		PHY_TO_VIRT( rsdp->ver2.xsdt_address, const struct xsdt_struct *);
+
+	if(memcmp(xsdt->header.signature ,"XSDT",4)!=0)
+		return 0; // no magic!
+
+	if(sum(xsdt, xsdt->header.length) != 0)
+		return 0; // corrupt or invalid
+
+	return xsdt;
+}
+
+static const struct rsdt_struct* find_rsdt( void ) {
+
+	const struct rsdp_header * rsdp = find_rsdp();
+
+	if(rsdp->ver1.revision > 0) {
+		HALT("trying to use rsdt, when xsdt is available!");
+	}
 
 	const struct rsdt_struct * rsdt =
-			PHY_TO_VIRT( (uint64_t)rsdp->ver1.rsdt_address, const struct rsdt_struct *);
+		PHY_TO_VIRT( rsdp->ver1.rsdt_address, const struct rsdt_struct *);
 
 	if(memcmp(rsdt->header.signature ,"RSDT",4)!=0)
 			return 0; // no magic!
@@ -150,51 +179,69 @@ static const struct rsdt_struct* find_rsdt( const struct rsdp_header * rsdp ) {
 	if(sum(rsdt, rsdt->header.length) != 0)
 			return 0; // corrupt or invalid.
 
-	return (const struct rsdt_struct *)rsdt;
+	return rsdt;
 }
 
-static void dump_info(const struct rsdt_struct * rsdt) {
+static void* acpi_find_next_table_revX(void *last, const char *target_sig, struct _header *header,uint8_t addrsize) {
 
-	uint64_t ents = (rsdt->header.length - sizeof rsdt->header) / 4;
+	if(!header)
+		return 0;
+
+	uint64_t ents = (header->length - sizeof *header) / addrsize;
+	uint8_t  returnflag = (!last) ? 1 : 0;
+
+	uint8_t * entry0 = PHY_TO_VIRT(((uint8_t*)header) + (sizeof *header),uint8_t *);
 
 	for(uint64_t i = 0; i<ents; i++) {
 
-//		const uint32_t * p0 	= &(rsdt->entry0);
-//		uint32_t padd 	= p0[i];
-//		uint32_t *paddp = (uint32_t *)(uint64_t)padd;
-//		sint8_t *sig = PHY_TO_VIRT(paddp,sint8_t *);
+		uint8_t *sig = 0;
+		if(addrsize == 8)
+			sig = (uint8_t*)(uint64_t)(*((uint64_t*)entry0));
+		else
+			sig = (uint8_t*)(uint64_t)(*((uint32_t*)entry0));
 
-		sint8_t *sig = PHY_TO_VIRT((&rsdt->entry0)[i],sint8_t *);
+		if(memcmp(sig, target_sig, 4)==0) {
 
-		kprintf("DESC HEADER %c%c%c%c\n",sig[0],sig[1],sig[2],sig[3]);
+			if(returnflag)
+				return sig;
+			else if(sig==last)
+				returnflag = 1;
+		}
+
+		entry0 += addrsize;
 	}
-}
-
-sint8_t acpi_init() {
-
-	const struct rsdp_header * rsdp;
-	const struct rsdt_struct * rsdt;
-
-	if(!(rsdp = find_rsdp())) {
-		return -1;
-	}
-
-	kprintf("RSDP %c%c%c%c%c%c\n",
-			rsdp->ver1.oemid[0],rsdp->ver1.oemid[1],rsdp->ver1.oemid[2],rsdp->ver1.oemid[3],rsdp->ver1.oemid[4],rsdp->ver1.oemid[5]);
-	kprintf("    revision %d\n", rsdp->ver1.revision);
-
-	if(rsdp->ver1.revision > 0)
-	{
-		HALT("TODO: parse xsdt instead of srdt");
-	}
-
-	if(!(rsdt = find_rsdt(rsdp))) {
-		return -1;
-	}
-
-	dump_info(rsdt);
-
 	return 0;
 }
 
+static void* acpi_find_next_table_rev0(void *last, const char *header) {
+
+	const struct rsdt_struct * rsdt = find_rsdt( );
+
+	return acpi_find_next_table_revX(last, header, &rsdt->header, sizeof rsdt->entry0);
+}
+
+static void* acpi_find_next_table_rev1(void *last, const char *header) {
+
+	const struct xsdt_struct * xsdt = find_xsdt( );
+
+	return acpi_find_next_table_revX(last, header, &xsdt->header, sizeof xsdt->entry0);
+}
+
+void* acpi_find_next_table(void *last, const char *header) {
+
+	struct rsdp_header* rsdp = find_rsdp();
+
+	if(!rsdp)
+		return 0;
+
+	if(rsdp->ver1.revision == 0)
+		return acpi_find_next_table_rev0(last,header);
+
+	return acpi_find_next_table_rev1(last,header);
+}
+
+void *acpi_find_first_table(const char * header) {
+
+	return find_next_hpet_table(0, header);
+}
 

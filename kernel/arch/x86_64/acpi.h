@@ -8,6 +8,8 @@
 #ifndef ACPI_H_
 #define ACPI_H_
 
-sint8_t acpi_init();
+void* acpi_find_first_table(const char * header);
+void* acpi_find_next_table(void *last, const char * header);
 
 #endif /* ACPI_H_ */
+
