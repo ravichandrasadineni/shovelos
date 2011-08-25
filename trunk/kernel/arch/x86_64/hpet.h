@@ -12,4 +12,12 @@
 
 uint8_t hpet_init(void);
 
+/*** busy waits ***/
+void hpet_wait_picoseconds(uint64_t picoseconds);
+void hpet_wait_nanoseconds(uint64_t nanoseconds);
+void hpet_wait_microseconds(uint64_t microseconds);
+void hpet_wait_milliseconds(uint64_t milliseconds);
+void hpet_wait_seconds(uint64_t seconds);
+
 #endif /* HPET_H_ */
+

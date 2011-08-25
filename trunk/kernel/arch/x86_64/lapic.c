@@ -165,7 +165,7 @@ static uint64_t lapic_set_phy_address(uint64_t phy) {
 	return lapic_get_phy_address();
 }
 */
-static struct local_apic_struct * lapic_mmap() {
+static volatile struct local_apic_struct * lapic_mmap() {
 
 	uint64_t phy = lapic_get_phy_address();
 	//uint64_t off = phy & (PAGE_SIZE-1);
@@ -175,11 +175,10 @@ static struct local_apic_struct * lapic_mmap() {
 
 	uint64_t virt = (uint64_t)vmm_alloc_hw(pages);
 
-
 	for(uint64_t i=0; i<pages; i++)
 		mmap((phy + i*PAGE_SIZE ) & ~(PAGE_SIZE-1), virt + PAGE_SIZE*i, 0);
 
-	struct local_apic_struct *s = (struct local_apic_struct *)(virt + (phy & (PAGE_SIZE-1)));
+	volatile struct local_apic_struct *s = (volatile struct local_apic_struct *)(virt + (phy & (PAGE_SIZE-1)));
 
 	return s;
 }
