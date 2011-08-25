@@ -7,6 +7,7 @@
 
 #include<arch/arch.h>
 #include<lib/lib.h>
+#include<mm/mm.h>
 
 struct  event_timer_block_id {
 
@@ -115,7 +116,7 @@ static void hpet_write_register(volatile uint64_t *hpet_base, enum hpet_register
 	hpet_base[reg] = val;
 }
 
-static void hpet_set_register_bits(volatile uint64_t *hpet_base, enum hpet_registers reg, uint64_t bits) {
+/*static*/ void hpet_set_register_bits(volatile uint64_t *hpet_base, enum hpet_registers reg, uint64_t bits) {
 
 	hpet_write_register(hpet_base, reg,
 		hpet_read_register(hpet_base, reg) | bits);
@@ -127,27 +128,35 @@ static void hpet_clear_register_bits(volatile uint64_t *hpet_base, enum hpet_reg
 		hpet_read_register(hpet_base, reg) & ~bits);
 }
 
-static void hpet_update_register_bits(volatile uint64_t *hpet_base, enum hpet_register reg, uint64_t clear, uint64_t set) {
+/*static */void hpet_update_register_bits(volatile uint64_t *hpet_base, enum hpet_registers reg, uint64_t clear, uint64_t set) {
 
 	hpet_write_register(hpet_base, reg,
 			(hpet_read_register(hpet_base, reg) | set) & ~clear);
 }
 
+static uint64_t hpet_clock_period(volatile uint64_t *hpet_base) {
+
+	uint64_t reg = hpet_read_register(hpet_base, hpet_general_cap_reg);
+
+	return reg >> 32;
+}
+
 volatile uint64_t *hpet_base = 0;
 
 
-// 1x10^15 (10,000,000,000,000,000) femtoseconds in a second
-// soooo... on a 64bit timer, wraps around every approx 5 hours ???
-
 void hpet_wait_femtoseconds(uint64_t femtoseconds) {
 
-	if(!femtoseconds)
+	uint64_t period = hpet_clock_period(hpet_base);
+
+	uint64_t ticks = femtoseconds / period;
+
+	if(!ticks)
 		return;
 
 	uint64_t timenow  	= hpet_read_register(hpet_base, hpet_main_counter);
-	uint64_t timeafter 	= timenow + femtoseconds;
+	uint64_t timeafter 	= timenow + ticks;
 
-	if(timeafter < femtoseconds) {
+	if(timeafter < timenow) {
 
 		// need to wait for wrap around
 		while(hpet_read_register(hpet_base, hpet_main_counter) >= timenow) {
@@ -190,7 +199,12 @@ void hpet_wait_milliseconds(uint64_t milliseconds) {
 
 void hpet_wait_seconds(uint64_t seconds) {
 
-	hpet_wait_femtoseconds(seconds * 10000000000000000);
+	hpet_wait_femtoseconds(seconds * 1000000000000000);
+}
+
+uint64_t hpet_read_main_counter(void) {
+
+	return hpet_read_register(hpet_base, hpet_main_counter);
 }
 
 uint8_t hpet_init(void) {
@@ -212,8 +226,8 @@ uint8_t hpet_init(void) {
 	// zero counter
 	hpet_write_register( hpet_base, hpet_main_counter, 0);
 
-	//start ticking
-	hpet_set_register_bits( hpet_base, hpet_general_conf_reg, hpet_general_conf_general_enable );
+	//start ticking and kill legacy emulation.
+	hpet_update_register_bits( hpet_base, hpet_general_conf_reg, hpet_general_conf_legacy_replacement, hpet_general_conf_general_enable );
 
 	return 0;
 }

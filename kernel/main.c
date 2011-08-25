@@ -9,6 +9,7 @@
 #include <arch/arch.h>
 #include <mm/mm.h>
 #include <arch/arch.h>
+#include <lib/lib.h>
 
 static int running_processors = 0;
 
@@ -23,14 +24,25 @@ int main(struct mm_phy_reg *reg, uint64_t len, void (*boot_aux_cpu)())  {
 	bsp = FALSE;
 
 	kbc_initialise();
-	_8259_disable();			/*** kill the legacy pic ***/
-	mm_phy_init(reg,len); 		/*** initialise physical memory manager ***/
-	pt_initialise(reg,len);		/*** retire boot-loaders page tables ***/
-	_x86_64_load_gdt();			/*** retire boot-loaders gdt ***/
-	_x86_64_load_idt();			/*** retire boot-loaders idt ***/
-	lapic_configure();			/*** configure the local-apic ***/
-	ioapic_configure();			/*** configure the io-apic ***/
-	hpet_init();				/*** configure HPET ***/
+	_8259_disable();				/*** kill the legacy pic ***/
+	mm_phy_init(reg,len); 			/*** initialise physical memory manager ***/
+	pt_initialise(reg,len);			/*** retire boot-loaders page tables ***/
+	_x86_64_load_gdt();				/*** retire boot-loaders gdt ***/
+	_x86_64_load_idt();				/*** retire boot-loaders idt ***/
+	lapic_configure();				/*** configure the local-apic ***/
+	ioapic_configure();				/*** configure the io-apic ***/
+
+
+	if(hpet_init() != 0) {
+
+		kprintf("OOPS, no HPET hardware!\n");
+		kprintf("    are you using BOCHS?\n");
+		kprintf("    Try qemu!\n");
+		HALT("");
+	}
+
+
+	lapic_ipi_start(1, boot_aux_cpu);
 
 	kprintf("shovelos.kernel - \"HELLO WORLD!\"\n");
 
@@ -38,12 +50,17 @@ int main(struct mm_phy_reg *reg, uint64_t len, void (*boot_aux_cpu)())  {
 
 	for(;;) {
 
-		sint32_t c = kbc_readchar();
+		hpet_wait_seconds(2);
 
-		if(c>=0) {
+		kprintf("X");
+
+		sint32_t c;
+
+		while((c = kbc_readchar())>=0) {
 			kprintf("%c",c);
-			if(c=='\n')
-				kprintf("#> ");
+			if(c=='\n') {
+				kprintf("(0x%x)#> ", running_processors);
+			}
 		}
 	}
 	return 0;

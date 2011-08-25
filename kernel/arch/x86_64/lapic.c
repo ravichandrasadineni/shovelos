@@ -87,7 +87,9 @@ enum lapic_ipi_enum {
 	LAPIC_IPI_TRIGGERMODE_EDGE  = 0,
 	LAPIC_IPI_TRIGGERMODE_LEVEL = 1,
 
+	LAPIC_IPI_MESSAGETYPE_INIT = 5,
 	LAPIC_IPI_MESSAGETYPE_STARTUP = 6,
+
 
 	LAPIC_DESTINATION_MODE_LOGICAL = 1,
 	LAPIC_DESTINATION_MODE_PHYSICAL = 0,
@@ -99,16 +101,37 @@ volatile struct local_apic_struct *lapic = 0;
 void lapic_ipi_start(uint8_t lapic_id, void* address) {
 
 	lapic_ipi_register reg;
-	memset(&reg,0, sizeof reg);
 
+
+	// INIT
+	memset(&reg,0, sizeof reg);
+	reg.bits.trigger_mode = LAPIC_IPI_TRIGGERMODE_LEVEL;
+	reg.bits.message_type = LAPIC_IPI_MESSAGETYPE_INIT;
+	reg.bits.destination_mode = LAPIC_DESTINATION_MODE_PHYSICAL;
+	reg.bits.destination = lapic_id;
+	lapic->interrupt_command[1]._register = (uint32_t)((reg._register) >> 32);
+	lapic->interrupt_command[0]._register = (uint32_t)((reg._register) >>  0);
+
+	hpet_wait_milliseconds(10);
+
+	memset(&reg,0, sizeof reg);
 	reg.bits.vector = (uint8_t)((((uint64_t)address) >> 12) & 0xff );
 	reg.bits.trigger_mode = LAPIC_IPI_TRIGGERMODE_EDGE;
 	reg.bits.message_type = LAPIC_IPI_MESSAGETYPE_STARTUP;
 	reg.bits.destination_mode = LAPIC_DESTINATION_MODE_PHYSICAL;
 	reg.bits.destination = lapic_id;
 
+	// SIPI 1
 	lapic->interrupt_command[1]._register = (uint32_t)((reg._register) >> 32);
 	lapic->interrupt_command[0]._register = (uint32_t)((reg._register) >>  0);
+
+	hpet_wait_microseconds(200);
+
+	// SIPI 2
+	lapic->interrupt_command[1]._register = (uint32_t)((reg._register) >> 32);
+	lapic->interrupt_command[0]._register = (uint32_t)((reg._register) >>  0);
+
+	hpet_wait_microseconds(200);
 }
 
 static void lapic_global_enable() {

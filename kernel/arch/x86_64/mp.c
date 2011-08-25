@@ -230,3 +230,10 @@ const struct mp_local_interrupt_assignment* mp_find_next_local_interrupt( const 
 	return (const struct mp_local_interrupt_assignment*)mp_find_next_(LocalInterruptAssignment, last);
 }
 
+
+
+
+
+
+
+
