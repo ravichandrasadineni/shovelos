@@ -21,10 +21,11 @@
 #include "mp.h"
 #include "console.h"
 #include "ioapic.h"
-#include "lapic.h"
+#include "lapic/lapic.h"
 #include "kbc.h"
 #include "ports.h"
 #include "kbc_scancodes.h"
+#include "isr.h"
 
 struct isr_error_stack_frame
 {

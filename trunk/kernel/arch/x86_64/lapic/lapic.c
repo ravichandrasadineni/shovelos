@@ -5,9 +5,7 @@
  *      Author: cds
  */
 
-#include "lapic.h"
-#include "msr.h"
-#include "pt.h"
+#include<arch/arch.h>
 #include<lib/lib.h>
 #include<mm/mm.h>
 
@@ -89,7 +87,6 @@ enum lapic_ipi_enum {
 
 	LAPIC_IPI_MESSAGETYPE_INIT = 5,
 	LAPIC_IPI_MESSAGETYPE_STARTUP = 6,
-
 
 	LAPIC_DESTINATION_MODE_LOGICAL = 1,
 	LAPIC_DESTINATION_MODE_PHYSICAL = 0,
