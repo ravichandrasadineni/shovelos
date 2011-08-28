@@ -134,19 +134,19 @@ static void hpet_clear_register_bits(volatile uint64_t *hpet_base, enum hpet_reg
 			(hpet_read_register(hpet_base, reg) | set) & ~clear);
 }
 
-static uint64_t hpet_clock_period(volatile uint64_t *hpet_base) {
+volatile uint64_t *hpet_base = 0;
+
+uint64_t hpet_clock_period(void) {
 
 	uint64_t reg = hpet_read_register(hpet_base, hpet_general_cap_reg);
 
 	return reg >> 32;
 }
 
-volatile uint64_t *hpet_base = 0;
-
 
 void hpet_wait_femtoseconds(uint64_t femtoseconds) {
 
-	uint64_t period = hpet_clock_period(hpet_base);
+	uint64_t period = hpet_clock_period();
 
 	uint64_t ticks = femtoseconds / period;
 

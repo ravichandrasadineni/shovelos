@@ -199,8 +199,6 @@ static void* acpi_find_next_table_revX(const void *last, const char *target_sig,
 
 		uint8_t *virt_addr = PHY_TO_VIRT(phy_addr, uint8_t *);
 
-//		kprintf("acpi found %c%c%c%c\n",virt_addr[0],virt_addr[1],virt_addr[2],virt_addr[3]);
-
 		if(memcmp(virt_addr, target_sig, 4)==0) {
 
 			if(returnflag)
