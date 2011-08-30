@@ -118,8 +118,9 @@ void x86_64_handle_isr_vector14(struct isr_pf_stack_frame *stack) {
 
 	uint64_t vaddr = cpu_read_cr2();
 	uint64_t   pde = virt_to_pde(vaddr);
-	uint64_t stale_tlb = 1;
+//	uint64_t stale_tlb = 1;
 
+	/*
 	if(stack->error.error.p && !(pde & PT_PRESENT_FLAG))
 		stale_tlb = 0; // real page fault on present status.
 
@@ -134,6 +135,7 @@ void x86_64_handle_isr_vector14(struct isr_pf_stack_frame *stack) {
 		cpu_invlpg((uint64_t*)vaddr);
 	}
 	else {
+	*/
 		kprintf("PAGE FAULT!\n");
 		kprintf("          pde  : 0x%lx\n", pde);
 		kprintf("     v-address : 0x%lx\n", vaddr);
@@ -146,7 +148,7 @@ void x86_64_handle_isr_vector14(struct isr_pf_stack_frame *stack) {
 		kprintf("           RIP : 0x%lx\n",stack->rip);
 
 		HALT("");
-	}
+//	}
 }
 
 

@@ -17,6 +17,7 @@
 #include "pt.h"
 #include "semaphore.h"
 #include "acpi/acpi.h"
+#include "cpu/cpu.h"
 #include "hpet.h"
 #include "mp.h"
 #include "console.h"

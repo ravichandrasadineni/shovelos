@@ -10,7 +10,7 @@
 
 #include <inttypes.h>
 
-uint16_t ioapic_detect();
+uint64_t ioapic_detect();
 uint16_t ioapic_configure();
 
 sint8_t ioapic_setmask_irq(uint8_t irq, sint8_t mask);

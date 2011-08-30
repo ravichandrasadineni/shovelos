@@ -216,7 +216,8 @@ uint8_t hpet_init(void) {
 	hpet_write_register( hpet_base, hpet_main_counter, 0);
 
 	//start ticking and kill legacy emulation.
-	hpet_update_register_bits( hpet_base, hpet_general_conf_reg, hpet_general_conf_legacy_replacement, hpet_general_conf_general_enable );
+	hpet_clear_register_bits ( hpet_base, hpet_general_conf_reg, hpet_general_conf_legacy_replacement);
+	hpet_set_register_bits( hpet_base, hpet_general_conf_reg, hpet_general_conf_general_enable );
 
 	return 0;
 }

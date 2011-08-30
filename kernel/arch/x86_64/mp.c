@@ -5,6 +5,9 @@
  *  Author: cds ( chris.stones _AT_ gmail.com )
  */
 
+/*** DROPPED IN FAVOR OF APCI ***/
+#if(0)
+
 #include<mm/mm.h>
 #include<arch/arch.h>
 #include<lib/string.h>
@@ -230,10 +233,7 @@ const struct mp_local_interrupt_assignment* mp_find_next_local_interrupt( const 
 	return (const struct mp_local_interrupt_assignment*)mp_find_next_(LocalInterruptAssignment, last);
 }
 
-
-
-
-
+#endif
 
 
 

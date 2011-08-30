@@ -414,7 +414,6 @@ void _x86_64_load_idt() {
 	SET_ISR(64); // KBC IRQ
 
 	cpu_lidt(&idtr);
-	cpu_sti();
 }
 
 
