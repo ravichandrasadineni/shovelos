@@ -23,15 +23,20 @@ int main(struct mm_phy_reg *reg, uint64_t len, void (*boot_aux_cpu)())  {
 		for(;;);
 	bsp = FALSE;
 
+	_x86_64_load_gdt();				/*** retire boot-loaders gdt ***/
+	_x86_64_load_idt();				/*** retire boot-loaders idt ***/
+
 	kbc_initialise();
 	_8259_disable();				/*** kill the legacy pic ***/
 	mm_phy_init(reg,len); 			/*** initialise physical memory manager ***/
 	pt_initialise(reg,len);			/*** retire boot-loaders page tables ***/
-	_x86_64_load_gdt();				/*** retire boot-loaders gdt ***/
-	_x86_64_load_idt();				/*** retire boot-loaders idt ***/
-	lapic_configure();				/*** configure the local-apic ***/
-	ioapic_configure();				/*** configure the io-apic ***/
 
+	ioapic_configure();				/*** configure the io-apic ***/
+	lapic_configure();				/*** configure the local-apic ***/
+
+	cpu_sti();
+
+	cpu_initialise();
 
 	if(hpet_init() != 0) {
 
@@ -42,7 +47,7 @@ int main(struct mm_phy_reg *reg, uint64_t len, void (*boot_aux_cpu)())  {
 	}
 
 
-	lapic_ipi_start(1, boot_aux_cpu);
+//	lapic_ipi_start(1, boot_aux_cpu);
 
 	kprintf("shovelos.kernel - \"HELLO WORLD!\"\n");
 

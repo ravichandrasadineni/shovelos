@@ -5,6 +5,9 @@
  *      Author: cds
  */
 
+/*** DROPPED IN FAVOR OF APCI ***/
+#if(0)
+
 #ifndef MP_H_
 #define MP_H_
 
@@ -84,4 +87,8 @@ const struct mp_io_interrupt_assignment* 		mp_find_next_io_interrupt		( const st
 const struct mp_local_interrupt_assignment* 	mp_find_next_local_interrupt	( const struct mp_local_interrupt_assignment 	*last );
 
 #endif /* MP_H_ */
+
+#endif
+
+
 

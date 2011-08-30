@@ -15,8 +15,9 @@ volatile struct local_apic_struct *lapic = 0;
 
 void lapic_ipi_start(uint8_t lapic_id, void* address) {
 
-	lapic_ipi_register reg;
+	HALT("");
 
+	lapic_ipi_register reg;
 
 	// INIT
 	memset(&reg,0, sizeof reg);
@@ -127,10 +128,17 @@ void lapic_eoi(uint32_t vector) {
 	lapic->end_of_interrupt._register = vector;
 }
 
+uint64_t lapic_id()
+{
+	return lapic->id._register;
+}
+
 void lapic_configure() {
 
 	if(!lapic)
 		lapic = lapic_mmap();
+
+//	kprintf("lapic @ 0x%lx\n", lapic);
 
 	lapic_global_enable();
 	lapic_enable_stolen(); // TODO: understand this ?

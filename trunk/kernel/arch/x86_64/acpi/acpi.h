@@ -8,7 +8,7 @@
 #ifndef ACPI_H_
 #define ACPI_H_
 
-struct apci_header {
+struct acpi_header {
 
 	sint8_t signature[4];
 	uint32_t length;
@@ -22,7 +22,7 @@ struct apci_header {
 
 } __attribute__((packed)) ;
 
-#include "lapic.h"
+#include "apic.h"
 
 const void* acpi_find_first_table(const char * header);
 const void* acpi_find_next_table(const void *last, const char * header);

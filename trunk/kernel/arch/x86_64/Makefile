@@ -1,7 +1,7 @@
 .PHONY: clean
 .SECONDARY:
 
-LIBS    = lapic/lapic.a acpi/acpi.a
+LIBS    = lapic/lapic.a acpi/acpi.a cpu/cpu.a
 SRC64_C = gdt.c idt.c console.c 8259.c pt.c mp.c ioapic.c ticket_lock.c isr.c kbc.c kbc_scancodes.c hpet.c
 SRC64_S = gdt.s 
 
@@ -24,12 +24,16 @@ lapic/lapic.a:
 	
 acpi/acpi.a:
 	@make -C acpi acpi.a
-	
+
+cpu/cpu.a:
+	@make -C cpu cpu.a
+
 clean:
 	@rm -f *~
 	@rm -f *.o
 	@rm -f *.a
 	@make -C lapic clean
 	@make -C acpi clean
+	@make -C cpu clean
 
 	

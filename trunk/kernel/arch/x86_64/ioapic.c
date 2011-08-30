@@ -8,6 +8,7 @@
 #include <inttypes.h>
 #include <lib/lib.h>
 #include <mm/mm.h>
+#include <arch/arch.h>
 #include "ioapic.h"
 #include "mp.h"
 #include "pt.h"
@@ -185,15 +186,13 @@ static inline uint64_t io_apic_read64(void* ioapic_base, enum ioapic_reg reg) {
 	return retlo | (rethi<<32);
 }
 
-uint16_t ioapic_detect() {
+uint64_t ioapic_detect() {
 
-    uint16_t count = 0;
+    uint64_t count = 0;
 
-    /*** todo: there are other ways to find the ioapic ***/
-    for (const struct mp_ioapic *ioapic  = mp_find_first_io_apic();
-            ioapic != 0;
-            ioapic  = mp_find_next_io_apic( ioapic )) {
-        ++count;
+    for(uint64_t id = acpi_find_first_ioapic_id(); id != (uint64_t)-1; id = acpi_find_next_ioapic_id(id)) {
+
+    	++count;
     }
 
     return count;
@@ -206,6 +205,8 @@ static void config(uint64_t phy_addr) {
     uint64_t red_ent = 0;
 
     if(!ioapic) {
+
+    	kprintf("found ioapic @ 0x%lx\n", phy_addr);
 
     	uint64_t vpage = (uint64_t)vmm_alloc_hw( PAGE_SIZE );
 
@@ -282,13 +283,11 @@ uint16_t ioapic_configure() {
 
     uint16_t count = 0;
 
-    for (const struct mp_ioapic *ioapic  = mp_find_first_io_apic();
-            ioapic != 0;
-            ioapic  = mp_find_next_io_apic( ioapic )) {
+    for(uint64_t id = acpi_find_first_ioapic_id(); id != (uint64_t)-1; id = acpi_find_next_ioapic_id(id)) {
 
     	++count;
 
-       config( ioapic->mmap_ioapic );
+    	config( acpi_find_ioapic_address(id) );
     }
 
     return count;
