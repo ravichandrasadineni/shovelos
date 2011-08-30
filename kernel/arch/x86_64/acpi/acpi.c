@@ -68,17 +68,6 @@ struct madt_struct {
 
 }__attribute__((packed)) ;
 
-static uint8_t sum(const void * _data, uint64_t len) {
-
-	uint8_t sum = 0;
-	const uint8_t *data = (const uint8_t *)_data;
-
-	while(len--)
-		sum += *data++;
-
-	return sum;
-}
-
 static sint8_t validate(const struct rsdp_header* header) {
 
 	if(memcmp(header,"RSD PTR ",8)!=0)
@@ -197,13 +186,16 @@ static void* acpi_find_next_table_revX(const void *last, const char *target_sig,
 
 		memcpy(&phy_addr, entry, addrsize);
 
-		uint8_t *virt_addr = PHY_TO_VIRT(phy_addr, uint8_t *);
+		struct _header *header = PHY_TO_VIRT(phy_addr, struct _header *);
 
-		if(memcmp(virt_addr, target_sig, 4)==0) {
+		if(sum(header, header->length)!=0)
+			continue;
+
+		if(memcmp(header->signature, target_sig, sizeof header->signature)==0) {
 
 			if(returnflag)
-				return virt_addr;
-			else if(virt_addr==last)
+				return header;
+			else if(header==(struct _header *)last)
 				returnflag = 1;
 		}
 	}

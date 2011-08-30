@@ -32,6 +32,17 @@ static uint64_t declen(const char *str) {
 	return ret;
 }
 
+uint8_t sum(const void * _data, uint64_t len) {
+
+	uint8_t sum = 0;
+	const uint8_t *data = (const uint8_t *)_data;
+
+	while(len--)
+		sum += *data++;
+
+	return sum;
+}
+
 void halt(const char *reason, const char * const file, const char * const function, uint32_t line) {
 
 	kprintf("%s %s:%d\n",file,function,line);
