@@ -1,5 +1,6 @@
 
 .PHONY: clean
+.SECONDARY:
 
 SRC64_C = string.c stdlib.c kprintf.c
 SRC64_S = 
@@ -8,7 +9,7 @@ OBJ64=$(SRC64_S:.s=.s.64.o) $(SRC64_C:.c=.c.64.o)
 
 %.a : $(OBJ64)
 	@echo Archiving $@
-	@ar rcs $@ $(OBJ64)
+	@ar csrT $@ $(OBJ64)
 	
 %.c.64.o : %.c
 	@echo Compiling $<

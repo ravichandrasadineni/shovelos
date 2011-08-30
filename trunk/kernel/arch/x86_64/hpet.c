@@ -78,17 +78,6 @@ enum hpet_register_bits {
 	hpet_general_conf_legacy_replacement 	= (1<<1),
 };
 
-static uint8_t sum(const void * _data, uint64_t len) {
-
-	uint8_t sum = 0;
-	const uint8_t *data = (const uint8_t *)_data;
-
-	while(len--)
-		sum += *data++;
-
-	return sum;
-}
-
 static volatile uint64_t * hpet_mmap(uint64_t phy) {
 
 	uint64_t size   = 1024; // TODO: correct?
