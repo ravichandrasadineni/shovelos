@@ -7,7 +7,6 @@
 
 #include <arch/arch.h>
 #include <lib/lib.h>
-#include "ioapic.h"
 
 struct kbc_buffer_struct
 {

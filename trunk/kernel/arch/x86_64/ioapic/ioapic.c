@@ -9,12 +9,8 @@
 #include <lib/lib.h>
 #include <mm/mm.h>
 #include <arch/arch.h>
-#include "ioapic.h"
-#include "mp.h"
-#include "pt.h"
-#include "8259.h"
 
-#define MAX_IOAPIC 16
+#define MAX_IOAPIC 	16
 
 enum ioapic_mm_reg {
     IOREGSEL 	= 0x00,
@@ -101,7 +97,35 @@ enum ioapic_param {
     IOAPIC_SET	= 0x1,
 };
 
-static struct ioapic_struct ioapics[IOAPIC_MAX];
+struct ioapic_irq_map {
+
+	struct ioapic_struct 	*ioapic;
+	enum ioapic_reg 		redir_register;
+};
+
+static struct ioapic_struct ioapics[MAX_IOAPIC];
+
+// Determine which register, or which IOAPIC is connected to the given system IRQ line.
+struct ioapic_irq_map* ioapic_find_irq(uint8_t irq, struct ioapic_irq_map *irq_struct) {
+
+	for(uint64_t i=0; i<MAX_IOAPIC; i++) {
+
+		if(!ioapics[i].vaddr)
+			continue;
+
+		if(ioapics[i].irq_sys_interrupt_base > irq)
+			continue;
+
+		if((ioapics[i].irq_sys_interrupt_base + ioapics[i].irq_redirect_size) <= irq )
+			continue;
+
+		irq_struct->ioapic = &ioapics[i];
+		irq_struct->redir_register = (enum ioapic_reg)(IOREDTBL00 + ((irq - ioapics[i].irq_sys_interrupt_base)*2));
+
+		return irq_struct;
+	}
+	return 0;
+}
 
 static inline void io_apic_write32__nolock__(void* ioapic_base, enum ioapic_reg reg, uint32_t data) {
 
@@ -121,14 +145,14 @@ static inline void io_apic_write32__nolock__(void* ioapic_base, enum ioapic_reg 
 
 static inline uint32_t io_apic_read32__nolock__(void* ioapic_base, enum ioapic_reg reg) {
 
-	uint32_t ret = 0;
+	uint32_t ret = 69;
 
 	__asm__ __volatile__ (
 			"movl %2, %0;    \n" // select  register
-			"movl %3, %1;    \n" // write register
+			"movl %3, %1;    \n" // read    register
 
 		:	"=m" (*(volatile uint32_t*)((uint8_t*)ioapic_base + IOREGSEL)), /* output 0 register select */
-		 	"=a" (ret)  													/* output 1 return value*/
+		 	"=r" (ret)  													/* output 1 return value*/
 		:	"r"	 (reg),														/* input 2 register */
 		 	"m" (*(volatile uint32_t*)((uint8_t*)ioapic_base + IOWIN   ))	/* input 3 io-window*/
 		);
@@ -147,7 +171,7 @@ static inline void io_apic_write32(struct ioapic_struct *ioapic, enum ioapic_reg
 
 static inline uint32_t io_apic_read32(struct ioapic_struct *ioapic, enum ioapic_reg reg) {
 
-	uint32_t ret = 0;
+	uint32_t ret = 69;
 
 	ticket_lock_wait( &ioapic->lock );
 
@@ -256,7 +280,7 @@ sint8_t ioapic_unmask_irq(uint8_t irq)
 
 static struct ioapic_struct* find_free_ioapic_struct(void) {
 
-	for(uint64_t i=0; i<IOAPIC_MAX; i++)
+	for(uint64_t i=0; i<MAX_IOAPIC; i++)
 		if(ioapics[i].vaddr == 0)
 			return &(ioapics[i]);
 
@@ -266,8 +290,6 @@ static struct ioapic_struct* find_free_ioapic_struct(void) {
 
 
 static void config(uint64_t id) {
-
-    uint64_t red_ent = 0;
 
     struct ioapic_struct* ioapic = find_free_ioapic_struct();
 
@@ -283,7 +305,8 @@ static void config(uint64_t id) {
    	ioapic->id = id;
    	ioapic->irq_sys_interrupt_base = acpi_find_ioapic_system_interrupt_base(id);
     ioapic->vaddr = (void*)(vpage + (phy_addr & (PAGE_SIZE-1)));
-    ioapic->irq_redirect_size = (io_apic_read32(ioapic->vaddr, IOAPICVER) >> 16) & 0xff;
+    uint32_t ver = io_apic_read32(ioapic, IOAPICVER);
+    ioapic->irq_redirect_size = 1 + ((ver >> 16) & 0xff);
 }
 
 uint16_t ioapic_configure() {
@@ -298,17 +321,26 @@ uint16_t ioapic_configure() {
     	config( id );
     }
 
-    // TODO: determine which IOAPIC is connected to IRQ1
-        red_ent = 	IOAPIC_RED_DST		( 0ll )						|
-        			IOAPIC_RED_MASK		( IOAPIC_CLEAR )			|
-        			IOAPIC_RED_TRIGGER	( IOAPIC_EDGE_TRIGGER )		|
-        			IOAPIC_RED_INPOL	( IOAPIC_INTPOL_HI )		|
-        			IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )			|
-        			IOAPIC_RED_DESTMOD	( IOAPIC_DEST_PHYSICAL )	|
-        			IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) 	|
-        			IOAPIC_RED_INTVEC	( 64 );
+    // HACK - KEYBOURD IRQ
+    struct ioapic_irq_map irq_map;
 
-        io_apic_write64( &ioapics[0], IOREDTBL01 ,red_ent);
+    if(ioapic_find_irq(1, &irq_map)) {
+
+    	uint64_t red_ent = 	IOAPIC_RED_DST		( 0ll )						|
+    	    				IOAPIC_RED_MASK		( IOAPIC_CLEAR )			|
+    	    				IOAPIC_RED_TRIGGER	( IOAPIC_EDGE_TRIGGER )		|
+    	    				IOAPIC_RED_INPOL	( IOAPIC_INTPOL_HI )		|
+    	    				IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )			|
+    	    				IOAPIC_RED_DESTMOD	( IOAPIC_DEST_PHYSICAL )	|
+    	    				IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) 	|
+    	    				IOAPIC_RED_INTVEC	( 64 ); /* HACK - KBC VECTOR */
+
+    	io_apic_write64( irq_map.ioapic, irq_map.redir_register ,red_ent);
+    }
+    else
+    	HALT("couldn't find ioapic for IRQ 1");
+
+    // END HACK
 
     return count;
 }
