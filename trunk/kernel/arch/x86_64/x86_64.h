@@ -21,7 +21,7 @@
 #include "hpet.h"
 #include "mp.h"
 #include "console.h"
-#include "ioapic.h"
+#include "ioapic/ioapic.h"
 #include "lapic/lapic.h"
 #include "cpu/cpu.h"
 #include "kbc.h"

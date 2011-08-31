@@ -9,7 +9,6 @@ struct cpu_struct {
 
 	uint64_t flags;
 	uint64_t id;
-	volatile struct local_apic_struct *lapic;
 };
 
 struct cpu_struct* 	cpu_find_this(void);
