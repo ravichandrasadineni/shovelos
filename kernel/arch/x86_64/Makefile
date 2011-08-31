@@ -2,7 +2,7 @@
 .SECONDARY:
 
 LIBS    = ioapic/ioapic.a lapic/lapic.a acpi/acpi.a cpu/cpu.a
-SRC64_C = gdt.c idt.c console.c 8259.c pt.c mp.c ioapic.c ticket_lock.c isr.c kbc.c kbc_scancodes.c hpet.c
+SRC64_C = gdt.c idt.c console.c 8259.c pt.c ticket_lock.c isr.c kbc.c kbc_scancodes.c hpet.c
 SRC64_S = gdt.s 
 
 OBJ64=$(SRC64_S:.s=.s.64.o) $(SRC64_C:.c=.c.64.o)

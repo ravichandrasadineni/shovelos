@@ -19,7 +19,6 @@
 #include "acpi/acpi.h"
 #include "cpu/cpu.h"
 #include "hpet.h"
-#include "mp.h"
 #include "console.h"
 #include "ioapic/ioapic.h"
 #include "lapic/lapic.h"

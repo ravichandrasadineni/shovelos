@@ -40,7 +40,6 @@ struct cpu_struct* cpu_find_id(uint64_t id) {
 struct cpu_struct* cpu_find_this(void) {
 
 	uint64_t id = lapic_id();
-	kprintf("lapic id == 0x%lx\n", id);
 	return cpu_find_id( id );
 }
 
