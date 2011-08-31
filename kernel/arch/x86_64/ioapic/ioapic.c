@@ -14,6 +14,8 @@
 #include "pt.h"
 #include "8259.h"
 
+#define MAX_IOAPIC 16
+
 enum ioapic_mm_reg {
     IOREGSEL 	= 0x00,
     IOWIN		= 0x10,
@@ -99,7 +101,7 @@ enum ioapic_param {
     IOAPIC_SET	= 0x1,
 };
 
-static struct ticket_lock lock = { 0,0,0 };
+static struct ioapic_struct ioapics[IOAPIC_MAX];
 
 static inline void io_apic_write32__nolock__(void* ioapic_base, enum ioapic_reg reg, uint32_t data) {
 
@@ -115,15 +117,6 @@ static inline void io_apic_write32__nolock__(void* ioapic_base, enum ioapic_reg 
 		:	"r"	 (reg),		/* input 2 register */
 		  	"r"  (data)		/* input 3 data */
 		);
-}
-
-static inline void io_apic_write32(void* ioapic_base, enum ioapic_reg reg, uint32_t data) {
-
-	ticket_lock_wait( &lock );
-
-	io_apic_write32__nolock__( ioapic_base, reg, data );
-
-	ticket_lock_signal( &lock );
 }
 
 static inline uint32_t io_apic_read32__nolock__(void* ioapic_base, enum ioapic_reg reg) {
@@ -143,45 +136,54 @@ static inline uint32_t io_apic_read32__nolock__(void* ioapic_base, enum ioapic_r
 	return (ret);
 }
 
-static inline uint32_t io_apic_read32(void* ioapic_base, enum ioapic_reg reg) {
+static inline void io_apic_write32(struct ioapic_struct *ioapic, enum ioapic_reg reg, uint32_t data) {
+
+	ticket_lock_wait( &ioapic->lock );
+
+	io_apic_write32__nolock__( ioapic->vaddr, reg, data );
+
+	ticket_lock_signal( &ioapic->lock );
+}
+
+static inline uint32_t io_apic_read32(struct ioapic_struct *ioapic, enum ioapic_reg reg) {
 
 	uint32_t ret = 0;
 
-	ticket_lock_wait( &lock );
+	ticket_lock_wait( &ioapic->lock );
 
-	ret = io_apic_read32__nolock__(ioapic_base,reg);
+	ret = io_apic_read32__nolock__(ioapic->vaddr,reg);
 
-	ticket_lock_signal( &lock );
+	ticket_lock_signal( &ioapic->lock );
 
 	return ret;
 }
 
-static inline void io_apic_write64(void* ioapic_base, enum ioapic_reg reg, uint64_t data) {
+static inline void io_apic_write64(struct ioapic_struct *ioapic, enum ioapic_reg reg, uint64_t data) {
 
 	uint32_t hidata = data >> 32;
 	uint32_t lodata = data  & 0xffffffff;
 	uint32_t maskdata = IOAPIC_RED_MASK(IOAPIC_SET);
 
-	ticket_lock_wait( &lock );
+	ticket_lock_wait( &ioapic->lock );
 
-	io_apic_write32__nolock__( ioapic_base, reg+0, maskdata );
-	io_apic_write32__nolock__( ioapic_base, reg+1, hidata );
-	io_apic_write32__nolock__( ioapic_base, reg+0, lodata );
+	io_apic_write32__nolock__( ioapic->vaddr, reg+0, maskdata );
+	io_apic_write32__nolock__( ioapic->vaddr, reg+1, hidata );
+	io_apic_write32__nolock__( ioapic->vaddr, reg+0, lodata );
 
-	ticket_lock_signal( &lock );
+	ticket_lock_signal( &ioapic->lock );
 }
 
-static inline uint64_t io_apic_read64(void* ioapic_base, enum ioapic_reg reg) {
+static inline uint64_t io_apic_read64(struct ioapic_struct *ioapic, enum ioapic_reg reg) {
 
 	uint64_t retlo = 0;
 	uint64_t rethi = 0;
 
-	ticket_lock_wait( &lock );
+	ticket_lock_wait( &ioapic->lock );
 
-	retlo = io_apic_read32__nolock__( ioapic_base, reg+0 );
-	rethi = io_apic_read32__nolock__( ioapic_base, reg+1 );
+	retlo = io_apic_read32__nolock__( ioapic->vaddr, reg+0 );
+	rethi = io_apic_read32__nolock__( ioapic->vaddr, reg+1 );
 
-	ticket_lock_signal( &lock );
+	ticket_lock_signal( &ioapic->lock );
 
 	return retlo | (rethi<<32);
 }
@@ -198,35 +200,7 @@ uint64_t ioapic_detect() {
     return count;
 }
 
-static void* ioapic = 0;
-
-static void config(uint64_t phy_addr) {
-
-    uint64_t red_ent = 0;
-
-    if(!ioapic) {
-
-    	kprintf("found ioapic @ 0x%lx\n", phy_addr);
-
-    	uint64_t vpage = (uint64_t)vmm_alloc_hw( PAGE_SIZE );
-
-   		mmap(phy_addr & ~(PAGE_SIZE-1), vpage, 0);
-
-    	ioapic = (void*)(vpage + (phy_addr & (PAGE_SIZE-1)));
-    }
-
-    red_ent = 	IOAPIC_RED_DST		( 0ll 						)|
-    			IOAPIC_RED_MASK		( IOAPIC_CLEAR )			|
-    			IOAPIC_RED_TRIGGER	( IOAPIC_EDGE_TRIGGER )		|
-    			IOAPIC_RED_INPOL	( IOAPIC_INTPOL_HI )		|
-    			IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )			|
-    			IOAPIC_RED_DESTMOD	( IOAPIC_DEST_PHYSICAL )	|
-    			IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) 	|
-    			IOAPIC_RED_INTVEC	( 64 );
-
-    io_apic_write64( ioapic, IOREDTBL01 ,red_ent);
-}
-
+/*
 sint8_t ioapic_setmask_irq(uint8_t irq, sint8_t mask) {
 
 	if(mask)
@@ -278,17 +252,63 @@ sint8_t ioapic_unmask_irq(uint8_t irq)
 
 	return wasmasked;
 }
+*/
+
+static struct ioapic_struct* find_free_ioapic_struct(void) {
+
+	for(uint64_t i=0; i<IOAPIC_MAX; i++)
+		if(ioapics[i].vaddr == 0)
+			return &(ioapics[i]);
+
+	return 0;
+}
+
+
+
+static void config(uint64_t id) {
+
+    uint64_t red_ent = 0;
+
+    struct ioapic_struct* ioapic = find_free_ioapic_struct();
+
+    if(!ioapic)
+    	HALT("too many installed ioapics");
+
+    uint64_t phy_addr = acpi_find_ioapic_address(id);
+
+    uint64_t vpage = (uint64_t)vmm_alloc_hw( PAGE_SIZE );
+
+   	mmap(phy_addr & ~(PAGE_SIZE-1), vpage, 0);
+
+   	ioapic->id = id;
+   	ioapic->irq_sys_interrupt_base = acpi_find_ioapic_system_interrupt_base(id);
+    ioapic->vaddr = (void*)(vpage + (phy_addr & (PAGE_SIZE-1)));
+    ioapic->irq_redirect_size = (io_apic_read32(ioapic->vaddr, IOAPICVER) >> 16) & 0xff;
+}
 
 uint16_t ioapic_configure() {
 
     uint16_t count = 0;
 
+    memset(ioapics, 0, sizeof ioapics );
+
     for(uint64_t id = acpi_find_first_ioapic_id(); id != (uint64_t)-1; id = acpi_find_next_ioapic_id(id)) {
 
     	++count;
-
-    	config( acpi_find_ioapic_address(id) );
+    	config( id );
     }
+
+    // TODO: determine which IOAPIC is connected to IRQ1
+        red_ent = 	IOAPIC_RED_DST		( 0ll )						|
+        			IOAPIC_RED_MASK		( IOAPIC_CLEAR )			|
+        			IOAPIC_RED_TRIGGER	( IOAPIC_EDGE_TRIGGER )		|
+        			IOAPIC_RED_INPOL	( IOAPIC_INTPOL_HI )		|
+        			IOAPIC_RED_DELVIS	( IOAPIC_CLEAR )			|
+        			IOAPIC_RED_DESTMOD	( IOAPIC_DEST_PHYSICAL )	|
+        			IOAPIC_RED_DELMOD	( IOAPIC_DELMOD_FIXED ) 	|
+        			IOAPIC_RED_INTVEC	( 64 );
+
+        io_apic_write64( &ioapics[0], IOREDTBL01 ,red_ent);
 
     return count;
 }

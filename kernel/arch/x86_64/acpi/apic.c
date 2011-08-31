@@ -188,4 +188,13 @@ uint64_t acpi_find_ioapic_address(uint64_t id) {
 	return 0;
 }
 
+uint64_t acpi_find_ioapic_system_interrupt_base(uint64_t id) {
 
+	for(const struct acpi_madt_ioapic* ioapic = acpi_find_first_ioapic(); ioapic; ioapic = acpi_find_next_ioapic(ioapic)) {
+
+		if(ioapic->ioapic_id == id)
+			return ioapic->global_system_interrupt_base;
+	}
+
+	return 0;
+}
