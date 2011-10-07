@@ -15,7 +15,7 @@ volatile struct local_apic_struct *lapic = 0;
 
 void lapic_ipi_start(uint8_t lapic_id, void* address) {
 
-	HALT("");
+//	HALT("");
 
 	lapic_ipi_register reg;
 

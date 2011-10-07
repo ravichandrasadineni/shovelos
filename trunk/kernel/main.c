@@ -47,7 +47,7 @@ int main(struct mm_phy_reg *reg, uint64_t len, void (*boot_aux_cpu)())  {
 	}
 
 
-//	lapic_ipi_start(1, boot_aux_cpu);
+	lapic_ipi_start(2, boot_aux_cpu);
 
 	kprintf("shovelos.kernel - \"HELLO WORLD!\"\n");
 
@@ -55,16 +55,12 @@ int main(struct mm_phy_reg *reg, uint64_t len, void (*boot_aux_cpu)())  {
 
 	for(;;) {
 
-		hpet_wait_seconds(2);
-
-		kprintf("X");
-
 		sint32_t c;
 
 		while((c = kbc_readchar())>=0) {
 			kprintf("%c",c);
 			if(c=='\n') {
-				kprintf("(0x%x)#> ", running_processors);
+				kprintf("%d #> ", running_processors);
 			}
 		}
 	}
